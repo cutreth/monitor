@@ -1,0 +1,10 @@
+__pycache__
+*.pyc
+static
+staticfiles
+cutreth/local_settings.py
+cutreth/local_settings.pyc
+local_settings.py
+local_settings.pyc
+db.sqlite3
+*.log
