@@ -91,16 +91,16 @@ def chart(request):
     extra_serie1 = {
         "tooltip": {"y_start": "", "y_end": " cal"},
         "date_format": tooltip_date,
-        'color': '#a4c639'
+        #'color': '#a239c6',
     }
     extra_serie2 = {
         "tooltip": {"y_start": "", "y_end": " cal"},
         "date_format": tooltip_date,
-        'color': '#FF8aF8'
+        #'color': '#395ec6',
     }
     chartdata = {'x': xdata,
-                 'name1': 'series 1', 'y1': ydata, 'extra1': extra_serie1,
-                 'name2': 'series 2', 'y2': ydata2, 'extra2': extra_serie2}
+                 'name1': 'Beer Temp', 'y1': ydata, 'extra1': extra_serie1,
+                 'name2': 'Amb Temp', 'y2': ydata2, 'extra2': extra_serie2}
 
     charttype = "lineChart"
     chartcontainer = 'chart_container'  # container name
@@ -113,6 +113,7 @@ def chart(request):
             'x_axis_format': '%d %b %Y %H',         
             'tag_script_js': True,
             'jquery_on_ready': False,
+            'chart_attr': {'color':['orange', 'blue']},
         }
     }
     return render_to_response('chart.html', data)
