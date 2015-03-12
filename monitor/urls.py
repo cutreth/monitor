@@ -8,4 +8,6 @@ urlpatterns = patterns('',
     url(r'^success/', views.success, name='success'),
     url(r'^fail/', views.fail, name='fail'),
     url(r'^chart/', views.chart, name='chart'),
+    url(r'^linechart/', views.linechart, name='linechart'),
+    
 )

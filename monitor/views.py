@@ -5,6 +5,10 @@ from django.views.decorators.csrf import csrf_exempt
 
 from monitor.models import Beer, Reading, Config
 
+import random
+import datetime
+import time
+
 def index(request):
     return HttpResponse("Hello, world. You're at the index.")
     
@@ -42,21 +46,115 @@ def api(request):
         return HttpResponseRedirect(reverse('index'))
         
 
+def ConvertDateTime(obj):
+    import calendar, datetime
+
+    if isinstance(obj, datetime.datetime):
+        if obj.utcoffset() is not None:
+            obj = obj - obj.utcoffset()
+    millis = int(
+        calendar.timegm(obj.timetuple()) * 1000 +
+        obj.microsecond / 1000
+    )
+    return millis
+    
+
 def chart(request):
-    xdata = ["Apple", "Apricot", "Avocado", "Banana", "Boysenberries", "Blueberries", "Dates", "Grapefruit", "Kiwi", "Lemon"]
-    ydata = [52, 48, 160, 94, 75, 71, 490, 82, 46, 17]
-    chartdata = {'x': xdata, 'y': ydata}
-    charttype = "pieChart"
-    chartcontainer = 'piechart_container'
+    
+    active_config = Config.objects.get(pk=1)
+    active_beer = active_config.beer
+    
+    xdata = Reading.objects.values_list('instant',flat=True).filter(beer=active_beer)
+    y1data = Reading.objects.values_list('temp_beer',flat=True).filter(beer=active_beer)
+    y2data = Reading.objects.values_list('temp_amb',flat=True).filter(beer=active_beer)
+    
+    xdata = [ConvertDateTime(n) for n in xdata]
+    y1data = [float(n) for n in y1data]    
+    y2data = [float(n) for n in y2data]
+    
+    """
+    lineChart page
+    """
+    """
+    start_time = int(time.mktime(datetime.datetime(2012, 6, 1).timetuple()) * 1000)
+    nb_element = 150
+    xdata = range(nb_element)
+    xdata = list(map(lambda x: start_time + x * 1000000000, xdata))
+    ydata = [i + random.randint(1, 10) for i in range(nb_element)]
+    ydata2 = list(map(lambda x: x * 2, ydata))
+    """
+
+    ydata=y1data
+    ydata2=y2data
+
+    tooltip_date = "%d %b %Y %H:%M:%S %p"
+    extra_serie1 = {
+        "tooltip": {"y_start": "", "y_end": " cal"},
+        "date_format": tooltip_date,
+        'color': '#a4c639'
+    }
+    extra_serie2 = {
+        "tooltip": {"y_start": "", "y_end": " cal"},
+        "date_format": tooltip_date,
+        'color': '#FF8aF8'
+    }
+    chartdata = {'x': xdata,
+                 'name1': 'series 1', 'y1': ydata, 'extra1': extra_serie1,
+                 'name2': 'series 2', 'y2': ydata2, 'extra2': extra_serie2}
+
+    charttype = "lineChart"
+    chartcontainer = 'chart_container'  # container name
     data = {
         'charttype': charttype,
         'chartdata': chartdata,
         'chartcontainer': chartcontainer,
         'extra': {
-            'x_is_date': False,
-            'x_axis_format': '',
+            'x_is_date': True,
+            'x_axis_format': '%d %b %Y %H',         
             'tag_script_js': True,
             'jquery_on_ready': False,
         }
     }
     return render_to_response('chart.html', data)
+
+
+def linechart(request):
+    """
+    lineChart page
+    """
+    start_time = int(time.mktime(datetime.datetime(2012, 6, 1).timetuple()) * 1000)
+    nb_element = 150
+    xdata = range(nb_element)
+    xdata = list(map(lambda x: start_time + x * 1000000000, xdata))
+    ydata = [i + random.randint(1, 10) for i in range(nb_element)]
+    ydata2 = list(map(lambda x: x * 2, ydata))
+
+    tooltip_date = "%d %b %Y %H:%M:%S %p"
+    extra_serie1 = {
+        "tooltip": {"y_start": "", "y_end": " cal"},
+        "date_format": tooltip_date,
+        'color': '#a4c639'
+    }
+    extra_serie2 = {
+        "tooltip": {"y_start": "", "y_end": " cal"},
+        "date_format": tooltip_date,
+        'color': '#FF8aF8'
+    }
+    chartdata = {'x': xdata,
+                 'name1': 'series 1', 'y1': ydata, 'extra1': extra_serie1,
+                 'name2': 'series 2', 'y2': ydata2, 'extra2': extra_serie2}
+
+    charttype = "lineChart"
+    chartcontainer = 'linechart_container'  # container name
+    data = {
+        'charttype': charttype,
+        'chartdata': chartdata,
+        'chartcontainer': chartcontainer,
+        'extra': {
+            'x_is_date': True,
+            'x_axis_format': '%d %b %Y %H',         
+            'tag_script_js': True,
+            'jquery_on_ready': False,
+        }
+    }
+    return render_to_response('linechart.html', data)
