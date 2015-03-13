@@ -7,7 +7,7 @@ from monitor.models import Beer, Reading, Config
 
 import random
 import datetime
-import time
+from datetime import timedelta
 
 def index(request):
     return HttpResponse("Hello, world. You're at the index.")
@@ -51,6 +51,8 @@ def ConvertDateTime(obj):
     if isinstance(obj, datetime.datetime):
         if obj.utcoffset() is not None:
             obj = obj - obj.utcoffset()
+        else:
+            obj = obj + timedelta(hours=5)
     millis = int(
         calendar.timegm(obj.timetuple()) * 1000 +
         obj.microsecond / 1000
@@ -72,8 +74,8 @@ def chart(request):
     y2data = [float(n) for n in y2data]
     
     xdata.append(min(xdata)-1)
-    y1data.append(50)
-    y2data.append(90)
+    y1data.append(90)
+    y2data.append(50)
     
     xy1y2data = zip(xdata, y1data, y2data)
     xy1y2data = sorted(xy1y2data)
@@ -99,7 +101,7 @@ def chart(request):
     ydata=y1data
     ydata2=y2data
 
-    tooltip_date = "%d %b %Y %H:%M:%S %p"
+    tooltip_date = "%m/%d %H:%M"
     extra_serie1 = {
         "tooltip": {"y_start": "", "y_end": " cal"},
         "date_format": tooltip_date,
@@ -124,7 +126,7 @@ def chart(request):
         'chartcontainer': chartcontainer,
         'extra': {
             'x_is_date': True,
-            'x_axis_format': '%d %b %Y %H',         
+            'x_axis_format': '%m/%d %H:%M',         
             'tag_script_js': True,
             'jquery_on_ready': False,
             'chart_attr': {'color':['orange', 'blue']},
