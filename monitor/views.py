@@ -28,8 +28,10 @@ def api(request):
             active_beer = active_config.beer
             read = Reading(beer=active_beer)
     
+            light_amb = request.POST.get('light_amb')
             temp_beer = request.POST.get('temp_beer')
             temp_amb = request.POST.get('temp_amb')
+            read.light_amb = light_amb
             read.temp_beer = temp_beer
             read.temp_amb = temp_amb
         
@@ -64,21 +66,19 @@ def chart(request):
     
     active_config = Config.objects.get(pk=1)
     active_beer = active_config.beer
-    
-    xdata = Reading.objects.filter(beer=active_beer)
-    y1data = Reading.objects.values_list('temp_amb',flat=True).filter(beer=active_beer)
-    y2data = Reading.objects.values_list('temp_beer',flat=True).filter(beer=active_beer)
-    
-    xdata = [ConvertDateTime(n.instant_actual()) for n in xdata]
-    y1data = [float(n) for n in y1data]    
-    y2data = [float(n) for n in y2data]
+    active_readings = Reading.objects.filter(beer=active_beer)
+
+    xdata = [ConvertDateTime(n.instant_actual()) for n in active_readings]
+    y1data = [n.get_temp_amb() for n in active_readings]    
+    y2data = [n.get_temp_beer() for n in active_readings]   
     
     xdata.append(min(xdata)-1)
-    y1data.append(90)
-    y2data.append(50)
+    y1data.append(float(90))
+    y2data.append(float(50))
     
     xy1y2data = zip(xdata, y1data, y2data)
     xy1y2data = sorted(xy1y2data)
+    
     xdata = [n[0] for n in xy1y2data]
     y1data = [n[1] for n in xy1y2data]
     y2data = [n[2] for n in xy1y2data]

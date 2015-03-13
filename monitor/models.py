@@ -20,10 +20,15 @@ class Reading(models.Model):
     instant = models.DateTimeField('Instant',auto_now_add=True)
     instant_override = models.DateTimeField('Instant Override',blank=True,
                                             null=True,default=None)
+    light_amb = models.DecimalField('Ambient Light', max_digits=5,
+                                    decimal_places=2,blank=True,null=False,
+                                    default=0)
     temp_amb = models.DecimalField('Ambient Temp',max_digits=5,
-                                   decimal_places=2)
+                                   decimal_places=2,blank=True,null=False,
+                                    default=0)
     temp_beer = models.DecimalField('Beer Temp',max_digits=5,
-                                    decimal_places=2)
+                                    decimal_places=2,blank=True,null=False,
+                                    default=0)
     temp_unit = models.CharField('Temp Unit',max_length=1,
                                  choices=temp_choices,default='F')
     
@@ -32,6 +37,18 @@ class Reading(models.Model):
             return self.instant_override
         else:
             return self.instant
+            
+    def get_temp_amb(self):
+        if self.temp_unit is 'F':
+            return float(self.temp_amb)
+        else:
+            return float(self.temp_amb*9/5+32)
+    
+    def get_temp_beer(self):
+        if self.temp_unit is 'F':
+            return float(self.temp_beer)
+        else:
+            return float(self.temp_beer*9/5+32)
     
     def __str__(self):
         return str(self.beer) + ': ' + \
