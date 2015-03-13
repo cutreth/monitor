@@ -1,4 +1,4 @@
-from django.shortcuts import render_to_response
+from django.shortcuts import render,render_to_response
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -44,7 +44,6 @@ def api(request):
             return HttpResponseRedirect(reverse('fail'))
     except:
         return HttpResponseRedirect(reverse('index'))
-        
 
 def ConvertDateTime(obj):
     import calendar, datetime
@@ -82,7 +81,8 @@ def chart(request):
     y1data = [n[1] for n in xy1y2data]
     y2data = [n[2] for n in xy1y2data]
     
-    
+    beer_name = active_beer
+    beer_date = active_beer.brew_date
     
     """
     lineChart page
@@ -117,6 +117,8 @@ def chart(request):
     charttype = "lineChart"
     chartcontainer = 'chart_container'  # container name
     data = {
+        'beer_name': beer_name,
+        'beer_date': beer_date,
         'charttype': charttype,
         'chartdata': chartdata,
         'chartcontainer': chartcontainer,
