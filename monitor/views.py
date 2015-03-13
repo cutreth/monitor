@@ -64,13 +64,25 @@ def chart(request):
     active_config = Config.objects.get(pk=1)
     active_beer = active_config.beer
     
-    xdata = Reading.objects.values_list('instant',flat=True).filter(beer=active_beer)
-    y1data = Reading.objects.values_list('temp_beer',flat=True).filter(beer=active_beer)
-    y2data = Reading.objects.values_list('temp_amb',flat=True).filter(beer=active_beer)
+    xdata = Reading.objects.filter(beer=active_beer)
+    y1data = Reading.objects.values_list('temp_amb',flat=True).filter(beer=active_beer)
+    y2data = Reading.objects.values_list('temp_beer',flat=True).filter(beer=active_beer)
     
-    xdata = [ConvertDateTime(n) for n in xdata]
+    xdata = [ConvertDateTime(n.instant_actual()) for n in xdata]
     y1data = [float(n) for n in y1data]    
     y2data = [float(n) for n in y2data]
+    
+    xdata.append(min(xdata)-1)
+    y1data.append(50)
+    y2data.append(90)
+    
+    xy1y2data = zip(xdata, y1data, y2data)
+    xy1y2data = sorted(xy1y2data)
+    xdata = [n[0] for n in xy1y2data]
+    y1data = [n[1] for n in xy1y2data]
+    y2data = [n[2] for n in xy1y2data]
+    
+    
     
     """
     lineChart page
@@ -99,8 +111,8 @@ def chart(request):
         #'color': '#395ec6',
     }
     chartdata = {'x': xdata,
-                 'name1': 'Beer Temp', 'y1': ydata, 'extra1': extra_serie1,
-                 'name2': 'Amb Temp', 'y2': ydata2, 'extra2': extra_serie2}
+                 'name1': 'Amb Temp', 'y1': ydata, 'extra1': extra_serie1,
+                 'name2': 'Beer Temp', 'y2': ydata2, 'extra2': extra_serie2}
 
     charttype = "lineChart"
     chartcontainer = 'chart_container'  # container name

@@ -17,7 +17,9 @@ class Reading(models.Model):
     )
 
     beer = models.ForeignKey(Beer)
-    instant = models.DateTimeField(auto_now_add=True)
+    instant = models.DateTimeField('Instant',auto_now_add=True)
+    instant_override = models.DateTimeField('Instant Override',blank=True,
+                                            null=True,default=None)
     temp_amb = models.DecimalField('Ambient Temp',max_digits=5,
                                    decimal_places=2)
     temp_beer = models.DecimalField('Beer Temp',max_digits=5,
@@ -25,9 +27,15 @@ class Reading(models.Model):
     temp_unit = models.CharField('Temp Unit',max_length=1,
                                  choices=temp_choices,default='F')
     
+    def instant_actual(self):
+        if self.instant_override is not None:
+            return self.instant_override
+        else:
+            return self.instant
+    
     def __str__(self):
         return str(self.beer) + ': ' + \
-        str(self.instant.strftime("%Y-%m-%d %H:%M:%S"))
+        str(self.instant_actual().strftime("%Y-%m-%d %H:%M:%S"))
 
 class Config(models.Model):
     

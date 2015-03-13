@@ -12,5 +12,14 @@ class BeerAdmin(admin.ModelAdmin):
     ]
     inlines = [ReadingInLine]
 
+class ReadingAdmin(admin.ModelAdmin):
+    fieldsets = [
+    ('Data',       {'fields': ['beer','temp_amb','temp_beer','temp_unit']}),
+    ('Instant',    {'fields': ['instant','instant_override']}),
+    ]
+    readonly_fields = ('instant',)
+
+
 admin.site.register(Beer, BeerAdmin)
 admin.site.register(Config)
+admin.site.register(Reading,ReadingAdmin)
