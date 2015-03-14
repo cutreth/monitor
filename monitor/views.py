@@ -58,6 +58,7 @@ def api(request):
 
 def DeviationCheck(active_config, active_beer, read):
 
+    #Enhance to add support for temperature conversions
     temp_amb_base = active_config.temp_amb_base
     temp_amb_dev = active_config.temp_amb_dev
 
@@ -70,7 +71,8 @@ def DeviationCheck(active_config, active_beer, read):
         
         if not (temp_amb_min < read.temp_amb < temp_amb_max):
             read.error_flag = True
-            read.error_details = read.error_details + 'temp_amb: [' + str(temp_amb_min) + ', ' + str(temp_amb_max) + '] '
+            read.error_details = read.error_details + 'temp_amb: [' + str(temp_amb_min) + ', ' + str(temp_amb_max) + ']'
+            read.error_details = read.error_details + ' *[' + str(read.temp_amb) + '] '        
         elif read.error_flag is None:
             read.error_flag = False
 
@@ -80,7 +82,8 @@ def DeviationCheck(active_config, active_beer, read):
         
         if not (temp_beer_min < read.temp_beer < temp_beer_max):
             read.error_flag = True
-            read.error_details = read.error_details + 'temp_beer: [' + str(temp_beer_min) + ', ' + str(temp_beer_max) + '] '
+            read.error_details = read.error_details + 'temp_beer: [' + str(temp_beer_min) + ', ' + str(temp_beer_max) + ']'
+            read.error_details = read.error_details + ' *[' + str(read.temp_beer) + '] '
         elif read.error_flag is None:
             read.error_flag = False
 
