@@ -33,7 +33,7 @@ class Reading(models.Model):
                                  choices=temp_choices,default='F')
                                  
     error_flag = models.NullBooleanField('Error?')
-    error_details = models.SlugField('Error Details',blank=True)
+    error_details = models.CharField('Error Details',blank=True,max_length=150)
     
     def instant_actual(self):
         if self.instant_override is not None:
