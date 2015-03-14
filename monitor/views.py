@@ -1,51 +1,89 @@
-from django.shortcuts import render,render_to_response
-from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render,render_to_response,get_object_or_404
+from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 
 from monitor.models import Beer, Reading, Config
 
 import random
-import datetime
+import datetime, logging
 from datetime import timedelta
 
 def index(request):
     return HttpResponse("Hello, world. You're at the index.")
-    
+
 def success(request):
     return HttpResponse("Success")
 
 def fail(request):
     return HttpResponse("Fail")
-    
+
 @csrf_exempt
 def api(request):
-    try:
-        key = request.POST.get('key')
-        if key == 'beer':
-            
-            active_config = Config.objects.get(pk=1)
-            active_beer = active_config.beer
-            read = Reading(beer=active_beer)
-    
-            light_amb = request.POST.get('light_amb')
-            temp_beer = request.POST.get('temp_beer')
-            temp_amb = request.POST.get('temp_amb')
+
+    key = request.POST.get('key')
+    if key == 'beer':
+
+        active_config = Config.objects.get(pk=1)
+        active_beer = active_config.beer
+        read = Reading(beer=active_beer)
+
+        light_amb = float(request.POST.get('light_amb',0))
+        temp_beer = float(request.POST.get('temp_beer',0))
+        temp_amb = float(request.POST.get('temp_amb',0))
+
+        if (light_amb>0 or temp_beer>0 or temp_amb>0):
+
             read.light_amb = light_amb
             read.temp_beer = temp_beer
             read.temp_amb = temp_amb
-        
+
             temp_unit = str(request.POST.get('temp_unit'))
             temp_unit = temp_unit.capitalize()[0]
             read.temp_unit = temp_unit
-    
+
+            DeviationCheck(active_config, active_beer, read)
             read.save()
+
             return HttpResponseRedirect(reverse('success'))
-        
+
         else:
             return HttpResponseRedirect(reverse('fail'))
-    except:
-        return HttpResponseRedirect(reverse('index'))
+
+    else:
+        return HttpResponseRedirect(reverse('fail'))
+
+
+
+
+def DeviationCheck(active_config, active_beer, read):
+
+    temp_amb_base = active_config.temp_amb_base
+    temp_amb_dev = active_config.temp_amb_dev
+
+    temp_beer_base = active_config.temp_beer_base
+    temp_beer_dev = active_config.temp_beer_dev
+
+    if (bool(temp_amb_base) and bool(temp_amb_dev)):
+        temp_amb_max = temp_amb_base + temp_amb_dev
+        temp_amb_min = temp_amb_base - temp_amb_dev
+        
+        if not (temp_amb_min < read.temp_amb < temp_amb_max):
+            read.error_flag = True
+            read.error_details = read.error_details + 'temp_amb: [' + str(temp_amb_min) + ', ' + str(temp_amb_max) + '] '
+        elif read.error_flag is None:
+            read.error_flag = False
+
+    if (bool(temp_beer_base) and bool(temp_beer_dev)):
+        temp_beer_max = temp_beer_base + temp_beer_dev
+        temp_beer_min = temp_beer_base - temp_beer_dev
+        
+        if not (temp_beer_min < read.temp_beer < temp_beer_max):
+            read.error_flag = True
+            read.error_details = read.error_details + 'temp_beer: [' + str(temp_beer_min) + ', ' + str(temp_beer_max) + '] '
+        elif read.error_flag is None:
+            read.error_flag = False
+
 
 def ConvertDateTime(obj):
     import calendar, datetime
@@ -60,43 +98,47 @@ def ConvertDateTime(obj):
         obj.microsecond / 1000
     )
     return millis
-    
 
-def chart(request):
-    
-    active_config = Config.objects.get(pk=1)
-    active_beer = active_config.beer
+
+def chart(request, cur_beer=None):
+
+    all_beers = Beer.objects.all()
+
+    if cur_beer is None:
+        active_config = Config.objects.get(pk=1)
+        active_beer = active_config.beer
+    else:
+        active_beer = Beer.objects.get(pk=cur_beer)
+
     active_readings = Reading.objects.filter(beer=active_beer)
 
     xdata = [ConvertDateTime(n.instant_actual()) for n in active_readings]
-    y1data = [n.get_temp_amb() for n in active_readings]    
-    y2data = [n.get_temp_beer() for n in active_readings]   
-    
+    temp_amb_data = [n.get_temp_amb() for n in active_readings]
+    temp_beer_data = [n.get_temp_beer() for n in active_readings]
+    light_amb_data = [n.light_amb for n in active_readings]
+
+    #Doesn't respect ordering via Reading.instant_actual()
+    error_readings = Reading.objects.filter(beer=active_beer).filter(error_flag=True)
+
+    y1data=temp_amb_data
+    y2data=temp_beer_data
+    #nothing = light_amb_data
+
+
     xdata.append(min(xdata)-1)
     y1data.append(float(90))
     y2data.append(float(50))
-    
+
     xy1y2data = zip(xdata, y1data, y2data)
     xy1y2data = sorted(xy1y2data)
-    
+
     xdata = [n[0] for n in xy1y2data]
     y1data = [n[1] for n in xy1y2data]
     y2data = [n[2] for n in xy1y2data]
-    
+
     beer_name = active_beer
     beer_date = active_beer.brew_date
-    
-    """
-    lineChart page
-    """
-    """
-    start_time = int(time.mktime(datetime.datetime(2012, 6, 1).timetuple()) * 1000)
-    nb_element = 150
-    xdata = range(nb_element)
-    xdata = list(map(lambda x: start_time + x * 1000000000, xdata))
-    ydata = [i + random.randint(1, 10) for i in range(nb_element)]
-    ydata2 = list(map(lambda x: x * 2, ydata))
-    """
+
 
     ydata=y1data
     ydata2=y2data
@@ -119,6 +161,8 @@ def chart(request):
     charttype = "lineChart"
     chartcontainer = 'chart_container'  # container name
     data = {
+        'all_beers': all_beers,
+        'error_readings': error_readings,
         'beer_name': beer_name,
         'beer_date': beer_date,
         'charttype': charttype,
@@ -126,7 +170,7 @@ def chart(request):
         'chartcontainer': chartcontainer,
         'extra': {
             'x_is_date': True,
-            'x_axis_format': '%m/%d %H:%M',         
+            'x_axis_format': '%m/%d %H:%M',
             'tag_script_js': True,
             'jquery_on_ready': False,
             'chart_attr': {'color':['orange', 'blue']},
@@ -169,7 +213,7 @@ def linechart(request):
         'chartcontainer': chartcontainer,
         'extra': {
             'x_is_date': True,
-            'x_axis_format': '%d %b %Y %H',         
+            'x_axis_format': '%d %b %Y %H',
             'tag_script_js': True,
             'jquery_on_ready': False,
         }

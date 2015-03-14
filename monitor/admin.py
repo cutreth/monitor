@@ -14,9 +14,12 @@ class BeerAdmin(admin.ModelAdmin):
 
 class ReadingAdmin(admin.ModelAdmin):
     fieldsets = [
-    ('Data',       {'fields': ['beer','temp_amb','temp_beer','temp_unit']}),
+    ('Data',       {'fields': ['beer','temp_amb','temp_beer','temp_unit',
+                               'light_amb']}),
     ('Instant',    {'fields': ['instant','instant_override']}),
+    ('Errors',     {'fields': ['error_flag','error_details']}),
     ]
+
     readonly_fields = ('instant',)
 
 

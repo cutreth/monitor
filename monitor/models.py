@@ -31,6 +31,9 @@ class Reading(models.Model):
                                     default=0)
     temp_unit = models.CharField('Temp Unit',max_length=1,
                                  choices=temp_choices,default='F')
+                                 
+    error_flag = models.NullBooleanField('Error?')
+    error_details = models.SlugField('Error Details',blank=True)
     
     def instant_actual(self):
         if self.instant_override is not None:
@@ -57,6 +60,18 @@ class Reading(models.Model):
 class Config(models.Model):
     
     beer = models.ForeignKey(Beer)
+    temp_amb_base = models.DecimalField('Ambient Temp Baseline', max_digits=5,
+                                        decimal_places=2,blank=True,null=True,
+                                        default=None)
+    temp_amb_dev = models.DecimalField('Ambient Temp Deviation', max_digits=5,
+                                       decimal_places=2,blank=True,null=True,
+                                       default=None)
+    temp_beer_base = models.DecimalField('Beer Temp Baseline', max_digits=5,
+                                         decimal_places=2,blank=True,null=True,
+                                         default=None)
+    temp_beer_dev = models.DecimalField('Ambient Temp Deviation', max_digits=5,
+                                        decimal_places=2,blank=True,null=True,
+                                        default=None)
     
     def __str__(self):
         return 'Config' + ': ' + str(self.pk)

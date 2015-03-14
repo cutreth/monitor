@@ -2,9 +2,25 @@
 <head>
     {% include_chart_jscss %}
     {% load_chart charttype chartdata chartcontainer extra %}
+    <title>Beer Monitor - Temp</title>
 </head>
 <body>
     <h1>{{beer_name}}</h1>
     <h2>Brewed on {{beer_date}}</h2>
+    
+    <ul>
+    {% for beer in all_beers %}
+        <li><a href="/monitor/chart/{{ beer.id }}/">{{ beer }}</a></li>
+    {% endfor %}
+    </ul>
+    
+    <br>
     {% include_container chartcontainer 400 600 %}
+    
+    <h2>Errors</h2>
+    {% for read in error_readings %}
+        <li>{{read.instant_actual}} - {{ read.error_details }}</li>
+    {% endfor %}
+    
+    
 </body>
