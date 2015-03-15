@@ -115,7 +115,7 @@ ALLOWED_HOSTS = ['*']
 
 #STATIC_ROOT = 'staticfiles'
 
-DEBUG = False
+#DEBUG = False
 
 POSTMARK_API_TOKEN = '8912d7b5-aa44-472f-bef9-2519cb3befa8'
 POSTMARK_SMTP_SERVER = 'smtp.postmarkapp.com'
