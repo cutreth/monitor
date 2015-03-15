@@ -40,6 +40,7 @@ def api(request):
             if bool(instant_override):
                 instant_override = int(instant_override)
                 instant_override=datetime.datetime.fromtimestamp(instant_override)
+                instant_override = instant_override - timedelta(hours=1)
                 read.instant_override = instant_override          
             
 
