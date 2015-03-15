@@ -6,15 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from monitor.models import Beer, Reading, Config
 
 from datetime import timedelta
-
-def index(request):
-    return HttpResponse("Hello, world. You're at the index.")
-
-def success(request):
-    return HttpResponse("Success")
-
-def fail(request):
-    return HttpResponse("Fail")
+import datetime
 
 @csrf_exempt
 def api(request):
@@ -36,32 +28,63 @@ def api(request):
             read.temp_beer = temp_beer
             read.temp_amb = temp_amb
 
-            temp_unit = str(request.POST.get('temp_unit'))
+            temp_unit = request.POST.get('temp_unit','F')
+            temp_unit = str(temp_unit)
             temp_unit = temp_unit.capitalize()[0]
-            read.temp_unit = temp_unit
+            if temp_unit == 'F' or temp_unit == 'C':
+                read.temp_unit = temp_unit
 
-            DeviationCheck(active_config, active_beer, read)
+            error_flag = DeviationCheck(active_config, active_beer, read)
+            
+            instant_override = request.POST.get('instant_override',None)            
+            if bool(instant_override):
+                instant_override = int(instant_override)
+                instant_override=datetime.datetime.fromtimestamp(instant_override)
+                read.instant_override = instant_override          
+            
+
             read.save()
 
             from postmark import PMMail
 
+            #C:\Python34\python -m pbd manage.py runserver
+            #import pdb; pdb.set_trace()
+
+            email_api_key = '8912d7b5-aa44-472f-bef9-2519cb3befa8'
+            
+            email_sender = "cutreth@cutreth.com"
+            email_to = "kikot.world@gmail.com"
+            
+            email_subject = "A beer update!"
+            email_text_body = read.error_details
+
+            if error_flag:
+                message = PMMail(api_key = email_api_key,
+                                 sender = email_sender,
+                                 to = email_to,
+                                 subject = email_subject,
+                                 text_body = email_text_body)                                
+                message.send()
 
 
-            message = PMMail(api_key = '8912d7b5-aa44-472f-bef9-2519cb3befa8',
-                             subject = "Hello from Postmark",
-                             sender = "cutreth@cutreth.com",
-                             to = "kikot.world@gmail.com",
-                             text_body = "Hello")
-            #message.send()
 
-
-            return HttpResponseRedirect(reverse('success'))
+            response = HttpResponse("Success")
+            response['light_amb'] = light_amb
+            response['temp_beer'] = temp_beer
+            response['temp_amb'] = temp_amb
+            response['temp_unit'] = temp_unit
+            response['instant_override'] = instant_override
+            return response
 
         else:
-            return HttpResponseRedirect(reverse('fail'))
+            response = HttpResponse("Failure")
+            response['light_amb'] = light_amb
+            response['temp_beer'] = temp_beer
+            response['temp_amb'] = temp_amb
+            return response
 
     else:
-        return HttpResponseRedirect(reverse('fail'))
+        return HttpResponse("Key failure")        
 
 
 
@@ -95,6 +118,8 @@ def DeviationCheck(active_config, active_beer, read):
             read.error_details = read.error_details + ' *[' + str(read.temp_beer) + '] '
         elif read.error_flag is None:
             read.error_flag = False
+    
+    return read.error_flag
 
 
 def ConvertDateTime(obj):

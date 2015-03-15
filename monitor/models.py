@@ -42,13 +42,13 @@ class Reading(models.Model):
             return self.instant
             
     def get_temp_amb(self):
-        if self.temp_unit is 'F':
+        if self.temp_unit is 'F' or self.temp_unit is None:
             return float(self.temp_amb)
         else:
             return float(self.temp_amb*9/5+32)
     
     def get_temp_beer(self):
-        if self.temp_unit is 'F':
+        if self.temp_unit is 'F' or self.temp_unit is None:
             return float(self.temp_beer)
         else:
             return float(self.temp_beer*9/5+32)
