@@ -52,7 +52,8 @@ def api(request):
 
             email_api_key = '8912d7b5-aa44-472f-bef9-2519cb3befa8'
             
-            email_sender = "cutreth@cutreth.com"
+            #Move these settings to the config record, seperate emails by ','
+            email_sender = "cutreth@cutreth.com,bscorwin+brew-o-meter@gmail.com"
             email_to = "kikot.world@gmail.com"
             
             email_subject = "A beer update!"
