@@ -55,7 +55,7 @@ def api(request):
     import os
     from postmark import PMMail
     
-    message = PMMail(api_key = os.environ.get('8912d7b5-aa44-472f-bef9-2519cb3befa8'),
+    message = PMMail(api_key = '8912d7b5-aa44-472f-bef9-2519cb3befa8',
                      subject = "Hello from Postmark",
                      sender = "cutreth@cutreth.com",
                      to = "kikot.world@gmail.com",
