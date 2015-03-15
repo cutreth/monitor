@@ -43,6 +43,15 @@ def api(request):
             DeviationCheck(active_config, active_beer, read)
             read.save()
 
+            from postmark import PMMail
+
+            message = PMMail(api_key = '8912d7b5-aa44-472f-bef9-2519cb3befa8',
+                             subject = "Hello from Postmark",
+                             sender = "cutreth@cutreth.com",
+                             to = "kikot.world@gmail.com",
+                             text_body = "Hello")
+            message.send()
+
             return HttpResponseRedirect(reverse('success'))
 
         else:
@@ -50,18 +59,7 @@ def api(request):
 
     else:
         return HttpResponseRedirect(reverse('fail'))
-        
-        
-    import os
-    from postmark import PMMail
-    
-    message = PMMail(api_key = '8912d7b5-aa44-472f-bef9-2519cb3befa8',
-                     subject = "Hello from Postmark",
-                     sender = "cutreth@cutreth.com",
-                     to = "kikot.world@gmail.com",
-                     text_body = "Hello")
 
-    message.send()
 
 
 def DeviationCheck(active_config, active_beer, read):
