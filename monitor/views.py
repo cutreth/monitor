@@ -50,8 +50,19 @@ def api(request):
 
     else:
         return HttpResponseRedirect(reverse('fail'))
+        
+        
+    import os
+    from postmark import PPMail
+    
+    message = PMMail(api_key = os.environ.get('POSTMARK_API_TOKEN'),
+                 subject = "Hello from Postmark",
+                 sender = "cutreth@cutreth.com",
+                 to = "kikot.world@gmail.com",
+                 text_body = "Hello",
+                 tag = "hello")
 
-
+    message.send()
 
 
 def DeviationCheck(active_config, active_beer, read):
