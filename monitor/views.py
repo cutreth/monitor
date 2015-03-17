@@ -89,7 +89,7 @@ def SendErrorEmail(active_config,read):
     email_api_key = active_config.email_api_key
     email_sender = active_config.email_sender
     email_to = active_config.email_to    
-    email_subject = active_config.subject
+    email_subject = active_config.email_subject
 
     email_text_body = read.error_details                
         
