@@ -92,6 +92,8 @@ class Config(models.Model):
                                         default=None)
                                         
     email_enable = models.BooleanField('Enable Email?',default=False)
+    email_timeout = models.PositiveIntegerField('Email Timeout (minutes)',
+                                                default=60)
     email_api_key = models.CharField("API Key",default='',blank=True,
                                      max_length=50)    
     email_sender = models.CharField("From",default='',blank=True,max_length=50)

@@ -91,6 +91,11 @@ def SendErrorEmail(active_config,read):
     email_to = active_config.email_to    
     email_subject = active_config.email_subject
 
+    send_email = active_config.email_enable
+    email_timeout = active_config.email_timeout
+    email_last_instant = active_config.email_last_instant
+    right_now = datetime.datetime.now()
+
     email_text_body = read.error_details                
         
     message = PMMail(api_key = email_api_key,
@@ -99,16 +104,12 @@ def SendErrorEmail(active_config,read):
                      subject = email_subject,
                      text_body = email_text_body)                                
 
-    send_email = active_config.email_enable
-    right_now = datetime.datetime.now()
-    email_last_instant = active_config.email_last_instant
-
-    if not bool(email_last_instant):
+    if not bool(email_last_instant): #If last_instant is null, send email
         active_config.email_last_instant = right_now   
         active_config.save()
-        if send_email:
+        if send_email: #Only send if email flag is enabled
              message.send()
-    elif email_last_instant <= right_now - datetime.timedelta(hours=1):
+    elif email_last_instant <= right_now - datetime.timedelta(minutes=email_timeout):
         active_config.email_last_instant = right_now    
         active_config.save()
         if send_email:
