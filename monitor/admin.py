@@ -4,6 +4,10 @@ from monitor.models import Beer, Reading, Config
 class ReadingInLine(admin.TabularInline):
     model = Reading
     extra = 1
+    
+    fields = ('instant', 'instant_override','instant_actual','light_amb', 'temp_amb',
+              'temp_beer', 'temp_unit', 'error_flag', 'error_details')
+    readonly_fields = ('instant','instant_actual')
 
 class BeerAdmin(admin.ModelAdmin):
     fieldsets = [
@@ -14,14 +18,13 @@ class BeerAdmin(admin.ModelAdmin):
 
 class ReadingAdmin(admin.ModelAdmin):
     fieldsets = [
-    ('Data',       {'fields': ['beer','temp_amb','temp_beer','temp_unit',
-                               'light_amb']}),
-    ('Instant',    {'fields': ['instant','instant_override']}),
+    ('Instant',    {'fields': ['instant','instant_override','instant_actual']}),    
+    ('Data',       {'fields': ['beer','light_amb','temp_amb','temp_beer',
+                               'temp_unit']}),    
     ('Errors',     {'fields': ['error_flag','error_details']}),
     ]
 
-    readonly_fields = ('instant',)
-
+    readonly_fields = ('instant','instant_actual')
 
 admin.site.register(Beer, BeerAdmin)
 admin.site.register(Config)

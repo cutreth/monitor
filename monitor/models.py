@@ -20,6 +20,8 @@ class Reading(models.Model):
     instant = models.DateTimeField('Instant',auto_now_add=True)
     instant_override = models.DateTimeField('Instant Override',blank=True,
                                             null=True,default=None)
+    instant_actual = models.DateTimeField('Instant Actual',blank=True,
+                                            null=True,default=None)
     light_amb = models.DecimalField('Ambient Light', max_digits=5,
                                     decimal_places=2,blank=True,null=False,
                                     default=0)
@@ -35,7 +37,7 @@ class Reading(models.Model):
     error_flag = models.NullBooleanField('Error?')
     error_details = models.CharField('Error Details',blank=True,max_length=150)
     
-    def instant_actual(self):
+    def func_instant_actual(self):
         if self.instant_override is not None:
             return self.instant_override
         else:
@@ -54,8 +56,24 @@ class Reading(models.Model):
             return float(self.temp_beer*9/5+32)
     
     def __str__(self):
-        return str(self.beer) + ': ' + \
-        str(self.instant_actual().strftime("%Y-%m-%d %H:%M:%S"))
+        value = str(self.beer) + ': '
+        if bool(self.instant_actual):        
+            value = value + str(self.instant_actual.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            value = value + str(self.instant.strftime("%Y-%m-%d %H:%M:%S"))
+        return value
+        
+    def save(self, *args, **kwargs):
+        
+        super(Reading, self).save(*args, **kwargs)
+        
+        #Set instant_actual before each save            
+        if bool(self.instant_override):
+            self.instant_actual = self.instant_override
+        else:
+            self.instant_actual = self.instant
+
+        super(Reading, self).save(*args, **kwargs)
 
 class Config(models.Model):
     
@@ -72,6 +90,7 @@ class Config(models.Model):
     temp_beer_dev = models.DecimalField('Ambient Temp Deviation', max_digits=5,
                                         decimal_places=2,blank=True,null=True,
                                         default=None)
+    email_enable = models.BooleanField('Enable Email?',default=False)
     
     def __str__(self):
         return 'Config' + ': ' + str(self.pk)

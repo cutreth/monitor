@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 SECRET_KEY = 'os@n_!9g^=v3(e$@p1cr0t%doylbk7_19)phgx-v*o!-%v(v0)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 TEMPLATE_DEBUG = True
 
@@ -113,9 +113,8 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 ALLOWED_HOSTS = ['*']
 
-#STATIC_ROOT = 'staticfiles'
 
-DEBUG = False
+#Postmark email settings
 
 POSTMARK_API_TOKEN = '8912d7b5-aa44-472f-bef9-2519cb3befa8'
 POSTMARK_SMTP_SERVER = 'smtp.postmarkapp.com'

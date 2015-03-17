@@ -1,3 +1,4 @@
 from django.test import TestCase
 
-# Create your tests here.
+from monitor.models import Reading, Config, Beer
+

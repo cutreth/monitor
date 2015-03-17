@@ -3,94 +3,55 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 
+import datetime
+from datetime import timedelta
+from postmark import PMMail
 from monitor.models import Beer, Reading, Config
 
-from datetime import timedelta
-import datetime
-
-@csrf_exempt
-def api(request):
-
-    key = request.POST.get('key')
-    if key == 'beer':
-
-        active_config = Config.objects.get(pk=1)
-        active_beer = active_config.beer
-        read = Reading(beer=active_beer)
-
-        light_amb = float(request.POST.get('light_amb',0))
-        temp_beer = float(request.POST.get('temp_beer',0))
-        temp_amb = float(request.POST.get('temp_amb',0))
-
-        if (light_amb>0 or temp_beer>0 or temp_amb>0):
-
-            read.light_amb = light_amb
-            read.temp_beer = temp_beer
-            read.temp_amb = temp_amb
-
-            temp_unit = request.POST.get('temp_unit','F')
-            temp_unit = str(temp_unit)
-            temp_unit = temp_unit.capitalize()[0]
-            if temp_unit == 'F' or temp_unit == 'C':
-                read.temp_unit = temp_unit
-
-            error_flag = DeviationCheck(active_config, active_beer, read)
-            
-            instant_override = request.POST.get('instant_override',None)            
-            if bool(instant_override):
-                instant_override = int(instant_override)
-                instant_override=datetime.datetime.fromtimestamp(instant_override)
-                instant_override = instant_override - timedelta(hours=1)
-                read.instant_override = instant_override          
-            
-
-            read.save()
-
-            from postmark import PMMail
-
-            #C:\Python34\python -m pbd manage.py runserver
-            #import pdb; pdb.set_trace()
-
-            email_api_key = '8912d7b5-aa44-472f-bef9-2519cb3befa8'
-            
-            #Move these settings to the config record, seperate emails by ','
-            email_sender = "cutreth@cutreth.com"
-            email_to = "kikot.world@gmail.com,bscorwin+brewometer@gmail.com"
-            
-            email_subject = "A beer update!"
-            email_text_body = read.error_details
-
-            if error_flag:
-                message = PMMail(api_key = email_api_key,
-                                 sender = email_sender,
-                                 to = email_to,
-                                 subject = email_subject,
-                                 text_body = email_text_body)                                
-                message.send()
-
-
-
-            response = HttpResponse("Success")
-            response['light_amb'] = light_amb
-            response['temp_beer'] = temp_beer
-            response['temp_amb'] = temp_amb
-            response['temp_unit'] = temp_unit
-            response['instant_override'] = instant_override
-            return response
-
-        else:
-            response = HttpResponse("Failure")
-            response['light_amb'] = light_amb
-            response['temp_beer'] = temp_beer
-            response['temp_amb'] = temp_amb
-            return response
-
+def floatFromPost(request,field):
+    value = request.POST.get(field,0) #Default value of 0
+    if bool(value):    
+        value = float(value) #Either return a float
     else:
-        return HttpResponse("Key failure")        
+        value = float(0)
+    return value
+    
+def stringFromPost(request,field):
+    value = request.POST.get(field)
+    if bool(value):
+        value = str(value) #Either return a string
+    else:  
+        value=str('') #Or return an empty string
+    return value    
 
+def intFromPost(request,field):
+    value = request.POST.get(field,0)
+    value = int(value) #Return an int
+    return value    
 
+def allDataBlank(sensor_data):
+    flag = True #Assume all data is blank
+    for data in sensor_data:
+        if data > 0:
+            flag = False #Disable flag if data exists
+    return flag
 
-def DeviationCheck(active_config, active_beer, read):
+def getTempUnit(request):
+    temp_unit = stringFromPost(request,'temp_unit')
+    if bool(temp_unit):
+        temp_unit = temp_unit[0].capitalize() #Take first letter and capitalize
+    if temp_unit != 'C':
+        temp_unit = 'F' #If not 'C', set 'F'
+    return temp_unit
+
+def getInstantOverride(request):
+    instant_override = intFromPost(request,'instant_override')        
+    if instant_override > 0:
+        instant_override=datetime.datetime.fromtimestamp(instant_override)
+        instant_override = instant_override - timedelta(hours=1)
+    return instant_override
+
+def ErrorCheck(active_config, read):
 
     #Enhance to add support for temperature conversions
     temp_amb_base = active_config.temp_amb_base
@@ -122,6 +83,101 @@ def DeviationCheck(active_config, active_beer, read):
             read.error_flag = False
     
     return read.error_flag
+ 
+def SendErrorEmail(active_config,read):
+    
+    email_api_key = '8912d7b5-aa44-472f-bef9-2519cb3befa8'
+    
+    #Move these settings to the config record, seperate emails by ','
+    email_sender = "cutreth@cutreth.com"
+    email_to = "kikot.world@gmail.com,bscorwin+brewometer@gmail.com"
+    
+    email_subject = "A beer update!"
+    email_text_body = read.error_details                
+        
+    message = PMMail(api_key = email_api_key,
+                     sender = email_sender,
+                     to = email_to,
+                     subject = email_subject,
+                     text_body = email_text_body)                                
+    if active_config.email_enable:
+         message.send()
+
+            #C:\Python34\python -m pdb manage.py runserver
+            #Then press 'c'
+            #import pdb; pdb.set_trace()
+ 
+def createHttpResp(read,value):
+
+    response = HttpResponse(value)
+    if bool(read):
+        response['light_amb'] = read.light_amb
+        response['temp_beer'] = read.temp_beer
+        response['temp_amb'] = read.temp_amb
+        response['temp_unit'] = read.temp_unit
+        response['instant_override'] = read.instant_override
+        response['instant'] = read.instant
+        response['instant_actual'] = read.instant_actual
+        response['error_flag'] = read.error_flag
+        response['error_details'] = read.error_details
+    
+    return response
+ 
+@csrf_exempt
+def api(request):
+
+    key = stringFromPost(request,'key')
+    if (key == 'beer') or (key == 'test'):
+
+        active_config = Config.objects.get(pk=1) #Get config 1
+        active_beer = active_config.beer #Get active beer
+        
+        read = Reading(beer=active_beer) #Create reading record
+
+        #Populate sensor data
+        light_amb = floatFromPost(request,'light_amb')
+        temp_beer = floatFromPost(request,'temp_beer')
+        temp_amb = floatFromPost(request,'temp_amb')
+        
+        sensor_data = [light_amb, temp_amb, temp_beer]
+
+        if (not allDataBlank(sensor_data)): #Proceed only if data exists
+
+            #All data set for every read            
+            read.light_amb = light_amb
+            read.temp_beer = temp_beer
+            read.temp_amb = temp_amb
+
+            #Get and set temp_unit
+            temp_unit = getTempUnit(request)            
+            read.temp_unit = temp_unit
+
+            #Get and set instant_override if it exists
+            instant_override = getInstantOverride(request) #0 = NULL
+            if bool(instant_override):
+                read.instant_override = instant_override
+            #instant_override will either be 0 or a datetime object
+            
+            #Check for deviation errors
+            error_flag = ErrorCheck(active_config, read)
+
+            #And finally, save the record
+            if key == 'beer':            
+                read.save()
+                if error_flag: #Send error emails if necessary
+                    SendErrorEmail(active_config,read)
+                status = "Success"
+            else:
+                status = "Test Success"
+        else:
+            status = "Data Failure"
+    else:
+        status = "Key Failure"
+        read = None #Not otherwise set outside the for loop
+    
+    #Generate and send a response per status flag with 'read' object data
+    response = createHttpResp(read,status)
+    return response
 
 
 def ConvertDateTime(obj):
@@ -151,7 +207,7 @@ def chart(request, cur_beer=None):
 
     active_readings = Reading.objects.filter(beer=active_beer)
 
-    xdata = [ConvertDateTime(n.instant_actual()) for n in active_readings]
+    xdata = [ConvertDateTime(n.func_instant_actual()) for n in active_readings]
     temp_amb_data = [n.get_temp_amb() for n in active_readings]
     temp_beer_data = [n.get_temp_beer() for n in active_readings]
     light_amb_data = [n.light_amb for n in active_readings]
