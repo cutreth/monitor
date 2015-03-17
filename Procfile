@@ -1,1 +1,1 @@
-web: web: newrelic-admin run-program gunicorn cutreth.wsgi
+web: newrelic-admin run-program gunicorn cutreth.wsgi
