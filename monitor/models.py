@@ -90,7 +90,16 @@ class Config(models.Model):
     temp_beer_dev = models.DecimalField('Ambient Temp Deviation', max_digits=5,
                                         decimal_places=2,blank=True,null=True,
                                         default=None)
+                                        
     email_enable = models.BooleanField('Enable Email?',default=False)
-    
+    email_api_key = models.CharField("API Key",default='',blank=True,
+                                     max_length=50)    
+    email_sender = models.CharField("From",default='',blank=True,max_length=50)
+    email_to = models.CharField("To",default='',blank=True,max_length=50)
+    email_subject = models.CharField("Subject",default='',blank=True,
+                                     max_length=50)
+    email_last_instant = models.DateTimeField('Last Email Instant',blank=True,
+                                null=True,default=None)
+        
     def __str__(self):
         return 'Config' + ': ' + str(self.pk)

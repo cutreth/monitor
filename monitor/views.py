@@ -86,13 +86,11 @@ def ErrorCheck(active_config, read):
  
 def SendErrorEmail(active_config,read):
     
-    email_api_key = '8912d7b5-aa44-472f-bef9-2519cb3befa8'
-    
-    #Move these settings to the config record, seperate emails by ','
-    email_sender = "cutreth@cutreth.com"
-    email_to = "kikot.world@gmail.com,bscorwin+brewometer@gmail.com"
-    
-    email_subject = "A beer update!"
+    email_api_key = active_config.email_api_key
+    email_sender = active_config.email_sender
+    email_to = active_config.email_to    
+    email_subject = active_config.subject
+
     email_text_body = read.error_details                
         
     message = PMMail(api_key = email_api_key,
@@ -100,8 +98,13 @@ def SendErrorEmail(active_config,read):
                      to = email_to,
                      subject = email_subject,
                      text_body = email_text_body)                                
-    if active_config.email_enable:
-         message.send()
+
+    send_email = active_config.email_enable
+    right_now = datetime.datetime.now()
+    if active_config.email_last_instant >= right_now - datetime.timedelta(hours=1):
+        active_config.email_last_instant = right_now    
+        if send_email:
+             message.send()
 
             #C:\Python34\python -m pdb manage.py runserver
             #Then press 'c'
@@ -210,7 +213,7 @@ def chart(request, cur_beer=None):
     xdata = [ConvertDateTime(n.func_instant_actual()) for n in active_readings]
     temp_amb_data = [n.get_temp_amb() for n in active_readings]
     temp_beer_data = [n.get_temp_beer() for n in active_readings]
-    light_amb_data = [n.light_amb for n in active_readings]
+    #light_amb_data = [n.light_amb for n in active_readings]
 
     #Doesn't respect ordering via Reading.instant_actual()
     error_readings = Reading.objects.filter(beer=active_beer).filter(error_flag=True)
