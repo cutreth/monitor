@@ -104,14 +104,16 @@ def SendErrorEmail(active_config,read):
     email_last_instant = active_config.email_last_instant
 
     if not bool(email_last_instant):
-        active_config.email_last_instant = right_now    
+        active_config.email_last_instant = right_now   
+        active_config.save()
         if send_email:
              message.send()
-    elif email_last_instant >= right_now - datetime.timedelta(hours=1):
+    elif email_last_instant <= right_now - datetime.timedelta(hours=1):
         active_config.email_last_instant = right_now    
+        active_config.save()
         if send_email:
              message.send()
-
+             
             #C:\Python34\python -m pdb manage.py runserver
             #Then press 'c'
             #import pdb; pdb.set_trace()
