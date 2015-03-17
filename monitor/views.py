@@ -101,7 +101,13 @@ def SendErrorEmail(active_config,read):
 
     send_email = active_config.email_enable
     right_now = datetime.datetime.now()
-    if active_config.email_last_instant >= right_now - datetime.timedelta(hours=1):
+    email_last_instant = active_config.email_last_instant
+
+    if not bool(email_last_instant):
+        active_config.email_last_instant = right_now    
+        if send_email:
+             message.send()
+    elif email_last_instant >= right_now - datetime.timedelta(hours=1):
         active_config.email_last_instant = right_now    
         if send_email:
              message.send()
