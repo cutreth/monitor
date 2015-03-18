@@ -103,36 +103,46 @@ def ErrorCheck(active_config, read):
 
     return read.error_flag
 
-def SendErrorEmail(active_config, read):
+def BuildErrorEmail(active_config, read, error_details):
 
     email_api_key = active_config.email_api_key
     email_sender = active_config.email_sender
     email_to = active_config.email_to
     email_subject = active_config.email_subject
-
-    send_email = active_config.email_enable
-    email_timeout = active_config.email_timeout
-    email_last_instant = active_config.email_last_instant
-    right_now = datetime.datetime.now()
-
-    email_text_body = read.error_details
+    
+    if bool(read):
+        email_text_body = read.error_details
+    elif bool(error_details):
+        email_text_body = error_details
+    else:
+        email_text_body = 'Unspecified Error'
 
     message = PMMail(api_key = email_api_key,
                      sender = email_sender,
                      to = email_to,
                      subject = email_subject,
                      text_body = email_text_body)
+    return message
+
+def SendErrorEmail(active_config, message):
+
+    send_email = active_config.email_enable
+    email_timeout = active_config.email_timeout
+    email_last_instant = active_config.email_last_instant
+    
+    right_now = datetime.datetime.now()
 
     if not bool(email_last_instant): #If last_instant is null, send email
         active_config.email_last_instant = right_now
         active_config.save()
-        if send_email: #Only send if email flag is enabled
-            message.send()
     elif email_last_instant <= right_now - datetime.timedelta(minutes=email_timeout):
         active_config.email_last_instant = right_now
         active_config.save()
-        if send_email:
-            message.send()
+    else:
+        send_email = False
+    
+    if send_email and bool(message):
+        message.send()
 
 def createHttpResp(read, value):
 
@@ -203,7 +213,8 @@ def api(request):
                 read.save()
                 SetReadInstant(active_config)
                 if error_flag: #Send error emails if necessary
-                    SendErrorEmail(active_config, read)
+                    message = BuildErrorEmail(active_config, read, None)
+                    SendErrorEmail(active_config, message)
                 status = "Success"
             else:
                 status = "Test Success"

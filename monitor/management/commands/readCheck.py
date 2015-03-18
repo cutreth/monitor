@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from monitor.models import Reading, Beer, Config
-from monitor.views import SendErrorEmail
+from monitor.views import SendErrorEmail, BuildErrorEmail
 
 import datetime
 
@@ -24,6 +24,6 @@ class Command(BaseCommand):
             read_expected = False
             
         if read_expected:
-            read = Reading(beer=active_config.beer)
-            read.error_details = 'No reading since: ' + str(read_last_instant)
-            SendErrorEmail(active_config, read)
+            error_details = 'No reading since: ' + str(read_last_instant)
+            message = BuildErrorEmail(active_config, None, error_details)
+            SendErrorEmail(active_config, message)
