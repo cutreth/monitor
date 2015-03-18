@@ -106,9 +106,9 @@ class Config(models.Model):
     email_api_key = models.CharField("API Key",default='',blank=True,
                                      max_length=50)    
     email_sender = models.CharField("From",default='',blank=True,max_length=50)
-    email_to = models.CharField("To",default='',blank=True,max_length=50)
+    email_to = models.CharField("To",default='',blank=True,max_length=150)
     email_subject = models.CharField("Subject",default='',blank=True,
-                                     max_length=50)
+                                     max_length=150)
     email_last_instant = models.DateTimeField('Last Email Instant',blank=True,
                                 null=True,default=None)
         
