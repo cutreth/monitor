@@ -37,24 +37,28 @@ class Reading(models.Model):
     error_flag = models.NullBooleanField('Error?')
     error_details = models.CharField('Error Details',blank=True,max_length=150)
     
+	#Defunct after references removed from views.chart
     def func_instant_actual(self):
         if self.instant_override is not None:
             return self.instant_override
         else:
             return self.instant
             
+	#Break out conversion into a new function, combine with get_temp_beer
     def get_temp_amb(self):
         if self.temp_unit is 'F' or self.temp_unit is None:
             return float(self.temp_amb)
         else:
             return float(self.temp_amb*9/5+32)
     
+	#Break out conversion into a new function, combine with get_temp_amb
     def get_temp_beer(self):
         if self.temp_unit is 'F' or self.temp_unit is None:
             return float(self.temp_beer)
         else:
             return float(self.temp_beer*9/5+32)
     
+	#Remove if/else once no legacy data without instant_actual exists
     def __str__(self):
         value = str(self.beer) + ': '
         if bool(self.instant_actual):        
@@ -90,6 +94,11 @@ class Config(models.Model):
     temp_beer_dev = models.DecimalField('Ambient Temp Deviation', max_digits=5,
                                         decimal_places=2,blank=True,null=True,
                                         default=None)
+                                        
+    read_missing = models.PositiveIntegerField('Missing Reading Warning (minutes)',
+                                               default=0)
+    read_last_instant = models.DateTimeField('Last Reading Instant',blank=True,
+                                null=True,default=None)
                                         
     email_enable = models.BooleanField('Enable Email?',default=False)
     email_timeout = models.PositiveIntegerField('Email Timeout (minutes)',

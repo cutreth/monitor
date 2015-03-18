@@ -3,31 +3,38 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 
-import datetime
+import calendar, datetime
+
 from datetime import timedelta
 from postmark import PMMail
 from monitor.models import Beer, Reading, Config
 
-def floatFromPost(request,field):
-    value = request.POST.get(field,0) #Default value of 0
-    if bool(value):    
-        value = float(value) #Either return a float
-    else:
-        value = float(0)
-    return value
-    
-def stringFromPost(request,field):
-    value = request.POST.get(field)
-    if bool(value):
-        value = str(value) #Either return a string
-    else:  
-        value=str('') #Or return an empty string
-    return value    
+def floatFromPost(request, field):
+    value = float(0)
+    try:
+        data = request.POST.get(field)
+        if bool(data):
+            value = float(data)
+    finally:
+        return value
 
-def intFromPost(request,field):
-    value = request.POST.get(field,0)
-    value = int(value) #Return an int
-    return value    
+def stringFromPost(request, field):
+    value = str('')
+    try:
+        data = request.POST.get(field)
+        if bool(data):
+            value = str(data)
+    finally:
+        return value
+
+def intFromPost(request, field):
+    value = int(0)
+    try:
+        data = request.POST.get(field)
+        if bool(data):
+            value = int(data)
+    finally:
+        return value
 
 def allDataBlank(sensor_data):
     flag = True #Assume all data is blank
@@ -36,20 +43,32 @@ def allDataBlank(sensor_data):
             flag = False #Disable flag if data exists
     return flag
 
+def allDataPositive(sensor_data):
+    flag = True #Assume all data is positive
+    for data in sensor_data:
+        if data < 0:
+            flag = False #Disable flag if values are negative
+    return flag
+
 def getTempUnit(request):
-    temp_unit = stringFromPost(request,'temp_unit')
-    if bool(temp_unit):
-        temp_unit = temp_unit[0].capitalize() #Take first letter and capitalize
-    if temp_unit != 'C':
-        temp_unit = 'F' #If not 'C', set 'F'
-    return temp_unit
+    temp_unit = 'F'
+    try:
+        data = stringFromPost(request, 'temp_unit')
+        if bool(data):
+            data = data[0].capitalize() #Take first letter and capitalize
+        if temp_unit == 'C':
+            temp_unit = data #Only update temp_unit if data == 'C'
+    finally:
+        return temp_unit
 
 def getInstantOverride(request):
-    instant_override = intFromPost(request,'instant_override')        
-    if instant_override > 0:
-        instant_override=datetime.datetime.fromtimestamp(instant_override)
-        instant_override = instant_override - timedelta(hours=1)
-    return instant_override
+    try:
+        instant_override = intFromPost(request, 'instant_override')
+        if instant_override > 0:
+            instant_override = datetime.datetime.fromtimestamp(instant_override)
+            instant_override = instant_override - timedelta(hours=1)
+    finally:
+        return instant_override
 
 def ErrorCheck(active_config, read):
 
@@ -60,35 +79,35 @@ def ErrorCheck(active_config, read):
     temp_beer_base = active_config.temp_beer_base
     temp_beer_dev = active_config.temp_beer_dev
 
-    if (bool(temp_amb_base) and bool(temp_amb_dev)):
+    if bool(temp_amb_base) and bool(temp_amb_dev):
         temp_amb_max = temp_amb_base + temp_amb_dev
         temp_amb_min = temp_amb_base - temp_amb_dev
-        
+
         if not (temp_amb_min < read.temp_amb < temp_amb_max):
             read.error_flag = True
             read.error_details = read.error_details + 'temp_amb: [' + str(temp_amb_min) + ', ' + str(temp_amb_max) + ']'
-            read.error_details = read.error_details + ' *[' + str(read.temp_amb) + '] '        
+            read.error_details = read.error_details + ' *[' + str(read.temp_amb) + '] '
         elif read.error_flag is None:
             read.error_flag = False
 
-    if (bool(temp_beer_base) and bool(temp_beer_dev)):
+    if bool(temp_beer_base) and bool(temp_beer_dev):
         temp_beer_max = temp_beer_base + temp_beer_dev
         temp_beer_min = temp_beer_base - temp_beer_dev
-        
+
         if not (temp_beer_min < read.temp_beer < temp_beer_max):
             read.error_flag = True
             read.error_details = read.error_details + 'temp_beer: [' + str(temp_beer_min) + ', ' + str(temp_beer_max) + ']'
             read.error_details = read.error_details + ' *[' + str(read.temp_beer) + '] '
         elif read.error_flag is None:
             read.error_flag = False
-    
+
     return read.error_flag
- 
-def SendErrorEmail(active_config,read):
-    
+
+def SendErrorEmail(active_config, read):
+
     email_api_key = active_config.email_api_key
     email_sender = active_config.email_sender
-    email_to = active_config.email_to    
+    email_to = active_config.email_to
     email_subject = active_config.email_subject
 
     send_email = active_config.email_enable
@@ -96,30 +115,26 @@ def SendErrorEmail(active_config,read):
     email_last_instant = active_config.email_last_instant
     right_now = datetime.datetime.now()
 
-    email_text_body = read.error_details                
-        
+    email_text_body = read.error_details
+
     message = PMMail(api_key = email_api_key,
                      sender = email_sender,
                      to = email_to,
                      subject = email_subject,
-                     text_body = email_text_body)                                
+                     text_body = email_text_body)
 
     if not bool(email_last_instant): #If last_instant is null, send email
-        active_config.email_last_instant = right_now   
+        active_config.email_last_instant = right_now
         active_config.save()
         if send_email: #Only send if email flag is enabled
-             message.send()
+            message.send()
     elif email_last_instant <= right_now - datetime.timedelta(minutes=email_timeout):
-        active_config.email_last_instant = right_now    
+        active_config.email_last_instant = right_now
         active_config.save()
         if send_email:
-             message.send()
-             
-            #C:\Python34\python -m pdb manage.py runserver
-            #Then press 'c'
-            #import pdb; pdb.set_trace()
- 
-def createHttpResp(read,value):
+            message.send()
+
+def createHttpResp(read, value):
 
     response = HttpResponse(value)
     if bool(read):
@@ -132,36 +147,46 @@ def createHttpResp(read,value):
         response['instant_actual'] = read.instant_actual
         response['error_flag'] = read.error_flag
         response['error_details'] = read.error_details
-    
+
     return response
- 
+
+def SetReadInstant(active_config):
+    right_now = datetime.datetime.now()
+    active_config.read_last_instant = right_now
+    active_config.save()
+    return
+
+#C:\Python34\python -m pdb manage.py runserver
+#Then press 'c'
+#import pdb; pdb.set_trace()
+
 @csrf_exempt
 def api(request):
 
-    key = stringFromPost(request,'key')
+    key = stringFromPost(request, 'key')
     if (key == 'beer') or (key == 'test'):
 
         active_config = Config.objects.get(pk=1) #Get config 1
         active_beer = active_config.beer #Get active beer
-        
+
         read = Reading(beer=active_beer) #Create reading record
 
         #Populate sensor data
-        light_amb = floatFromPost(request,'light_amb')
-        temp_beer = floatFromPost(request,'temp_beer')
-        temp_amb = floatFromPost(request,'temp_amb')
-        
+        light_amb = floatFromPost(request, 'light_amb')
+        temp_beer = floatFromPost(request, 'temp_beer')
+        temp_amb = floatFromPost(request, 'temp_amb')
+
         sensor_data = [light_amb, temp_amb, temp_beer]
 
-        if (not allDataBlank(sensor_data)): #Proceed only if data exists
+        if (not allDataBlank(sensor_data) and allDataPositive(sensor_data)):
 
-            #All data set for every read            
+            #All data set for every read
             read.light_amb = light_amb
             read.temp_beer = temp_beer
             read.temp_amb = temp_amb
 
             #Get and set temp_unit
-            temp_unit = getTempUnit(request)            
+            temp_unit = getTempUnit(request)
             read.temp_unit = temp_unit
 
             #Get and set instant_override if it exists
@@ -169,15 +194,16 @@ def api(request):
             if bool(instant_override):
                 read.instant_override = instant_override
             #instant_override will either be 0 or a datetime object
-            
+
             #Check for deviation errors
             error_flag = ErrorCheck(active_config, read)
 
             #And finally, save the record
-            if key == 'beer':            
+            if key == 'beer':
                 read.save()
+                SetReadInstant(active_config)
                 if error_flag: #Send error emails if necessary
-                    SendErrorEmail(active_config,read)
+                    SendErrorEmail(active_config, read)
                 status = "Success"
             else:
                 status = "Test Success"
@@ -186,15 +212,13 @@ def api(request):
     else:
         status = "Key Failure"
         read = None #Not otherwise set outside the for loop
-    
+
     #Generate and send a response per status flag with 'read' object data
-    response = createHttpResp(read,status)
+    response = createHttpResp(read, status)
     return response
 
 
 def ConvertDateTime(obj):
-    import calendar, datetime
-
     if isinstance(obj, datetime.datetime):
         if obj.utcoffset() is not None:
             obj = obj - obj.utcoffset()
@@ -227,8 +251,8 @@ def chart(request, cur_beer=None):
     #Doesn't respect ordering via Reading.instant_actual()
     error_readings = Reading.objects.filter(beer=active_beer).filter(error_flag=True)
 
-    y1data=temp_amb_data
-    y2data=temp_beer_data
+    y1data = temp_amb_data
+    y2data = temp_beer_data
     #nothing = light_amb_data
 
 
@@ -247,8 +271,8 @@ def chart(request, cur_beer=None):
     beer_date = active_beer.brew_date
 
 
-    ydata=y1data
-    ydata2=y2data
+    ydata = y1data
+    ydata2 = y2data
 
     tooltip_date = "%m/%d %H:%M"
     extra_serie1 = {
