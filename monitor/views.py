@@ -257,33 +257,31 @@ def chart(request, cur_beer=None):
     xdata = [ConvertDateTime(n.func_instant_actual()) for n in active_readings]
     temp_amb_data = [n.get_temp_amb() for n in active_readings]
     temp_beer_data = [n.get_temp_beer() for n in active_readings]
-    #light_amb_data = [n.light_amb for n in active_readings]
+    light_amb_data = [float(n.light_amb) for n in active_readings]
 
     #Doesn't respect ordering via Reading.instant_actual()
     error_readings = Reading.objects.filter(beer=active_beer).filter(error_flag=True)
 
     y1data = temp_amb_data
     y2data = temp_beer_data
-    #nothing = light_amb_data
+    y3data = light_amb_data
 
 
     xdata.append(min(xdata)-1)
     y1data.append(float(90))
     y2data.append(float(50))
+    y3data.append(float(0))
 
-    xy1y2data = zip(xdata, y1data, y2data)
-    xy1y2data = sorted(xy1y2data)
+    xy1y2y3data = zip(xdata, y1data, y2data, y3data)
+    xy1y2y3data = sorted(xy1y2y3data)
 
-    xdata = [n[0] for n in xy1y2data]
-    y1data = [n[1] for n in xy1y2data]
-    y2data = [n[2] for n in xy1y2data]
+    xdata = [n[0] for n in xy1y2y3data]
+    y1data = [n[1] for n in xy1y2y3data]
+    y2data = [n[2] for n in xy1y2y3data]
+    y3data = [n[3] for n in xy1y2y3data]
 
     beer_name = active_beer
     beer_date = active_beer.brew_date
-
-
-    ydata = y1data
-    ydata2 = y2data
 
     tooltip_date = "%m/%d %H:%M"
     extra_serie1 = {
@@ -296,10 +294,17 @@ def chart(request, cur_beer=None):
         "date_format": tooltip_date,
         #'color': '#395ec6',
     }
+    extra_serie3 = {
+        "tooltip": {"y_start": "", "y_end": " cal"},
+        "date_format": tooltip_date,
+        #'color': '#395ec6',
+    }
+    
     chartdata = {'x': xdata,
-                 'name1': 'Amb Temp', 'y1': ydata, 'extra1': extra_serie1,
-                 'name2': 'Beer Temp', 'y2': ydata2, 'extra2': extra_serie2}
-
+                 'name1': 'Amb Temp', 'y1': y1data, 'extra1': extra_serie1,
+                 'name2': 'Beer Temp', 'y2': y2data, 'extra2': extra_serie2,
+                 'name3': 'Amb Light', 'y3': y3data, 'extra3': extra_serie3}
+    
     charttype = "lineChart"
     chartcontainer = 'chart_container'  # container name
     data = {
@@ -315,7 +320,7 @@ def chart(request, cur_beer=None):
             'x_axis_format': '%m/%d %H:%M',
             'tag_script_js': True,
             'jquery_on_ready': False,
-            'chart_attr': {'color':['orange', 'blue']},
+            'chart_attr': {'color':['orange', 'blue', 'green']},
         }
     }
     return render_to_response('chart.html', data)
