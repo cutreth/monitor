@@ -254,10 +254,15 @@ def chart(request, cur_beer=None):
 
     active_readings = Reading.objects.filter(beer=active_beer)
 
+    #I should use instant_actual here; rework when we rewrite this code
     xdata = [ConvertDateTime(n.func_instant_actual()) for n in active_readings]
+    if not bool(xdata):
+        xdata.append(ConvertDateTime(datetime.datetime.now()))
+    
+    #Update to only show y-data where non-zero values exist
     temp_amb_data = [n.get_temp_amb() for n in active_readings]
     temp_beer_data = [n.get_temp_beer() for n in active_readings]
-    light_amb_data = [float(n.light_amb) for n in active_readings]
+    light_amb_data = [n.get_light_amb() for n in active_readings]
 
     #Doesn't respect ordering via Reading.instant_actual()
     error_readings = Reading.objects.filter(beer=active_beer).filter(error_flag=True)
@@ -265,7 +270,6 @@ def chart(request, cur_beer=None):
     y1data = temp_amb_data
     y2data = temp_beer_data
     y3data = light_amb_data
-
 
     xdata.append(min(xdata)-1)
     y1data.append(float(90))

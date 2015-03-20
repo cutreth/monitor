@@ -58,6 +58,14 @@ class Reading(models.Model):
         else:
             return float(self.temp_beer*9/5+32)
     
+	#Eventually remove the clipping code; this should be handled on the server
+    def get_light_amb(self):
+        value = self.light_amb
+        if value > 200:
+            return float(200)
+        else:
+            return float(self.light_amb)
+    
 	#Remove if/else once no legacy data without instant_actual exists
     def __str__(self):
         value = str(self.beer) + ': '
