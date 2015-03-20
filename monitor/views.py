@@ -10,6 +10,7 @@ from postmark import PMMail
 from monitor.models import Beer, Reading, Config
 
 def floatFromPost(request, field):
+    '''Returns float() or float(0) for a given POST parameter'''
     value = float(0)
     try:
         data = request.POST.get(field)
@@ -19,6 +20,7 @@ def floatFromPost(request, field):
         return value
 
 def stringFromPost(request, field):
+    '''Returns str() or str('') for a given POST parameter'''
     value = str('')
     try:
         data = request.POST.get(field)
@@ -28,6 +30,7 @@ def stringFromPost(request, field):
         return value
 
 def intFromPost(request, field):
+    '''Returns int() or int(0) for a given POST parameter'''
     value = int(0)
     try:
         data = request.POST.get(field)
@@ -37,6 +40,7 @@ def intFromPost(request, field):
         return value
 
 def allDataBlank(sensor_data):
+    '''True if all data is greater than zero'''
     flag = True #Assume all data is blank
     for data in sensor_data:
         if data > 0:
@@ -44,6 +48,7 @@ def allDataBlank(sensor_data):
     return flag
 
 def allDataPositive(sensor_data):
+    '''False if any data is less than zero'''
     flag = True #Assume all data is positive
     for data in sensor_data:
         if data < 0:
@@ -51,6 +56,7 @@ def allDataPositive(sensor_data):
     return flag
 
 def getTempUnit(request):
+    '''Returns 'F' (default) or 'C' for a given POST parameter'''
     temp_unit = 'F'
     try:
         data = stringFromPost(request, 'temp_unit')
@@ -62,11 +68,14 @@ def getTempUnit(request):
         return temp_unit
 
 def getInstantOverride(request):
+    '''Returns a datetime from an int() for a given POST parameter'''
     try:
         instant_override = intFromPost(request, 'instant_override')
         if instant_override > 0:
             instant_override = datetime.datetime.fromtimestamp(instant_override)
             instant_override = instant_override - timedelta(hours=1)
+        else:
+            instant_override = int(0)
     finally:
         return instant_override
 
@@ -255,7 +264,7 @@ def chart(request, cur_beer=None):
     active_readings = Reading.objects.filter(beer=active_beer)
 
     #I should use instant_actual here; rework when we rewrite this code
-    xdata = [ConvertDateTime(n.func_instant_actual()) for n in active_readings]
+    xdata = [ConvertDateTime(n.instant_actual) for n in active_readings]
     if not bool(xdata):
         xdata.append(ConvertDateTime(datetime.datetime.now()))
 
