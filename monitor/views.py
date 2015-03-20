@@ -109,7 +109,7 @@ def BuildErrorEmail(active_config, read, error_details):
     email_sender = active_config.email_sender
     email_to = active_config.email_to
     email_subject = active_config.email_subject
-    
+
     if bool(read):
         email_text_body = read.error_details
     elif bool(error_details):
@@ -129,7 +129,7 @@ def SendErrorEmail(active_config, message):
     send_email = active_config.email_enable
     email_timeout = active_config.email_timeout
     email_last_instant = active_config.email_last_instant
-    
+
     right_now = datetime.datetime.now()
 
     if not bool(email_last_instant): #If last_instant is null, send email
@@ -140,7 +140,7 @@ def SendErrorEmail(active_config, message):
         active_config.save()
     else:
         send_email = False
-    
+
     if send_email and bool(message):
         message.send()
 
@@ -188,7 +188,7 @@ def api(request):
 
         sensor_data = [light_amb, temp_amb, temp_beer]
 
-        if (not allDataBlank(sensor_data) and allDataPositive(sensor_data)):
+        if not allDataBlank(sensor_data) and allDataPositive(sensor_data):
 
             #All data set for every read
             read.light_amb = light_amb
@@ -258,7 +258,7 @@ def chart(request, cur_beer=None):
     xdata = [ConvertDateTime(n.func_instant_actual()) for n in active_readings]
     if not bool(xdata):
         xdata.append(ConvertDateTime(datetime.datetime.now()))
-    
+
     #Update to only show y-data where non-zero values exist
     temp_amb_data = [n.get_temp_amb() for n in active_readings]
     temp_beer_data = [n.get_temp_beer() for n in active_readings]
@@ -303,12 +303,12 @@ def chart(request, cur_beer=None):
         "date_format": tooltip_date,
         #'color': '#395ec6',
     }
-    
+
     chartdata = {'x': xdata,
                  'name1': 'Amb Temp', 'y1': y1data, 'extra1': extra_serie1,
                  'name2': 'Beer Temp', 'y2': y2data, 'extra2': extra_serie2,
                  'name3': 'Amb Light', 'y3': y3data, 'extra3': extra_serie3}
-    
+
     charttype = "lineChart"
     chartcontainer = 'chart_container'  # container name
     data = {
@@ -328,3 +328,4 @@ def chart(request, cur_beer=None):
         }
     }
     return render_to_response('chart.html', data)
+    
