@@ -22,7 +22,7 @@ def stringFromPost(request, field):
     value = str('')
     try:
         data = request.POST.get(field)
-        if bool(data):
+        if bool(data) and str(data) != str(0):
             value = str(data)
     finally:
         return value
