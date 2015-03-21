@@ -7,6 +7,8 @@ import calendar, datetime
 
 from datetime import timedelta
 from postmark import PMMail
+
+from monitor.middleware import send2middleware
 from monitor.models import Beer, Reading, Config
 
 def floatFromPost(request, field):
@@ -247,9 +249,36 @@ def api(request):
     response = createHttpResp(read, status)
     return response
 
+def commands(request):
+    
+    if request.session.has_key('command_status'):
+        command_status = request.session.get('command_status')
+        del request.session['command_status']
+    else:
+        command_status = str('')
+        
+    
+    command_options = [('f','Force a log'),('b','Intentional error')]
 
+    data = {
+    'command_status': command_status,
+    'command_options': command_options,
+    }
+    
+    return render_to_response('commands.html', data)
+    
+    
+def send_command(request, command_char=None):
 
-
+    if command_char == 'f':
+        command_status = send2middleware(command_char)
+    elif command_char == None:
+        command_status = str('')
+    else:
+        command_status = 'Error'
+    request.session['command_status']= command_status        
+        
+    return HttpResponseRedirect(reverse('commands'))
 
 
 def ConvertDateTime(obj):
