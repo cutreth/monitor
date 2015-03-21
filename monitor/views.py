@@ -135,7 +135,7 @@ def BuildErrorEmail(active_config, read, error_details):
     elif bool(error_details):
         email_text_body = error_details
     else:
-        email_text_body = 'Unspecified Error'
+        email_text_body = 'Unspecified error'
 
     message = PMMail(api_key = email_api_key,
                      sender = email_sender,
