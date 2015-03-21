@@ -25,6 +25,9 @@ class Reading(models.Model):
     light_amb = models.DecimalField('Ambient Light', max_digits=5,
                                     decimal_places=2,blank=True,null=False,
                                     default=0)
+    pres_beer = models.DecimalField('Beer Pressure', max_digits=5,
+                                   decimal_places=2,blank=True,null=False,
+                                   default=0)
     temp_amb = models.DecimalField('Ambient Temp',max_digits=5,
                                    decimal_places=2,blank=True,null=False,
                                     default=0)
@@ -58,8 +61,11 @@ class Reading(models.Model):
             return float(200)
         else:
             return float(self.light_amb)
+            
+    def get_pres_beer(self):
+        value = self.pres_beer
+        return float(value)
     
-	#Remove if/else once no legacy data without instant_actual exists
     def __str__(self):
         value = str(self.beer) + ': '    
         value = value + str(self.instant_actual.strftime("%Y-%m-%d %H:%M:%S"))

@@ -78,42 +78,53 @@ def getInstantOverride(request):
             instant_override = int(0)
     finally:
         return instant_override
+        
+def MaxMinCheck(base, deviation, value, category):
+    '''Returns an error string if the input value exceeds the calculated bounds'''
+    error = None    
+    if bool(base) and bool(deviation):
+        upper = base + deviation
+        lower = base - deviation
+        if not (lower < value < upper):
+            error = '[' + str(value) + ':' + str(lower) + '-' + str(upper) + '] '
+            error = str(category) + ' ' + error
+    return error
+
+def SetErrorInfo(error_flag, error_details, error):
+    '''Sets error_flag/error_details if an error is passed in'''
+    if bool(error):
+        error_flag = True
+        error_details = error_details + error
+    return [error_flag, error_details]
 
 def ErrorCheck(active_config, read):
+    '''Check for errors, update Reading record, output True if errors found'''
+    error_flag = False
+    error_details = str('')
 
-    #Enhance to add support for temperature conversions
     temp_amb_base = active_config.temp_amb_base
     temp_amb_dev = active_config.temp_amb_dev
+    temp_amb = read.get_temp_amb()
+    error_cat = 'temp_amb'
+    
+    error = MaxMinCheck(temp_amb_base, temp_amb_dev, temp_amb, error_cat)
+    [error_flag, error_details] = SetErrorInfo(error_flag, error_details, error)
 
     temp_beer_base = active_config.temp_beer_base
     temp_beer_dev = active_config.temp_beer_dev
+    temp_beer = read.get_temp_beer()
+    error_cat = 'temp_beer'
+    
+    error = MaxMinCheck(temp_beer_base, temp_beer_dev, temp_beer, error_cat)
+    [error_flag, error_details] = SetErrorInfo(error_flag, error_details, error)
+    
+    #Think about breaking these into arrays to simply adding more sensors
 
-    if bool(temp_amb_base) and bool(temp_amb_dev):
-        temp_amb_max = temp_amb_base + temp_amb_dev
-        temp_amb_min = temp_amb_base - temp_amb_dev
-
-        if not (temp_amb_min < read.temp_amb < temp_amb_max):
-            read.error_flag = True
-            read.error_details = read.error_details + 'temp_amb: [' + str(temp_amb_min) + ', ' + str(temp_amb_max) + ']'
-            read.error_details = read.error_details + ' *[' + str(read.temp_amb) + '] '
-        elif read.error_flag is None:
-            read.error_flag = False
-
-    if bool(temp_beer_base) and bool(temp_beer_dev):
-        temp_beer_max = temp_beer_base + temp_beer_dev
-        temp_beer_min = temp_beer_base - temp_beer_dev
-
-        if not (temp_beer_min < read.temp_beer < temp_beer_max):
-            read.error_flag = True
-            read.error_details = read.error_details + 'temp_beer: [' + str(temp_beer_min) + ', ' + str(temp_beer_max) + ']'
-            read.error_details = read.error_details + ' *[' + str(read.temp_beer) + '] '
-        elif read.error_flag is None:
-            read.error_flag = False
-
+    read.error_flag = error_flag
+    read.error_details = error_details
     return read.error_flag
 
 def BuildErrorEmail(active_config, read, error_details):
-
     email_api_key = active_config.email_api_key
     email_sender = active_config.email_sender
     email_to = active_config.email_to
@@ -133,31 +144,29 @@ def BuildErrorEmail(active_config, read, error_details):
                      text_body = email_text_body)
     return message
 
-def SendErrorEmail(active_config, message):
+def isTimeBefore(reference, current, delta):
+    '''Returns true if reference is before current minus delta
+    (5AM, 7AM, 1 hour) -> True; (5AM, 7AM, 3 hours) -> False'''    
+    return (reference <= current - delta)
 
+def SendErrorEmail(active_config, message):
     send_email = active_config.email_enable
     email_timeout = active_config.email_timeout
     email_last_instant = active_config.email_last_instant
-
     right_now = datetime.datetime.now()
-
-    if not bool(email_last_instant): #If last_instant is null, send email
-        active_config.email_last_instant = right_now
-        active_config.save()
-    elif email_last_instant <= right_now - datetime.timedelta(minutes=email_timeout):
-        active_config.email_last_instant = right_now
-        active_config.save()
-    else:
-        send_email = False
-
-    if send_email and bool(message):
-        message.send()
+    time_delta = datetime.timedelta(minutes=email_timeout)
+    
+    if send_email and bool(message): #Email if no last instant or if cooldown is over
+        if not bool(email_last_instant) or isTimeBefore(email_last_instant, right_now, time_delta):
+            active_config.email_last_instant = right_now
+            active_config.save()
+            message.send()
 
 def createHttpResp(read, value):
-
     response = HttpResponse(value)
     if bool(read):
         response['light_amb'] = read.light_amb
+        response['pres_beer'] = read.pres_beer
         response['temp_beer'] = read.temp_beer
         response['temp_amb'] = read.temp_amb
         response['temp_unit'] = read.temp_unit
@@ -166,7 +175,6 @@ def createHttpResp(read, value):
         response['instant_actual'] = read.instant_actual
         response['error_flag'] = read.error_flag
         response['error_details'] = read.error_details
-
     return response
 
 def SetReadInstant(active_config):
@@ -192,15 +200,17 @@ def api(request):
 
         #Populate sensor data
         light_amb = floatFromPost(request, 'light_amb')
+        pres_beer = floatFromPost(request, 'pres_beer')
         temp_beer = floatFromPost(request, 'temp_beer')
         temp_amb = floatFromPost(request, 'temp_amb')
 
-        sensor_data = [light_amb, temp_amb, temp_beer]
+        sensor_data = [light_amb, pres_beer, temp_amb, temp_beer]
 
         if not allDataBlank(sensor_data) and allDataPositive(sensor_data):
 
             #All data set for every read
             read.light_amb = light_amb
+            read.pres_beer = pres_beer
             read.temp_beer = temp_beer
             read.temp_amb = temp_amb
 
@@ -238,6 +248,10 @@ def api(request):
     return response
 
 
+
+
+
+
 def ConvertDateTime(obj):
     if isinstance(obj, datetime.datetime):
         if obj.utcoffset() is not None:
@@ -272,6 +286,7 @@ def chart(request, cur_beer=None):
     temp_amb_data = [n.get_temp_amb() for n in active_readings]
     temp_beer_data = [n.get_temp_beer() for n in active_readings]
     light_amb_data = [n.get_light_amb() for n in active_readings]
+    pres_beer_data = [n.get_pres_beer() for n in active_readings]
 
     #Doesn't respect ordering via Reading.instant_actual()
     error_readings = Reading.objects.filter(beer=active_beer).filter(error_flag=True)
@@ -279,19 +294,22 @@ def chart(request, cur_beer=None):
     y1data = temp_amb_data
     y2data = temp_beer_data
     y3data = light_amb_data
+    y4data = pres_beer_data
 
     xdata.append(min(xdata)-1)
-    y1data.append(float(90))
-    y2data.append(float(50))
+    y1data.append(float(0))
+    y2data.append(float(0))
     y3data.append(float(0))
+    y4data.append(float(100))
 
-    xy1y2y3data = zip(xdata, y1data, y2data, y3data)
-    xy1y2y3data = sorted(xy1y2y3data)
+    xydata = zip(xdata, y1data, y2data, y3data, y4data)
+    xydata = sorted(xydata)
 
-    xdata = [n[0] for n in xy1y2y3data]
-    y1data = [n[1] for n in xy1y2y3data]
-    y2data = [n[2] for n in xy1y2y3data]
-    y3data = [n[3] for n in xy1y2y3data]
+    xdata = [n[0] for n in xydata]
+    y1data = [n[1] for n in xydata]
+    y2data = [n[2] for n in xydata]
+    y3data = [n[3] for n in xydata]
+    y4data = [n[4] for n in xydata]
 
     beer_name = active_beer
     beer_date = active_beer.brew_date
@@ -312,11 +330,17 @@ def chart(request, cur_beer=None):
         "date_format": tooltip_date,
         #'color': '#395ec6',
     }
+    extra_serie4 = {
+        "tooltip": {"y_start": "", "y_end": " cal"},
+        "date_format": tooltip_date,
+        #'color': '#395ec6',
+    }
 
     chartdata = {'x': xdata,
                  'name1': 'Amb Temp', 'y1': y1data, 'extra1': extra_serie1,
                  'name2': 'Beer Temp', 'y2': y2data, 'extra2': extra_serie2,
-                 'name3': 'Amb Light', 'y3': y3data, 'extra3': extra_serie3}
+                 'name3': 'Amb Light', 'y3': y3data, 'extra3': extra_serie3,
+                 'name4': 'Pres Beer', 'y4': y4data, 'extra4': extra_serie4}
 
     charttype = "lineChart"
     chartcontainer = 'chart_container'  # container name
@@ -333,7 +357,7 @@ def chart(request, cur_beer=None):
             'x_axis_format': '%m/%d %H:%M',
             'tag_script_js': True,
             'jquery_on_ready': False,
-            'chart_attr': {'color':['orange', 'blue', 'green']},
+            'chart_attr': {'color':['orange', 'blue', 'green', 'purple']},
         }
     }
     return render_to_response('chart.html', data)

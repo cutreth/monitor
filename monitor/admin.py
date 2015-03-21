@@ -5,8 +5,8 @@ class ReadingInLine(admin.TabularInline):
     model = Reading
     extra = 1
     
-    fields = ('instant', 'instant_override','instant_actual','light_amb', 'temp_amb',
-              'temp_beer', 'temp_unit', 'error_flag', 'error_details')
+    fields = ('instant', 'instant_override','instant_actual','light_amb', 'pres_beer',
+              'temp_amb', 'temp_beer', 'temp_unit', 'error_flag', 'error_details')
     readonly_fields = ('instant','instant_actual')
 
 class BeerAdmin(admin.ModelAdmin):
@@ -19,8 +19,8 @@ class BeerAdmin(admin.ModelAdmin):
 class ReadingAdmin(admin.ModelAdmin):
     fieldsets = [
     ('Instant',    {'fields': ['instant','instant_override','instant_actual']}),    
-    ('Data',       {'fields': ['beer','light_amb','temp_amb','temp_beer',
-                               'temp_unit']}),    
+    ('Data',       {'fields': ['beer','light_amb','pres_beer','temp_amb',
+                               'temp_beer','temp_unit']}),    
     ('Errors',     {'fields': ['error_flag','error_details']}),
     ]
 

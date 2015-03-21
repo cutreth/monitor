@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from monitor.models import Reading, Beer, Config
-from monitor.views import SendErrorEmail, BuildErrorEmail
+from monitor.views import SendErrorEmail, BuildErrorEmail, isTimeBefore
 
 import datetime
 
@@ -15,10 +15,12 @@ class Command(BaseCommand):
         read_missing = active_config.read_missing        
         read_last_instant = active_config.read_last_instant
         right_now = datetime.datetime.now()
+        time_delta = datetime.timedelta(minutes=read_missing)
+        
         
         if read_missing > 0:
             if bool(read_last_instant):
-                if read_last_instant >= right_now - datetime.timedelta(minutes=read_missing):
+                if isTimeBefore(read_last_instant, right_now, time_delta):
                     read_expected = False
         else:
             read_expected = False
