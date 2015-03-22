@@ -250,19 +250,29 @@ def api(request):
     return response
 
 def commands(request):
+    blank = str('')
+    command_status = blank
+    error = blank
+    details = blank
     
     if request.session.has_key('command_status'):
         command_status = request.session.get('command_status')
         del request.session['command_status']
-    else:
-        command_status = str('')
+        error = command_status[0]
+        details = command_status[1]
+
+    if not bool(error):
+        error = blank
+    if not bool(details):
+        details = blank
         
-    
     command_options = [('f','Force a log'),('b','Intentional error')]
 
     data = {
     'command_status': command_status,
     'command_options': command_options,
+    'error': error,
+    'details': details
     }
     
     return render_to_response('commands.html', data)
@@ -275,7 +285,7 @@ def send_command(request, command_char=None):
     elif command_char == None:
         command_status = str('')
     else:
-        command_status = 'Error'
+        command_status = ('Error','Test details')
     request.session['command_status']= command_status        
         
     return HttpResponseRedirect(reverse('commands'))
