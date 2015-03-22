@@ -1,6 +1,5 @@
 __pycache__
 *.pyc
-static
 staticfiles
 cutreth/local_settings.py
 cutreth/local_settings.pyc
