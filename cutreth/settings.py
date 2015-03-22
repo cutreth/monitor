@@ -100,6 +100,7 @@ BOWER_COMPONENTS_ROOT = os.path.join(BASE_DIR, 'components')
 BOWER_INSTALLED_APPS = (
     'd3#3.3.6',
     'nvd3#1.1.12-beta',
+    'monitor'
 )
 
 
