@@ -2,11 +2,13 @@ def handler(signum, frame):
     raise Exception()
 
 def send2middleware(message, testMode = False):
-    import socket    
+    import socket
+    import platform
     import signal    
  
-    signal.signal(signal.SIGALRM, handler)
-    signal.alarm(15)
+    if platform.system == 'Linux': 
+        signal.signal(signal.SIGALRM, handler)
+        signal.alarm(15)
  
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     if testMode == False:
