@@ -1,15 +1,14 @@
-from django.shortcuts import render_to_response, get_object_or_404, render
-from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
+from django.shortcuts import render_to_response
+from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 
-import calendar, datetime
+from monitor.middleware import send2middleware
+from monitor.models import Beer, Reading, Config
 
 from datetime import timedelta
 from postmark import PMMail
-
-from monitor.middleware import send2middleware
-from monitor.models import Beer, Reading, Config
+import calendar, datetime
 
 def floatFromPost(request, field):
     '''Returns float() or float(0) for a given POST parameter'''
@@ -104,45 +103,41 @@ def ErrorCheck(active_config, read):
     error_flag = False
     error_details = str('')
 
+    #Think about breaking these into arrays to simply adding more sensors
+    error_cat = 'temp_amb'
     temp_amb_base = active_config.temp_amb_base
     temp_amb_dev = active_config.temp_amb_dev
-    temp_amb = read.get_temp_amb()
-    error_cat = 'temp_amb'
-    
+    temp_amb = read.get_temp_amb()    
     error = MaxMinCheck(temp_amb_base, temp_amb_dev, temp_amb, error_cat)
     [error_flag, error_details] = SetErrorInfo(error_flag, error_details, error)
 
+    error_cat = 'temp_beer'
     temp_beer_base = active_config.temp_beer_base
     temp_beer_dev = active_config.temp_beer_dev
-    temp_beer = read.get_temp_beer()
-    error_cat = 'temp_beer'
-    
+    temp_beer = read.get_temp_beer()    
     error = MaxMinCheck(temp_beer_base, temp_beer_dev, temp_beer, error_cat)
     [error_flag, error_details] = SetErrorInfo(error_flag, error_details, error)
     
-    #Think about breaking these into arrays to simply adding more sensors
-
     read.error_flag = error_flag
     read.error_details = error_details
     return read.error_flag
 
 def BuildErrorEmail(active_config, read, error_details):
+    '''Construct an email; read.error_details then error_details (string)'''
     email_api_key = active_config.email_api_key
     email_sender = active_config.email_sender
     email_to = active_config.email_to
     email_subject = active_config.email_subject
 
-    if bool(read):
+    if bool(read.error_details):
         email_text_body = read.error_details
     elif bool(error_details):
         email_text_body = error_details
     else:
         email_text_body = 'Unspecified error'
 
-    message = PMMail(api_key = email_api_key,
-                     sender = email_sender,
-                     to = email_to,
-                     subject = email_subject,
+    message = PMMail(api_key = email_api_key, sender = email_sender,
+                     to = email_to, subject = email_subject,
                      text_body = email_text_body)
     return message
 
@@ -165,6 +160,7 @@ def SendErrorEmail(active_config, message):
             message.send()
 
 def createHttpResp(read, value):
+    '''Output an HttpResponse with all key variables'''
     response = HttpResponse(value)
     if bool(read):
         response['light_amb'] = read.light_amb
@@ -180,6 +176,7 @@ def createHttpResp(read, value):
     return response
 
 def SetReadInstant(active_config):
+    '''Set the current instant as active_config.read_last_instant'''
     right_now = datetime.datetime.now()
     active_config.read_last_instant = right_now
     active_config.save()
@@ -249,6 +246,14 @@ def api(request):
     response = createHttpResp(read, status)
     return response
 
+def send_command(request, command_char=None):
+    if command_char == None:
+        command_status = str('')
+    else:
+        command_status = send2middleware(command_char)
+    request.session['command_status']= command_status                
+    return HttpResponseRedirect(reverse('commands'))
+
 def commands(request):
     blank = str('')
     command_status = blank
@@ -285,18 +290,9 @@ def commands(request):
     }
     
     return render_to_response('commands.html', data)
-    
-    
-def send_command(request, command_char=None):
-    if command_char == None:
-        command_status = str('')
-    else:
-        command_status = send2middleware(command_char)
-    request.session['command_status']= command_status                
-    return HttpResponseRedirect(reverse('commands'))
-
 
 def ConvertDateTime(obj):
+    #Defunct after views.chart is removed
     if isinstance(obj, datetime.datetime):
         if obj.utcoffset() is not None:
             obj = obj - obj.utcoffset()
@@ -308,9 +304,8 @@ def ConvertDateTime(obj):
     )
     return millis
 
-
 def chart(request, cur_beer=None):
-
+    #Plan to depricate this function
     all_beers = Beer.objects.all()
 
     if cur_beer is None:
