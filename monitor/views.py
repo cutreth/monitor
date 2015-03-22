@@ -272,6 +272,7 @@ def commands(request):
         details = blank
         
     command_options = [('f','Force a log'),
+                       ('m','Show log freq'),
                        ('m=1','Log freq = 1'),
                        ('m=5','Log freq = 5'),
                        ('m=15','Log freq = 15'),
