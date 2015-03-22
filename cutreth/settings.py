@@ -87,10 +87,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = (
-    '/monitor/static/',
-)
-
 STATICFILES_FINDERS = (
     'djangobower.finders.BowerFinder',
     "django.contrib.staticfiles.finders.FileSystemFinder",
