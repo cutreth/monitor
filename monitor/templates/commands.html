@@ -1,16 +1,16 @@
 <head>
-
     <title>Server Commands</title>
 </head>
+
 <body>
     <h1>Server Commands</h1>
-    <h2>{{error}}</h2>
-    <h2>{{details}}</h2>
     
     {% for command,description in command_options %}
     <form action="/monitor/commands/{{command}}/" method="get">
         <input type="submit" value="{{description}}">
     </form>
     {% endfor %}
-    
+
+    <h2>{{error}}</h2>
+    <h3>{{details}}</h3>
 </body>

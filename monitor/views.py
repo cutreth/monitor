@@ -266,7 +266,16 @@ def commands(request):
     if not bool(details):
         details = blank
         
-    command_options = [('f','Force a log'),('b','Intentional error')]
+    command_options = [('f','Force a log'),
+                       ('m=1','Log freq = 1'),
+                       ('m=5','Log freq = 5'),
+                       ('m=15','Log freq = 15'),
+                       ('m=30','Log freq = 30'),
+                       ('r=temp_amb','Value of temp_amb'),
+                       ('r=temp_beer','Value of temp_beer'),
+                       ('r=light_amb','Value of light_amb'),
+                       ('r=pres_beer','Value of pres_beer'),
+                      ]
 
     data = {
     'command_status': command_status,
@@ -279,15 +288,11 @@ def commands(request):
     
     
 def send_command(request, command_char=None):
-
-    if command_char == 'f':
-        command_status = send2middleware(command_char)
-    elif command_char == None:
+    if command_char == None:
         command_status = str('')
     else:
-        command_status = ('Error','Test details')
-    request.session['command_status']= command_status        
-        
+        command_status = send2middleware(command_char)
+    request.session['command_status']= command_status                
     return HttpResponseRedirect(reverse('commands'))
 
 
