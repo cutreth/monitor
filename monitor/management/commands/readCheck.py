@@ -1,5 +1,5 @@
-from django.core.management.base import BaseCommand, CommandError
-from monitor.models import Reading, Beer, Config
+from django.core.management.base import BaseCommand
+from monitor.models import Config
 from monitor.views import SendErrorEmail, BuildErrorEmail, isTimeBefore
 
 import datetime
@@ -29,3 +29,4 @@ class Command(BaseCommand):
             error_details = 'No reading since: ' + str(read_last_instant)
             message = BuildErrorEmail(active_config, None, error_details)
             SendErrorEmail(active_config, message)
+        
