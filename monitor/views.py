@@ -129,7 +129,7 @@ def BuildErrorEmail(active_config, read, error_details):
     email_to = active_config.email_to
     email_subject = active_config.email_subject
 
-    if bool(read.error_details):
+    if bool(read):
         email_text_body = read.error_details
     elif bool(error_details):
         email_text_body = error_details
