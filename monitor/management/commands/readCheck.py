@@ -20,7 +20,7 @@ class Command(BaseCommand):
         
         if read_missing > 0:
             if bool(read_last_instant):
-                if isTimeBefore(read_last_instant, right_now, time_delta):
+                if not isTimeBefore(read_last_instant, right_now, time_delta):
                     read_expected = False
         else:
             read_expected = False
