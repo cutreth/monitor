@@ -6,9 +6,9 @@ def send2middleware(message, testMode = False):
     import platform
     import signal    
  
-    if platform.system == 'Linux': 
+    if platform.system() != 'Windows': 
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(15)
+        signal.alarm(10)
  
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     if testMode == False:
