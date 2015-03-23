@@ -29,7 +29,7 @@ def send2middleware(message, testMode = False):
             # Send data
             sock.sendall(message.encode())
             # Look for the response
-            data = sock.recv(32).decode()
+            data = sock.recv(64).decode()
             sock.close()
             r,msg = data.split("|")
         except:
