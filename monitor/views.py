@@ -1,4 +1,4 @@
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, render, RequestContext
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -281,6 +281,8 @@ def commands(request):
                        ('r=temp_beer','Value of temp_beer'),
                        ('r=light_amb','Value of light_amb'),
                        ('r=pres_beer','Value of pres_beer'),
+                       ('o','Turn logging on'),
+                       ('l','Turn logging off'),
                       ]
 
     data = {
@@ -402,3 +404,93 @@ def chart(request, cur_beer=None):
     }
     return render_to_response('chart.html', data)
     
+def graph(request):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    import mpld3 
+
+    active_config = Config.objects.get(pk=1)
+    active_beer = active_config.beer
+
+    active_readings = Reading.objects.filter(beer=active_beer)
+
+    #I should use instant_actual here; rework when we rewrite this code
+    xdata = [ConvertDateTime(n.instant_actual) for n in active_readings]
+    if not bool(xdata):
+        xdata.append(ConvertDateTime(datetime.datetime.now()))
+
+    #Update to only show y-data where non-zero values exist
+    temp_amb_data = [n.get_temp_amb() for n in active_readings]
+    temp_beer_data = [n.get_temp_beer() for n in active_readings]
+    light_amb_data = [n.get_light_amb() for n in active_readings]
+    pres_beer_data = [n.get_pres_beer() for n in active_readings] 
+ 
+ 
+    t = np.arange(0., 5., 0.2) 
+ 
+    fig = plt.figure()
+    #fid = plt.plot(t, t, 'r--', t, t**2, 'bs', t, t**3, 'g^')
+    fid = plt.plot(temp_amb_data,'r-.',temp_beer_data,'b-.')
+         
+         
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    import mpld3
+    from mpld3 import plugins
+
+    # Define some CSS to control our custom labels
+    css = """
+    table
+    {
+      border-collapse: collapse;
+    }
+    th
+    {
+      color: #ffffff;
+      background-color: #000000;
+    }
+    td
+    {
+      background-color: #cccccc;
+    }
+    table, th, td
+    {
+      font-family:Arial, Helvetica, sans-serif;
+      border: 1px solid black;
+      text-align: right;
+    }
+    """
+    
+    fig, ax = plt.subplots()
+    ax.grid(True, alpha=0.3)
+    
+    N = 50
+    df = pd.DataFrame(index=range(N))
+    df['x'] = np.random.randn(N)
+    df['y'] = np.random.randn(N)
+    df['z'] = np.random.randn(N)
+    
+    labels = []
+    for i in range(N):
+        label = df.ix[[i], :].T
+        label.columns = ['Row {0}'.format(i)]
+        # .to_html() is unicode; so make leading 'u' go away with str()
+        labels.append(str(label.to_html()))
+    
+    points = ax.plot(df.x, df.y, 'o', color='b',
+                     mec='k', ms=15, mew=1, alpha=.6)
+    
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_title('HTML tooltips', size=20)
+    
+    tooltip = plugins.PointHTMLTooltip(points[0], labels,
+                                       voffset=10, hoffset=10, css=css)
+    plugins.connect(fig, tooltip)
+    
+    
+    
+    fig_html = mpld3.fig_to_html(fig)
+    return render_to_response('graph.html',{'figure': fig_html,})

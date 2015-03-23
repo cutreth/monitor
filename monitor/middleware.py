@@ -10,27 +10,39 @@ def send2middleware(message, testMode = False):
         signal.signal(signal.SIGALRM, handler)
         signal.alarm(10)
  
+    r = None
+    msg = None
+ 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     if testMode == False:
         server_ip = socket.gethostbyname('benjeye.ddns.net')
         server_address = (server_ip, 6005)
     else: server_address = ('192.168.1.111', 6005)
     
-    try: sock.connect(server_address)
-    except: return(("Timeout", None))
+    try: 
+        sock.connect(server_address)
+    except: 
+        r = 'Timeout'
 
-    try:
-        # Send data
-        sock.sendall(message.encode())
-        # Look for the response
-        data = sock.recv(32).decode()
-        sock.close()
-        r,msg = data.split("|")
-        return((r, msg))
-    except:
-        sock.close()
-        return(("No response", None))
-    return(("Unknown", None))
+    if not bool(r):
+        try:
+            # Send data
+            sock.sendall(message.encode())
+            # Look for the response
+            data = sock.recv(32).decode()
+            sock.close()
+            r,msg = data.split("|")
+        except:
+            sock.close()
+            r= 'No response'
+            
+    if not bool(r):
+        r = 'Unknown'
+    
+    if platform.system() != 'Windows': 
+        signal.alarm(0)
+        
+    return((r, msg))
 
 # messages:
 ## F - force a log or attempt to rerun main loop (depends on state)
