@@ -15,4 +15,3 @@ python-postmark==0.4.7
 newrelic
 mpld3
 matplotlib
-pandas
