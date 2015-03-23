@@ -17,7 +17,7 @@ def send2middleware(message, testMode = False):
     if testMode == False:
         server_ip = socket.gethostbyname('benjeye.ddns.net')
         server_address = (server_ip, 6005)
-    else: server_address = ('192.168.1.111', 6005)
+    else: server_address = ('localhost', 6005)
     
     try: 
         sock.connect(server_address)
@@ -67,7 +67,7 @@ send2middleware("f") = ('Success', 'Forcing log...')
 M=n - Set the log period to n minutes
 
 send2middleware("m=1")	= ('Success', 'Changed now minLog=1')	#Returns new minLog value
-send2middleware("m")	= ('Fail', 'Number needed. minLog=15')	#Returns current minLog value
+send2middleware("m")	= ('Success', 'Log frequency=15')		#Returns current minLog value
 send2middleware("m=")	= ('Fail', 'Number needed. minLog=15')	#Returns current minLog value
 
 ----------------------------------------------------------------
