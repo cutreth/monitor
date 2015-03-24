@@ -440,7 +440,7 @@ def graph(request):
               
     y_temp_amb = ax.plot_date(df['x_instant'],df['y_temp_amb'],'b.-',label='amb')                 
     y_temp_beer = ax.plot_date(df['x_instant'],df['y_temp_beer'],'r.-',label='beer')     
-    ax.set_ylim(0, 100)    
+    #ax.set_ylim(0, 100)    
     
     ax.set_title('HTML tooltips', size=20)
     ax.set_xlabel('x')
