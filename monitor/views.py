@@ -281,8 +281,8 @@ def commands(request):
                        ('r=temp_beer','Value of temp_beer'),
                        ('r=light_amb','Value of light_amb'),
                        ('r=pres_beer','Value of pres_beer'),
-                       ('o','Turn logging on'),
-                       ('l','Turn logging off'),
+                       ('l','Turn logging on'),
+                       ('o','Turn logging off'),
                       ]
 
     data = {
