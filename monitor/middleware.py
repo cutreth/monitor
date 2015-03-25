@@ -93,6 +93,19 @@ send2middleware("L")	= ('Success', 'Data collection on.')
 send2middleware("L")	= ('Fail', 'Was already on.')
 
 ----------------------------------------------------------------
+
+E - Turns off remote logging, continues to add logs to queue
+
+send2middleware("E")	= ('Success', 'Remote logging off.')
+send2middleware("E")	= ('Fail', 'Remote logging was already off.')
+----------------------------------------------------------------
+
+D - Turns on remote logging
+
+send2middleware("D")	= ('Success', 'Remote logging on.')
+send2middleware("D")	= ('Fail', 'Remote logging was already on.')
+
+----------------------------------------------------------------
 !!DEFUNCT!!
 C - Turns off server permanently, will require access to the server to turn it back on
 
