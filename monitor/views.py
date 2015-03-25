@@ -192,7 +192,7 @@ def api(request):
     key = stringFromPost(request, 'key')
     if (key == 'beer') or (key == 'test'):
 
-        active_config = Config.objects.filter()[:1].get() #Get config 1
+        active_config = Config.objects.get(pk=1) #Get config 1
         active_beer = active_config.beer #Get active beer
 
         read = Reading(beer=active_beer) #Create reading record
