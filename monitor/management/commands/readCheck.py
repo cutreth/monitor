@@ -11,7 +11,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         read_expected = True #Assume need a reading
-        active_config = Config.objects.get(pk=1)      
+        active_config = Config.objects.filter()[:1].get()      
         read_missing = active_config.read_missing        
         read_last_instant = active_config.read_last_instant
         right_now = datetime.datetime.now()
