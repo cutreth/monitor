@@ -192,7 +192,7 @@ def api(request):
     key = stringFromPost(request, 'key')
     if (key == 'beer') or (key == 'test'):
 
-        active_config = Config.objects.get(pk=1) #Get config 1
+        active_config = Config.objects.filter()[:1].get()
         active_beer = active_config.beer #Get active beer
 
         read = Reading(beer=active_beer) #Create reading record
@@ -314,7 +314,7 @@ def chart(request, cur_beer=None):
     all_beers = Beer.objects.all()
 
     if cur_beer is None:
-        active_config = Config.objects.get(pk=1)
+        active_config = Config.objects.filter()[:1].get()
         active_beer = active_config.beer
     else:
         active_beer = Beer.objects.get(pk=cur_beer)
@@ -406,42 +406,43 @@ def chart(request, cur_beer=None):
     }
     return render_to_response('chart.html', data)
     
-def graph(request):
+def graph(request,cur_beer=None):
+    import mpld3 
+    
+    if cur_beer is None:
+        active_config = Config.objects.filter()[:1].get()
+        active_beer = active_config.beer
+    else:
+        active_beer = Beer.objects.get(pk=cur_beer)
+    
+    fig1=createFig(1, active_beer)
+    fig2=createFig(2, active_beer)
+
+    fig1_html = mpld3.fig_to_html(fig1)
+    fig2_html = mpld3.fig_to_html(fig2)
+    
+    return render_to_response('graph.html',{'fig1': fig1_html,'fig2': fig2_html})
+
+def createFig(vers, active_beer):
     import matplotlib.pyplot as plt
     import numpy as np
     import pandas as pd
     import mpld3 
-
-    active_config = Config.objects.get(pk=1)
-    active_beer = active_config.beer
-
-    active_readings = Reading.objects.filter(beer=active_beer)
-
-    #I should use instant_actual here; rework when we rewrite this code
-    xdata = [ConvertDateTime(n.instant_actual) for n in active_readings]
-    if not bool(xdata):
-        xdata.append(ConvertDateTime(datetime.datetime.now()))
-
-    #Update to only show y-data where non-zero values exist
-    temp_amb_data = [n.get_temp_amb() for n in active_readings]
-    temp_beer_data = [n.get_temp_beer() for n in active_readings]
-    light_amb_data = [n.get_light_amb() for n in active_readings]
-    pres_beer_data = [n.get_pres_beer() for n in active_readings] 
- 
- 
-    t = np.arange(0., 5., 0.2) 
- 
-    fig = plt.figure()
-    #fid = plt.plot(t, t, 'r--', t, t**2, 'bs', t, t**3, 'g^')
-    fid = plt.plot(temp_amb_data,'r-.',temp_beer_data,'b-.')
-         
-         
     import matplotlib.pyplot as plt
-    import numpy as np
-    import pandas as pd
-    import mpld3
     from mpld3 import plugins
+    import matplotlib.dates as mpld
 
+    active_readings = Reading.objects.filter(beer=active_beer).order_by('instant_actual')
+    instant_data = [mpld.date2num(n.instant_actual) for n in active_readings]
+    
+    x_count = len(active_readings)
+    x_range = range(x_count)
+    df = pd.DataFrame(index=x_range)
+    df['x_instant'] = instant_data
+
+    fig, ax = plt.subplots()
+    ax.grid(True, alpha=0.3)
+        
     # Define some CSS to control our custom labels
     css = """
     table
@@ -463,36 +464,58 @@ def graph(request):
       border: 1px solid black;
       text-align: right;
     }
-    """
+    """        
+        
+    if vers==1:
+        temp_amb_data = [n.get_temp_amb() for n in active_readings]
+        df['y_temp_amb'] = temp_amb_data        
+        y_temp_amb = ax.plot_date(df['x_instant'],df['y_temp_amb'],'b.-',label='amb')   
+        ax.set_ylabel('Temp')      
+        title = str(active_beer) + ' - Temp'
+
+    if vers==1:
+        temp_beer_data = [n.get_temp_beer() for n in active_readings]
+        df['y_temp_beer'] = temp_beer_data
+        y_temp_beer = ax.plot_date(df['x_instant'],df['y_temp_beer'],'r.-',label='beer')
+        ax.set_ylabel('Temp')
+        title = str(active_beer) + ' - Temp'
+        
+    if vers==2:
+        light_amb_data = [n.get_light_amb() for n in active_readings]
+        df['y_light_amb'] = light_amb_data
+        y_light_amb = ax.plot_date(df['x_instant'],df['y_light_amb'],'y.-',label='light')  
+        ax.set_ylabel('Light') 
+        title = str(active_beer) + ' - Light' 
+
+    instant_data = [mpld.num2date(n).strftime('%Y-%m-%d %H:%M') for n in instant_data]
+    df.drop('x_instant',axis=1,inplace=True)    
     
-    fig, ax = plt.subplots()
-    ax.grid(True, alpha=0.3)
-    
-    N = 50
-    df = pd.DataFrame(index=range(N))
-    df['x'] = np.random.randn(N)
-    df['y'] = np.random.randn(N)
-    df['z'] = np.random.randn(N)
-    
-    labels = []
-    for i in range(N):
+    #Create chart labels
+    labels = []   
+    for i in range(x_count):
         label = df.ix[[i], :].T
-        label.columns = ['Row {0}'.format(i)]
+        label.columns = [instant_data[i]]
         # .to_html() is unicode; so make leading 'u' go away with str()
-        labels.append(str(label.to_html()))
+        labels.append(str(label.to_html()))   
+
+    if vers==1:
+        tooltip = plugins.PointHTMLTooltip(y_temp_amb[0], labels,
+                                   voffset=10, hoffset=10, css=css)
+        plugins.connect(fig, tooltip)   
+
+    if vers==1:
+        tooltip2 = plugins.PointHTMLTooltip(y_temp_beer[0], labels,
+                                   voffset=10, hoffset=10, css=css)
+        plugins.connect(fig, tooltip2)
+        
+    if vers==2:
+        tooltip = plugins.PointHTMLTooltip(y_light_amb[0], labels,
+                                   voffset=10, hoffset=10, css=css)
+        plugins.connect(fig, tooltip)   
+
+    ax.set_xlabel('Instant')   
+    ax.set_title(title, size=20)        
+    ax.legend(loc='best', fancybox=True, framealpha=0.5, title='')  
     
-    points = ax.plot(df.x, df.y, 'o', color='b',
-                     mec='k', ms=15, mew=1, alpha=.6)
+    return fig
     
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_title('HTML tooltips', size=20)
-    
-    tooltip = plugins.PointHTMLTooltip(points[0], labels,
-                                       voffset=10, hoffset=10, css=css)
-    plugins.connect(fig, tooltip)
-    
-    
-    
-    fig_html = mpld3.fig_to_html(fig)
-    return render_to_response('graph.html',{'figure': fig_html,})
