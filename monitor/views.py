@@ -283,8 +283,8 @@ def commands(request):
                        ('r=pres_beer','Value of pres_beer'),
                        ('l','Turn data collection on'),
                        ('o','Turn data collection off'),
-					   ('d','Turn remote logging on'),
-					   ('e','Turn remote logging off')
+                       ('d','Turn remote logging on'),
+                       ('e','Turn remote logging off')
                       ]
 
     data = {
