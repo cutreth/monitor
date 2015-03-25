@@ -284,7 +284,7 @@ def commands(request):
                        ('l','Turn data collection on'),
                        ('o','Turn data collection off'),
 					   ('d','Turn remote logging on'),
-                       ('e','Turn remote logging off')
+					   ('e','Turn remote logging off')
                       ]
 
     data = {
