@@ -192,7 +192,7 @@ def api(request):
     key = stringFromPost(request, 'key')
     if (key == 'beer') or (key == 'test'):
 
-        active_config = Config.objects.get(pk=1) #Get config 1
+        active_config = Config.objects.get(pk=2) #Get config 1
         active_beer = active_config.beer #Get active beer
 
         read = Reading(beer=active_beer) #Create reading record
@@ -312,7 +312,7 @@ def chart(request, cur_beer=None):
     all_beers = Beer.objects.all()
 
     if cur_beer is None:
-        active_config = Config.objects.get(pk=1)
+        active_config = Config.objects.get(pk=2)
         active_beer = active_config.beer
     else:
         active_beer = Beer.objects.get(pk=cur_beer)
@@ -408,7 +408,7 @@ def graph(request,cur_beer=None):
     import mpld3 
     
     if cur_beer is None:
-        active_config = Config.objects.get(pk=1)
+        active_config = Config.objects.get(pk=2)
         active_beer = active_config.beer
     else:
         active_beer = Beer.objects.get(pk=cur_beer)
