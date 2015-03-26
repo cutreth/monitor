@@ -446,12 +446,10 @@ def graph(request,cur_beer=None):
 
 def createFig(vers, active_beer):
     import matplotlib.pyplot as plt
-    import numpy as np
-    import pandas as pd
-    import mpld3 
-    import matplotlib.pyplot as plt
-    from mpld3 import plugins
     import matplotlib.dates as mpld
+    import pandas as pd
+    import numpy as np
+    from mpld3 import plugins
 
     active_readings = Reading.objects.filter(beer=active_beer).order_by('instant_actual')
     instant_data = [mpld.date2num(n.instant_actual) for n in active_readings]
