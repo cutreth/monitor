@@ -538,3 +538,25 @@ def createFig(vers, active_beer):
     
     return fig
     
+def dashboard(request, cur_beer=None):
+    if cur_beer is None:
+        active_config = Config.objects.filter()[:1].get()
+        active_beer = active_config.beer
+    else:
+        active_beer = Beer.objects.get(pk=cur_beer)
+    # To do:
+    # -Get most recent logged values (or send2middlware("r=var")?)
+    # -Add dashboard graphs
+    # -Add button to force a log and refresh page
+    # -and/or add button to send2middleware("r=var") and update charts
+    # -Add footnote of time of last log
+    cur_reading = [r for r in Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1]][0]
+    cur_vals = {
+        "cur_temp_amb": cur_reading.get_temp_amb(),
+        "cur_temp_beer": cur_reading.get_temp_beer(),
+        "cur_light_amb": cur_reading.get_light_amb(),
+        "cur_pres_beer": cur_reading.get_pres_beer(),
+        "last_log": cur_reading.instant_actual.strftime("%Y-%m-%d %H:%M:%S")
+    }
+    out = "<br>".join([": ".join([v, str(cur_vals[v])]) for v in cur_vals])
+    return HttpResponse(out)
