@@ -1,19 +1,116 @@
+<!DOCTYPE html>
+<!-- Template by html.am -->
+
+<!-- 
 {% load staticfiles %}
 <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}"
+-->
 
-<head>
-    <title>Server Commands</title>
-</head>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>Server - Commands</title>
+		<style type="text/css">
+		
+		body{
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+			height: 100%; 
+			max-height: 100%; 
+			font-family:Sans-serif;
+			line-height: 1.5em;
+		}
+		
+		#nav{
+			position: absolute;
+			top: 0;
+			bottom: 0; 
+			left: 0;
+			width: 230px; /* Width of navigation frame */
+			height: 100%;
+			overflow: hidden; /* Disables scrollbars on the navigation frame. To enable scrollbars, change "hidden" to "scroll" */
+			background: #eee;
+		}
+		
+		main{
+			position: fixed;
+			top: 0; 
+			left: 230px; /* Set this to the width of the navigation frame */
+			right: 0;
+			bottom: 0;
+			overflow: auto; 
+			background: #fff;
+		}
+		
+		.innertube{
+			margin: 15px; /* Provides padding for the content */
+		}
+		
+		p {
+			color: #555;
+		}
 
-<body>
-    <h1>Server Commands</h1>
-    
-    {% for command,description in command_options %}
-    <form action="/monitor/commands/{{command}}/" method="get">
-        <input type="submit" value="{{description}}">
-    </form>
-    {% endfor %}
+		nav ul {
+			list-style-type: none;
+			margin: 0;
+			padding: 0;
+		}
+		
+		nav ul a {
+			color: darkgreen;
+			text-decoration: none;
+		}
+				
+		/*IE6 fix*/
+		* html body{
+			padding: 0 0 0 230px; /* Set the last value to the width of the navigation frame */
+		}
+		
+		* html main{ 
+			height: 100%; 
+			width: 100%; 
+		}
+		
+		</style>
 
-    <h2>{{error}}</h2>
-    <h3>{{details}}</h3>
-</body>
+	</head>
+	
+	<body>		
+				
+		<main>
+			<div class="innertube">
+				
+				<h1>Server Commands</h1>
+                {% for command,description in command_options %}
+                    <form action="/monitor/commands/{{command}}/" method="get">
+                        <input type="submit" value="{{description}}">
+                    </form>
+                {% endfor %}
+                <h2>{{error}}</h2>
+                <h3>{{details}}</h3>
+                
+			</div>
+		</main>
+	
+		<nav id="nav">
+			<div class="innertube">
+			
+			<h3>Beers</h3>
+			<ul>
+				<li><a href="/monitor/graph/">Active Beer</a></li>
+                {% for beer in all_beers %}
+                    <li><a href="/monitor/graph/{{ beer.id }}/">{{ beer }}</a></li>
+                {% endfor %}
+			</ul>
+			<h3>Options</h3>
+			<ul>
+                <li><a href="/monitor/dashboard/">Dashboard</a></li>
+				<li><a href="/monitor/commands/">Commands</a></li>
+				<li><a href="/admin/">Admin</a></li>
+			</ul>
+			</div>
+		</nav>
+	
+	</body>
+</html>

@@ -287,7 +287,16 @@ def commands(request):
                        ('e','Turn remote logging off')
                       ]
 
+    active_config = Config.objects.filter()[:1].get()
+    active_beer = active_config.beer
+    all_beers = Beer.objects.all()
+    beer_name = active_beer
+    beer_date = active_beer.brew_date
+
     data = {
+    'all_beers': all_beers,
+    'beer_name': beer_name,
+    'beer_date': beer_date,
     'command_status': command_status,
     'command_options': command_options,
     'error': error,
@@ -408,12 +417,16 @@ def chart(request, cur_beer=None):
     
 def graph(request,cur_beer=None):
     import mpld3 
-    
+        
     if cur_beer is None:
         active_config = Config.objects.filter()[:1].get()
         active_beer = active_config.beer
     else:
         active_beer = Beer.objects.get(pk=cur_beer)
+    
+    all_beers = Beer.objects.all()
+    beer_name = active_beer
+    beer_date = active_beer.brew_date
     
     fig1=createFig(1, active_beer)
     fig2=createFig(2, active_beer)
@@ -421,7 +434,15 @@ def graph(request,cur_beer=None):
     fig1_html = mpld3.fig_to_html(fig1)
     fig2_html = mpld3.fig_to_html(fig2)
     
-    return render_to_response('graph.html',{'fig1': fig1_html,'fig2': fig2_html})
+    data = {
+        'all_beers': all_beers,
+        'beer_name': beer_name,
+        'beer_date': beer_date,
+        'fig1': fig1_html,
+        'fig2': fig2_html
+    }
+    
+    return render_to_response('graph.html',data)
 
 def createFig(vers, active_beer):
     import matplotlib.pyplot as plt
