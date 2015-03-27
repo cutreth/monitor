@@ -6,7 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from monitor.middleware import send2middleware
 from monitor.models import Beer, Reading, Config
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 from postmark import PMMail
 import calendar, datetime
 
@@ -543,11 +543,12 @@ def dashboard(request):
     # -Add button to force a log and refresh page
     # -Add footnote of time of last log
     # -Function to find bgcol (and fgcol) and paint cells
-    # -How much time since last log
+    
     active_config = Config.objects.filter()[:1].get()
     active_beer = active_config.beer
     
     cur_reading = Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1].get()
+    
     data = {
         "vals": {
             "temp_amb": cur_reading.get_temp_amb(),
@@ -567,7 +568,18 @@ def dashboard(request):
         },
         "last_log_date": cur_reading.instant_actual.strftime("%Y-%m-%d"),
         "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
+        "last_log_ago": get_date_diff(cur_reading.instant_actual, datetime.datetime.now()),
         'all_beers': Beer.objects.all()
     }
     
     return render_to_response('dashboard.html',data)
+def get_date_diff(d1,d2):
+    diff = abs(d2-d1)
+
+    if(diff.days > 0): out = str(diff.days) + " day(s) ago"
+    elif(diff.seconds < 1): out = "now"
+    elif(diff.seconds < 60): out = str(round(diff.seconds,0)) + " second(s) ago"
+    elif(diff.seconds < 60*60): out = str(round(diff.seconds/60,1)) + " minute(s) ago"
+    else: out = str(round(diff.seconds/(60*60),1)) + " hour(s) ago"
+    
+    return(out)
