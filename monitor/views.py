@@ -538,23 +538,16 @@ def createFig(vers, active_beer):
     
     return fig
     
-def dashboard(request, cur_beer=None):
-    ## !RANGES ONLY EXIST FOR ACTIVE BEER! ##
-    if cur_beer is None:
-        active_config = Config.objects.filter()[:1].get()
-        active_beer = active_config.beer
-    else:
-        active_beer = Beer.objects.get(pk=cur_beer)
+def dashboard(request):
     # To do:
-    # -Get most recent logged values (or send2middlware("r=var")?)
-    # -Can use setInterval js function to auto update with send2middlware("r=var")?
-    # -Add dashboard graphs
     # -Add button to force a log and refresh page
-    # -and/or add button to send2middleware("r=var") and update charts
     # -Add footnote of time of last log
-    # -Function to find bgcol (and fgcol)
+    # -Function to find bgcol (and fgcol) and paint cells
     # -How much time since last log
-    cur_reading = [r for r in Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1]][0]
+    active_config = Config.objects.filter()[:1].get()
+    active_beer = active_config.beer
+    
+    cur_reading = Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1].get()
     data = {
         "vals": {
             "temp_amb": cur_reading.get_temp_amb(),
