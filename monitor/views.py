@@ -549,22 +549,30 @@ def dashboard(request):
     
     cur_reading = Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1].get()
     
+    cur_temp_amb = cur_reading.get_temp_amb()
+    cur_temp_beer = cur_reading.get_temp_beer()
+    cur_light_amb = cur_reading.get_light_amb()
+    cur_pres_beer = cur_reading.get_pres_beer()
+            
+    temp_amb_rng = [active_config.temp_amb_base - active_config.temp_amb_dev, active_config.temp_amb_base + active_config.temp_amb_dev]
+    temp_beer_rng = [active_config.temp_beer_base - active_config.temp_beer_dev, active_config.temp_beer_base + active_config.temp_beer_dev]
+    
     data = {
         "vals": {
-            "temp_amb": cur_reading.get_temp_amb(),
-            "temp_beer": cur_reading.get_temp_beer(),
-            "light_amb": cur_reading.get_light_amb(),
-            "pres_beer": cur_reading.get_pres_beer()
+            "temp_amb": cur_temp_amb,
+            "temp_beer": cur_temp_beer,
+            "light_amb": cur_light_amb,
+            "pres_beer": cur_pres_beer
         },
         "bgcols" : {
-            "temp_amb": "white",
-            "temp_beer": "white",
-            "light_amb": "white",
-            "pres_beer": "white"
+            "temp_amb": get_paint_cols(cur_temp_amb, temp_amb_rng)[0],
+            "temp_beer": get_paint_cols(cur_temp_beer, temp_beer_rng)[0],
+            "light_amb": get_paint_cols(cur_light_amb)[0],
+            "pres_beer": get_paint_cols(cur_pres_beer)[0]
         },
         "greenrng": {
-            "temp_amb": [active_config.temp_amb_base - active_config.temp_amb_dev, active_config.temp_amb_base + active_config.temp_amb_dev],
-            "temp_beer": [active_config.temp_beer_base - active_config.temp_beer_dev, active_config.temp_beer_base + active_config.temp_beer_dev]
+            "temp_amb": temp_amb_rng,
+            "temp_beer": temp_beer_rng
         },
         "last_log_date": cur_reading.instant_actual.strftime("%Y-%m-%d"),
         "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
@@ -583,3 +591,10 @@ def get_date_diff(d1,d2):
     else: out = str(round(diff.seconds/(60*60),1)) + " hour(s) ago"
     
     return(out)
+def get_paint_cols(val, rng = None):
+    if rng == None: bgcol = "#FFFFFF" #White
+    elif(rng[0] <= val <= rng[1]): bgcol = "#008000" #Green
+    else: bgcol = "#FF0000"
+    
+    fgcol = "#000000"
+    return((bgcol, fgcol))
