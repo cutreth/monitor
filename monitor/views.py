@@ -6,7 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from monitor.middleware import send2middleware
 from monitor.models import Beer, Reading, Config
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 from postmark import PMMail
 import calendar, datetime
 
@@ -538,3 +538,68 @@ def createFig(vers, active_beer):
     
     return fig
     
+def dashboard(request):
+    # To do:
+    # -Add button to force a log and refresh page
+    # -Add footnote of time of last log
+    # -Function to find bgcol (and fgcol) and paint cells
+    # -Add red and/or yellow ranges to gauges and cell painting
+    
+    active_config = Config.objects.filter()[:1].get()
+    active_beer = active_config.beer
+    
+    cur_reading = Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1].get()
+    
+    cur_temp_amb = cur_reading.get_temp_amb()
+    cur_temp_beer = cur_reading.get_temp_beer()
+    cur_light_amb = cur_reading.get_light_amb()
+    cur_pres_beer = cur_reading.get_pres_beer()
+            
+    temp_amb_rng = [active_config.temp_amb_base - active_config.temp_amb_dev, active_config.temp_amb_base + active_config.temp_amb_dev]
+    temp_beer_rng = [active_config.temp_beer_base - active_config.temp_beer_dev, active_config.temp_beer_base + active_config.temp_beer_dev]
+    
+    data = {
+        "vals": {
+            "temp_amb": cur_temp_amb,
+            "temp_beer": cur_temp_beer,
+            "light_amb": cur_light_amb,
+            "pres_beer": cur_pres_beer
+        },
+        "bgcols" : {
+            "temp_amb": get_paint_cols(cur_temp_amb, temp_amb_rng)[0],
+            "temp_beer": get_paint_cols(cur_temp_beer, temp_beer_rng)[0],
+            "light_amb": get_paint_cols(cur_light_amb)[0],
+            "pres_beer": get_paint_cols(cur_pres_beer)[0]
+        },
+        "greenrng": {
+            "temp_amb": temp_amb_rng,
+            "temp_beer": temp_beer_rng
+        },
+        "last_log_date": cur_reading.instant_actual.strftime("%Y-%m-%d"),
+        "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
+        "last_log_ago": get_date_diff(cur_reading.instant_actual, datetime.datetime.now()),
+        'all_beers': Beer.objects.all()
+    }
+    
+    return render_to_response('dashboard.html',data)
+def get_date_diff(d1,d2):
+    diff = abs(d2-d1)
+
+    if(diff.days > 0): out = str(diff.days) + " day(s) ago"
+    elif(diff.seconds < 1): out = "now"
+    elif(diff.seconds < 60): out = str(round(diff.seconds,0)) + " second(s) ago"
+    elif(diff.seconds < 60*60): out = str(round(diff.seconds/60,1)) + " minute(s) ago"
+    else: out = str(round(diff.seconds/(60*60),1)) + " hour(s) ago"
+    
+    return(out)
+def get_paint_cols(val, rng = None):
+    if rng == None: bgcol = "#FFFFFF" #White
+    elif(rng[0] <= val <= rng[1]): bgcol = "#008000" #Green
+    else: bgcol = "#FF0000" #Red
+    
+    fgcol = "#000000" #Black
+    return((bgcol, fgcol))
+def dashboard_update(request):
+    command_status = send2middleware("F")
+    #Add a pop-up with error status
+    return dashboard(request)

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<!-- Template by html.am -->
+
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>Dashboard</title>
+        
+		{% load staticfiles %}
+        <link rel="stylesheet" type="text/css" href="{% static 'allStyle.css' %}">
+        
+        <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+        <script type="text/javascript">
+          google.load("visualization", "1", {packages:["gauge"]});
+          google.setOnLoadCallback(drawChart);
+          function drawChart() {
+
+            var data1 = google.visualization.arrayToDataTable([
+                ['Label', 'Value'],
+                ['Amb Temp', {{ vals.temp_amb }}]
+            ]);
+            var data2 = google.visualization.arrayToDataTable([
+                ['Label', 'Value'],
+                ['Beer Temp', {{ vals.temp_beer }}]
+            ]);
+            var data3 = google.visualization.arrayToDataTable([
+                ['Label', 'Value'],
+                ['Amb Light', {{ vals.light_amb }}]
+            ]);
+            var data4 = google.visualization.arrayToDataTable([
+                ['Label', 'Value'],
+                ['Pressure', {{ vals.pres_beer }}]
+            ]);
+            var options1 = {
+              width: 200, height: 240,
+              greenFrom: {{ greenrng.temp_amb.0 }}, greenTo: {{ greenrng.temp_amb.1 }},
+              min:50, max:100,
+              minorTicks: 5
+            };
+            var options2 = {
+              width: 200, height: 240,
+              greenFrom: {{ greenrng.temp_beer.0 }}, greenTo: {{ greenrng.temp_beer.1 }},
+              min:50, max:100,
+              minorTicks: 5
+            };
+            var options3 = {
+              width: 200, height: 240,
+              min:0, max:200,
+              minorTicks: 5
+            };
+            var options4 = {
+              width: 200, height: 240,
+              min:0, max:200,
+              minorTicks: 5
+            };
+
+            var chart = new google.visualization.Gauge(document.getElementById('chart_div1'));
+            chart.draw(data1, options1);
+            var chart = new google.visualization.Gauge(document.getElementById('chart_div2'));
+            chart.draw(data2, options2);
+            var chart = new google.visualization.Gauge(document.getElementById('chart_div3'));
+            chart.draw(data3, options3);
+            var chart = new google.visualization.Gauge(document.getElementById('chart_div4'));
+            chart.draw(data4, options4);
+          }
+        </script>
+	</head>
+	
+	<body>		
+				
+		<main>
+			<h2>Last logged values:</h2>
+            <h4>Last updated {{ last_log_ago }}.</h4><br>
+            
+            <div>
+                <div id="chart_div1" style="display: inline-block;"></div>
+                <div id="chart_div2" style="display: inline-block;"></div>
+                <div id="chart_div3" style="display: inline-block;"></div>
+                <div id="chart_div4" style="display: inline-block;"></div>
+            </div>
+            
+            <form action="/monitor/dashboard/update/" method="get">
+                <input type="submit" value="Update">
+            </form>
+            
+            <table border = "1">
+                <tr>
+                    <th>Measurement</th>
+                    <th>Value</th>
+                </tr><tr>
+                    <td>Current Amb Temp</td>
+                    <td bgcolor = {{ bgcols.temp_amb }} align = "right">{{ vals.temp_amb }}</td>
+                </tr><tr>
+                    <td>Current Beer Temp</td>
+                    <td bgcolor = {{ bgcols.temp_beer }} align = "right">{{ vals.temp_beer }}</td>
+                </tr><tr>
+                    <td>Current Amb Light</td>
+                    <td bgcolor = {{ bgcols.light_amb }} align = "right">{{ vals.light_amb }}</td>
+                </tr><tr>
+                    <td>Current Beer Pressure</td>
+                    <td bgcolor = {{ bgcols.pres_beer }} align = "right">{{ vals.pres_beer }}</td>
+                </tr>
+                
+            </table>
+		</main>
+	
+		<nav id="nav">
+			<div class="innertube">
+			
+			<h3>Beers</h3>
+			<ul>
+				<li><a href="/monitor/graph/">Active Beer</a></li>
+                {% for beer in all_beers %}
+                    <li><a href="/monitor/graph/{{ beer.id }}/">{{ beer }}</a></li>
+                {% endfor %}
+			</ul>
+			<h3>Options</h3>
+			<ul>
+                <li><a href="/monitor/dashboard/">Dashboard</a></li>
+				<li><a href="/monitor/commands/">Commands</a></li>
+				<li><a href="/admin/">Admin</a></li>
+			</ul>
+			</div>
+		</nav>
+	
+	</body>
+</html>
