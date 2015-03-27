@@ -550,13 +550,24 @@ def dashboard(request, cur_beer=None):
     # -Add button to force a log and refresh page
     # -and/or add button to send2middleware("r=var") and update charts
     # -Add footnote of time of last log
+    # -Function to find bgcol (and fgcol)
     cur_reading = [r for r in Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1]][0]
-    cur_vals = {
-        "cur_temp_amb": cur_reading.get_temp_amb(),
-        "cur_temp_beer": cur_reading.get_temp_beer(),
-        "cur_light_amb": cur_reading.get_light_amb(),
-        "cur_pres_beer": cur_reading.get_pres_beer(),
-        "last_log": cur_reading.instant_actual.strftime("%Y-%m-%d %H:%M:%S")
+    data = {
+        "vals": {
+            "cur_temp_amb": cur_reading.get_temp_amb(),
+            "cur_temp_beer": cur_reading.get_temp_beer(),
+            "cur_light_amb": cur_reading.get_light_amb(),
+            "cur_pres_beer": cur_reading.get_pres_beer()
+        },
+        "bgcols" : {
+            "cur_temp_amb": "white",
+            "cur_temp_beer": "white",
+            "cur_light_amb": "white",
+            "cur_pres_beer": "white"
+        },
+        "last_log_date": cur_reading.instant_actual.strftime("%Y-%m-%d"),
+        "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
+        'all_beers': Beer.objects.all()
     }
-    out = "<br>".join([": ".join([v, str(cur_vals[v])]) for v in cur_vals])
-    return HttpResponse(out)
+    
+    return render_to_response('dashboard.html',data)
