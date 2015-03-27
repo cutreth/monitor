@@ -543,6 +543,7 @@ def dashboard(request):
     # -Add button to force a log and refresh page
     # -Add footnote of time of last log
     # -Function to find bgcol (and fgcol) and paint cells
+    # -Add red and/or yellow ranges to gauges and cell painting
     
     active_config = Config.objects.filter()[:1].get()
     active_beer = active_config.beer
@@ -594,7 +595,11 @@ def get_date_diff(d1,d2):
 def get_paint_cols(val, rng = None):
     if rng == None: bgcol = "#FFFFFF" #White
     elif(rng[0] <= val <= rng[1]): bgcol = "#008000" #Green
-    else: bgcol = "#FF0000"
+    else: bgcol = "#FF0000" #Red
     
-    fgcol = "#000000"
+    fgcol = "#000000" #Black
     return((bgcol, fgcol))
+def dashboard_update(request):
+    command_status = send2middleware("F")
+    #Add a pop-up with error status
+    return dashboard(request)
