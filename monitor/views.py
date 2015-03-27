@@ -539,6 +539,7 @@ def createFig(vers, active_beer):
     return fig
     
 def dashboard(request, cur_beer=None):
+    ## !RANGES ONLY EXIST FOR ACTIVE BEER! ##
     if cur_beer is None:
         active_config = Config.objects.filter()[:1].get()
         active_beer = active_config.beer
@@ -546,28 +547,35 @@ def dashboard(request, cur_beer=None):
         active_beer = Beer.objects.get(pk=cur_beer)
     # To do:
     # -Get most recent logged values (or send2middlware("r=var")?)
+    # -Can use setInterval js function to auto update with send2middlware("r=var")?
     # -Add dashboard graphs
     # -Add button to force a log and refresh page
     # -and/or add button to send2middleware("r=var") and update charts
     # -Add footnote of time of last log
     # -Function to find bgcol (and fgcol)
+    # -How much time since last log
     cur_reading = [r for r in Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1]][0]
     data = {
         "vals": {
-            "cur_temp_amb": cur_reading.get_temp_amb(),
-            "cur_temp_beer": cur_reading.get_temp_beer(),
-            "cur_light_amb": cur_reading.get_light_amb(),
-            "cur_pres_beer": cur_reading.get_pres_beer()
+            "temp_amb": cur_reading.get_temp_amb(),
+            "temp_beer": cur_reading.get_temp_beer(),
+            "light_amb": cur_reading.get_light_amb(),
+            "pres_beer": cur_reading.get_pres_beer()
         },
         "bgcols" : {
-            "cur_temp_amb": "white",
-            "cur_temp_beer": "white",
-            "cur_light_amb": "white",
-            "cur_pres_beer": "white"
+            "temp_amb": "white",
+            "temp_beer": "white",
+            "light_amb": "white",
+            "pres_beer": "white"
+        },
+        "greenrng": {
+            "temp_amb": [active_config.temp_amb_base - active_config.temp_amb_dev, active_config.temp_amb_base + active_config.temp_amb_dev],
+            "temp_beer": [active_config.temp_beer_base - active_config.temp_beer_dev, active_config.temp_beer_base + active_config.temp_beer_dev]
         },
         "last_log_date": cur_reading.instant_actual.strftime("%Y-%m-%d"),
         "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
-        'all_beers': Beer.objects.all()
+        'all_beers': Beer.objects.all(),
+        'test': int(active_config.temp_amb_base - active_config.temp_amb_dev)
     }
     
     return render_to_response('dashboard.html',data)
