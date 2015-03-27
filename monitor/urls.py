@@ -11,5 +11,4 @@ urlpatterns = patterns('',
     url(r'^graph/$', views.graph, name='graph_default'),
     url(r'^graph/(?P<cur_beer>\d+)/$', views.graph, name='graph_beer'),
     url(r'^dashboard/$', views.dashboard, name='dashboard_default'),
-    url(r'^dashboard/(?P<cur_beer>\d+)/$', views.dashboard, name='graph_beer'),
 )
