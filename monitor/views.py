@@ -567,8 +567,7 @@ def dashboard(request):
         },
         "last_log_date": cur_reading.instant_actual.strftime("%Y-%m-%d"),
         "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
-        'all_beers': Beer.objects.all(),
-        'test': int(active_config.temp_amb_base - active_config.temp_amb_dev)
+        'all_beers': Beer.objects.all()
     }
     
     return render_to_response('dashboard.html',data)
