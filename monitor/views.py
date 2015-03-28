@@ -473,7 +473,9 @@ def createFig(vers, active_beer):
 
     fig, ax = plt.subplots()
     ax.grid(True, alpha=0.3)
-        
+    fig.set_figheight(6)
+    fig.set_figwidth(12)    
+    
     # Define some CSS to control our custom labels
     css = """
     table
@@ -509,14 +511,14 @@ def createFig(vers, active_beer):
         df['Temp Beer'] = temp_beer_data
         y_temp_beer = ax.plot_date(df['Instant'],df['Temp Beer'],'r.-',label='Temp Beer')
         ax.set_ylabel('Temp')
-        title = str(active_beer) + ' - Temp'
+        title = 'Temp'
         
     if vers==2:
         light_amb_data = [n.get_light_amb() for n in active_readings]
         df['Light Amb'] = light_amb_data
         y_light_amb = ax.plot_date(df['Instant'],df['Light Amb'],'y.-',label='Light Amb')  
         ax.set_ylabel('Light') 
-        title = str(active_beer) + ' - Light' 
+        title = 'Light' 
 
     instant_data = [mpld.num2date(n).strftime('%Y-%m-%d %H:%M') for n in instant_data]
     df.drop('Instant',axis=1,inplace=True)    
