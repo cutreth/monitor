@@ -436,23 +436,33 @@ def createDF(active_beer):
     import matplotlib.dates as mpld
     import pandas as pd
 
+    df = pd.DataFrame(columns = ['Instant', 'Temp Amb', 'Temp Beer', 'Light Amb'])
+    #Add logic for instances where no data exists
+    #Add logic to remove assumption that data is ordered; sort by instant?
+
+
+    #active_archives = None
+    #for archive in active_archives:
+        #for counter in archive.count:
+            #instant = None
+            #temp_amb = None
+            #temp_beer = None
+            #light_amb = None
+            
+            #i = len(df)
+            #df.loc([i]) == [instant, temp_amb, temp_beer, light_amb]
+
     active_readings = getReadings(active_beer)
-    instant_data = [mpld.date2num(n.instant_actual) for n in active_readings]
+    for reading in active_readings:        
 
-    df = pd.DataFrame()
-    df['Instant'] = instant_data
-
-    temp_amb_data = [n.get_temp_amb() for n in active_readings]
-    df['Temp Amb'] = temp_amb_data
-
-    temp_beer_data = [n.get_temp_beer() for n in active_readings]
-    df['Temp Beer'] = temp_beer_data
-
-    light_amb_data = [n.get_light_amb() for n in active_readings]
-    df['Light Amb'] = light_amb_data
-
-    #Add code to handle when there are no readings at all
-
+        instant = mpld.date2num(reading.instant_actual)
+        temp_amb = reading.get_temp_amb()
+        temp_beer = reading.get_temp_beer()
+        light_amb = reading.get_light_amb()        
+        
+        i = len(df)
+        df.loc[i] = [instant, temp_amb, temp_beer, light_amb]
+        
     return df
 
 def graph(request,cur_beer=None):
@@ -494,7 +504,6 @@ def createFig(vers, active_beer):
     fig.set_figheight(6)
     fig.set_figwidth(12)
 
-    # Define some CSS to control our custom labels
     css = """
     table
     {
@@ -541,7 +550,6 @@ def createFig(vers, active_beer):
     instant_data = [mpld.num2date(n).strftime('%Y-%m-%d %H:%M') for n in df['Instant']]
     df.drop('Instant',axis=1,inplace=True)
 
-    #Create chart labels
     labels = []
     for i in range(len(df.index)):
         label = df.ix[[i], :].T
