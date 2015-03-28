@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 
 from monitor.middleware import send2middleware
-from monitor.models import Beer, Reading, Config
+from monitor.models import Beer, Reading, Config, Archive
 
 from time import sleep
 from datetime import timedelta
@@ -429,28 +429,39 @@ def chart(request, cur_beer=None):
     return render_to_response('chart.html', data)
 
 def getReadings(active_beer):
+    '''Return all readings for active_beer ordered by instant_actual'''
     active_readings = Reading.objects.filter(beer=active_beer).order_by('instant_actual')
     return active_readings
+    
+def getArchives(active_beer):
+    active_archives = Archive.objects.filter(beer=active_beer).order_by('reading_date')
+    return active_archives
 
 def createDF(active_beer):
+    '''Return a DF of reading/archive data, ordered by instant'''
     import matplotlib.dates as mpld
     import pandas as pd
 
     df = pd.DataFrame(columns = ['Instant', 'Temp Amb', 'Temp Beer', 'Light Amb'])
     #Add logic for instances where no data exists
-    #Add logic to remove assumption that data is ordered; sort by instant?
 
-
-    #active_archives = None
-    #for archive in active_archives:
-        #for counter in archive.count:
-            #instant = None
-            #temp_amb = None
-            #temp_beer = None
-            #light_amb = None
+    active_archives = getArchives(active_beer)
+    for archive in active_archives:
+        counter = 0
+        instant_actual_a = archive.get_instant_actual()        
+        temp_amb_a = archive.get_temp_amb()        
+        temp_beer_a = archive.get_temp_beer()        
+        light_amb_a = archive.get_light_amb()                     
+        
+        while counter < archive.count:        
+            instant_actual = instant_actual_a[counter]
+            temp_amb = temp_amb_a[counter]
+            temp_beer = temp_beer_a[counter]
+            light_amb = light_amb_a[counter]
+            counter += 1            
             
-            #i = len(df)
-            #df.loc([i]) == [instant, temp_amb, temp_beer, light_amb]
+            i = len(df)
+            df.loc[i] = [instant_actual, temp_amb, temp_beer, light_amb]
 
     active_readings = getReadings(active_beer)
     for reading in active_readings:        
@@ -462,7 +473,10 @@ def createDF(active_beer):
         
         i = len(df)
         df.loc[i] = [instant, temp_amb, temp_beer, light_amb]
-        
+    
+    #Add logic to remove assumption that data is ordered; sort by instant?    
+    df = df.sort('Instant') #Note - this breaks tooltips for unordered data
+    df = df.reset_index(drop=True)
     return df
 
 def graph(request,cur_beer=None):
