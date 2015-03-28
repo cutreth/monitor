@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from monitor.middleware import send2middleware
 from monitor.models import Beer, Reading, Config
 
+from time import sleep
 from datetime import timedelta, datetime
 from postmark import PMMail
 import calendar, datetime
@@ -565,9 +566,13 @@ def dashboard(request):
     cur_temp_beer = cur_reading.get_temp_beer()
     cur_light_amb = cur_reading.get_light_amb()
     cur_pres_beer = cur_reading.get_pres_beer()
-            
-    temp_amb_rng = [active_config.temp_amb_base - active_config.temp_amb_dev, active_config.temp_amb_base + active_config.temp_amb_dev]
-    temp_beer_rng = [active_config.temp_beer_base - active_config.temp_beer_dev, active_config.temp_beer_base + active_config.temp_beer_dev]
+    
+    if active_config.temp_amb_base != None and active_config.temp_amb_dev != None:
+        temp_amb_rng = [active_config.temp_amb_base - active_config.temp_amb_dev, active_config.temp_amb_base + active_config.temp_amb_dev]
+    else: temp_amb_rng = (0,0)
+    if active_config.temp_beer_base != None and active_config.temp_beer_dev != None:
+        temp_beer_rng = [active_config.temp_beer_base - active_config.temp_beer_dev, active_config.temp_beer_base + active_config.temp_beer_dev]
+    else: temp_beer_rng = (0,0)
     
     data = {
         "vals": {
@@ -611,6 +616,17 @@ def get_paint_cols(val, rng = None):
     fgcol = "#000000" #Black
     return((bgcol, fgcol))
 def dashboard_update(request):
-    command_status = send2middleware("F")
-    #Add a pop-up with error status
-    return dashboard(request)
+    active_config = Config.objects.filter()[:1].get()
+    active_beer = active_config.beer
+    old_reading = Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1].get()
+    
+    for i in range(4):
+        command_status = send2middleware("F")
+        if command_status[0] == "Success": break
+        sleep(.1)
+    if command_status[0] == "Success":
+        for i in range(49):
+            if Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1].get() != old_reading: break
+            sleep(.1)
+    print(command_status[0])
+    return HttpResponseRedirect(reverse('dashboard'))
