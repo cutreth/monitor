@@ -450,7 +450,7 @@ def graph(request,cur_beer=None):
         'all_beers': all_beers,
         'beer_name': beer_name,
         'beer_date': beer_date,
-        'active_beer': getActiveBeer(), #Replace with active_beer to always show current beer bold
+        'active_beer': getActiveBeer(),
         'fig1': fig1_html,
         'fig2': fig2_html
     }
@@ -594,7 +594,8 @@ def dashboard(request):
         "last_log_date": cur_reading.instant_actual.strftime("%Y-%m-%d"),
         "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
         "last_log_ago": get_date_diff(cur_reading.instant_actual, datetime.datetime.now()),
-        'all_beers': Beer.objects.all()
+        'all_beers': Beer.objects.all(),
+        'active_beer': getActiveBeer(),
     }
     
     return render_to_response('dashboard.html',data)
