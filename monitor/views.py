@@ -1,4 +1,4 @@
-from django.shortcuts import render_to_response, render, RequestContext
+from django.shortcuts import render_to_response
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -79,7 +79,20 @@ def getInstantOverride(request):
             instant_override = int(0)
     finally:
         return instant_override
-        
+
+def getActiveConfig():
+    active_config = Config.objects.filter()[:1].get()
+    return active_config 
+    
+def getActiveBeer():
+    active_config = getActiveConfig()    
+    active_beer = active_config.beer
+    return active_beer
+    
+def getAllBeer():
+    all_beer = Beer.objects.all()
+    return all_beer
+
 def MaxMinCheck(base, deviation, value, category):
     '''Returns an error string if the input value exceeds the calculated bounds'''
     error = None    
@@ -192,8 +205,8 @@ def api(request):
     key = stringFromPost(request, 'key')
     if (key == 'beer') or (key == 'test'):
 
-        active_config = Config.objects.filter()[:1].get()
-        active_beer = active_config.beer #Get active beer
+        active_config = getActiveConfig()
+        active_beer = getActiveBeer() #Get active beer
 
         read = Reading(beer=active_beer) #Create reading record
 
@@ -287,9 +300,8 @@ def commands(request):
                        ('e','Turn remote logging off')
                       ]
 
-    active_config = Config.objects.filter()[:1].get()
-    active_beer = active_config.beer
-    all_beers = Beer.objects.all()
+    active_beer = getActiveBeer()
+    all_beers = getAllBeer()
     beer_name = active_beer
     beer_date = active_beer.brew_date
 
@@ -297,6 +309,7 @@ def commands(request):
     'all_beers': all_beers,
     'beer_name': beer_name,
     'beer_date': beer_date,
+    'active_beer': getActiveBeer(),
     'command_status': command_status,
     'command_options': command_options,
     'error': error,
@@ -320,11 +333,10 @@ def ConvertDateTime(obj):
 
 def chart(request, cur_beer=None):
     #Plan to depricate this function
-    all_beers = Beer.objects.all()
+    all_beers = getAllBeer()
 
     if cur_beer is None:
-        active_config = Config.objects.filter()[:1].get()
-        active_beer = active_config.beer
+        active_beer = getActiveBeer()
     else:
         active_beer = Beer.objects.get(pk=cur_beer)
 
@@ -419,12 +431,11 @@ def graph(request,cur_beer=None):
     import mpld3 
         
     if cur_beer is None:
-        active_config = Config.objects.filter()[:1].get()
-        active_beer = active_config.beer
+        active_beer = getActiveBeer()
     else:
         active_beer = Beer.objects.get(pk=cur_beer)
     
-    all_beers = Beer.objects.all()
+    all_beers = getAllBeer()
     beer_name = active_beer
     beer_date = active_beer.brew_date
     
@@ -438,6 +449,7 @@ def graph(request,cur_beer=None):
         'all_beers': all_beers,
         'beer_name': beer_name,
         'beer_date': beer_date,
+        'active_beer': getActiveBeer(), #Replace with active_beer to always show current beer bold
         'fig1': fig1_html,
         'fig2': fig2_html
     }
@@ -448,7 +460,6 @@ def createFig(vers, active_beer):
     import matplotlib.pyplot as plt
     import matplotlib.dates as mpld
     import pandas as pd
-    import numpy as np
     from mpld3 import plugins
 
     active_readings = Reading.objects.filter(beer=active_beer).order_by('instant_actual')
@@ -457,7 +468,7 @@ def createFig(vers, active_beer):
     x_count = len(active_readings)
     x_range = range(x_count)
     df = pd.DataFrame(index=x_range)
-    df['x_instant'] = instant_data
+    df['Instant'] = instant_data
 
     fig, ax = plt.subplots()
     ax.grid(True, alpha=0.3)
@@ -487,27 +498,27 @@ def createFig(vers, active_beer):
         
     if vers==1:
         temp_amb_data = [n.get_temp_amb() for n in active_readings]
-        df['y_temp_amb'] = temp_amb_data        
-        y_temp_amb = ax.plot_date(df['x_instant'],df['y_temp_amb'],'b.-',label='amb')   
+        df['Temp Amb'] = temp_amb_data        
+        y_temp_amb = ax.plot_date(df['Instant'],df['Temp Amb'],'b.-',label='Temp Amb')   
         ax.set_ylabel('Temp')      
         title = str(active_beer) + ' - Temp'
 
     if vers==1:
         temp_beer_data = [n.get_temp_beer() for n in active_readings]
-        df['y_temp_beer'] = temp_beer_data
-        y_temp_beer = ax.plot_date(df['x_instant'],df['y_temp_beer'],'r.-',label='beer')
+        df['Temp Beer'] = temp_beer_data
+        y_temp_beer = ax.plot_date(df['Instant'],df['Temp Beer'],'r.-',label='Temp Beer')
         ax.set_ylabel('Temp')
         title = str(active_beer) + ' - Temp'
         
     if vers==2:
         light_amb_data = [n.get_light_amb() for n in active_readings]
-        df['y_light_amb'] = light_amb_data
-        y_light_amb = ax.plot_date(df['x_instant'],df['y_light_amb'],'y.-',label='light')  
+        df['Light Amb'] = light_amb_data
+        y_light_amb = ax.plot_date(df['Instant'],df['Light Amb'],'y.-',label='Light Amb')  
         ax.set_ylabel('Light') 
         title = str(active_beer) + ' - Light' 
 
     instant_data = [mpld.num2date(n).strftime('%Y-%m-%d %H:%M') for n in instant_data]
-    df.drop('x_instant',axis=1,inplace=True)    
+    df.drop('Instant',axis=1,inplace=True)    
     
     #Create chart labels
     labels = []   
