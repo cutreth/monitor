@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from monitor.models import Archive
 from monitor.views import getActiveBeer, getReadings
+from monitor.archive import getArchive, createArchive, updateArchive
 
 import matplotlib.dates as mpld
 import datetime
@@ -21,17 +22,12 @@ class Command(BaseCommand):
         active_readings = active_readings.filter(instant_actual__lte=week_ago)
 
         for day in active_readings.dates('instant_actual', 'day', order='DESC'):
-            new_archive = Archive(beer=active_beer, reading_date=day)
+            archive = getArchive(active_beer, day)
+            if not bool (archive):
+                archive = createArchive(active_beer, day)
             day_readings = active_readings.filter(instant_actual__gte=day)
             for reading in day_readings:
-                new_archive.instant_actual = str(mpld.date2num(reading.instant_actual)) + '^'
-                new_archive.light_amb = str(reading.get_light_amb) + '^'
-                new_archive.pres_beer = str(reading.get_pres_beer) + '^'
-                new_archive.temp_amb = str(reading.get_temp_amb) + '^'
-                new_archive.temp_beer = str(reading.get_temp_beer) + '^'
-                new_archive.count += 1
-                new_archive.save()
-                reading.delete()
+                updateArchive(archive, reading)
 
         return None
 
