@@ -35,7 +35,11 @@
 			<ul>
 				<li><a href="/monitor/graph/">Active Beer</a></li>
                 {% for beer in all_beers %}
+                {% if beer == active_beer %}
+                    <b><li><a href="/monitor/graph/{{ beer.id }}/">{{ beer }}</a></li></b>                
+                {% else %}
                     <li><a href="/monitor/graph/{{ beer.id }}/">{{ beer }}</a></li>
+                {% endif %}
                 {% endfor %}
 			</ul>
 			<h3>Options</h3>

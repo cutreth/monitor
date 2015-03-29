@@ -8,6 +8,64 @@ class Beer(models.Model):
     
     def __str__(self):
         return self.beer_text
+        
+class Archive(models.Model):
+    
+    beer = models.ForeignKey(Beer)
+    reading_date = models.DateField('Reading Date')
+    instant_actual = models.TextField('Instant Actual')
+    light_amb = models.TextField('Ambient Light')
+    pres_beer = models.TextField('Beer Pressure')
+    temp_amb = models.TextField('Ambient Temp')
+    temp_beer = models.TextField('Beer Temp')
+    count = models.PositiveIntegerField('Count', default=0)
+    #Add conversion to F in archiving code
+    
+    def __str__(self):
+        value = str(self.beer) + ': '
+        value = value + str(self.reading_date.strftime("%Y-%m-%d")) + ' ['
+        value = value + str(self.count) + ']'
+        return value
+    
+    def get_instant_actual(self):
+        val = self.instant_actual
+        if bool(val):
+            out = val.split('^')
+            del out[-1]
+            out = [float(n) for n in out]
+        return out     
+        
+    def get_light_amb(self):
+        val = self.light_amb
+        if bool(val):
+            out = val.split('^')
+            del out[-1]
+            out = [float(n) for n in out]
+        return out
+
+    def get_pres_beer(self):
+        val = self.pres_beer
+        if bool(val):
+            out = val.split('^')
+            del out[-1]
+            out = [float(n) for n in out]
+        return out
+        
+    def get_temp_amb(self):
+        val = self.temp_amb
+        if bool(val):
+            out = val.split('^')
+            del out[-1]
+            out = [float(n) for n in out]
+        return out
+        
+    def get_temp_beer(self):
+        val = self.temp_beer
+        if bool(val):
+            out = val.split('^')
+            del out[-1]
+            out = [float(n) for n in out]
+        return out
     
 class Reading(models.Model):
 
@@ -40,21 +98,21 @@ class Reading(models.Model):
     error_flag = models.NullBooleanField('Error?')
     error_details = models.CharField('Error Details',blank=True,max_length=150)
             
-	#Break out conversion into a new function, combine with get_temp_beer
+    #Break out conversion into a new function, combine with get_temp_beer
     def get_temp_amb(self):
         if self.temp_unit is 'F' or self.temp_unit is None:
             return float(self.temp_amb)
         else:
             return float(self.temp_amb*9/5+32)
     
-	#Break out conversion into a new function, combine with get_temp_amb
+    #Break out conversion into a new function, combine with get_temp_amb
     def get_temp_beer(self):
         if self.temp_unit is 'F' or self.temp_unit is None:
             return float(self.temp_beer)
         else:
             return float(self.temp_beer*9/5+32)
     
-	#Eventually remove the clipping code; this should be handled on the server
+    #Eventually remove the clipping code; this should be handled on the server
     def get_light_amb(self):
         value = self.light_amb
         if value > 200:

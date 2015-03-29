@@ -1,5 +1,5 @@
 from django.contrib import admin
-from monitor.models import Beer, Reading, Config
+from monitor.models import Beer, Reading, Config, Archive
 
 class ReadingInLine(admin.TabularInline):
     model = Reading
@@ -25,7 +25,16 @@ class ReadingAdmin(admin.ModelAdmin):
     ]
 
     readonly_fields = ('instant','instant_actual')
+    
+class ArchiveAdmin(admin.ModelAdmin):
+    
+    fields = ('beer','reading_date','count','instant_actual',
+              'light_amb','pres_beer','temp_amb','temp_beer',)
+
+    readonly_fields = ('beer','reading_date','count','instant_actual',
+                       'light_amb','pres_beer','temp_amb','temp_beer',)
 
 admin.site.register(Beer, BeerAdmin)
 admin.site.register(Config)
 admin.site.register(Reading,ReadingAdmin)
+admin.site.register(Archive,ArchiveAdmin)

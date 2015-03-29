@@ -1,13 +1,13 @@
-from django.shortcuts import render_to_response, render, RequestContext
+from django.shortcuts import render_to_response
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 
 from monitor.middleware import send2middleware
-from monitor.models import Beer, Reading, Config
+from monitor.models import Beer, Reading, Config, Archive
 
 from time import sleep
-from datetime import timedelta, datetime
+from datetime import timedelta
 from postmark import PMMail
 import calendar, datetime
 
@@ -80,10 +80,23 @@ def getInstantOverride(request):
             instant_override = int(0)
     finally:
         return instant_override
-        
+
+def getActiveConfig():
+    active_config = Config.objects.filter()[:1].get()
+    return active_config
+
+def getActiveBeer():
+    active_config = getActiveConfig()
+    active_beer = active_config.beer
+    return active_beer
+
+def getAllBeer():
+    all_beer = Beer.objects.all()
+    return all_beer
+
 def MaxMinCheck(base, deviation, value, category):
     '''Returns an error string if the input value exceeds the calculated bounds'''
-    error = None    
+    error = None
     if bool(base) and bool(deviation):
         upper = base + deviation
         lower = base - deviation
@@ -108,17 +121,17 @@ def ErrorCheck(active_config, read):
     error_cat = 'temp_amb'
     temp_amb_base = active_config.temp_amb_base
     temp_amb_dev = active_config.temp_amb_dev
-    temp_amb = read.get_temp_amb()    
+    temp_amb = read.get_temp_amb()
     error = MaxMinCheck(temp_amb_base, temp_amb_dev, temp_amb, error_cat)
     [error_flag, error_details] = SetErrorInfo(error_flag, error_details, error)
 
     error_cat = 'temp_beer'
     temp_beer_base = active_config.temp_beer_base
     temp_beer_dev = active_config.temp_beer_dev
-    temp_beer = read.get_temp_beer()    
+    temp_beer = read.get_temp_beer()
     error = MaxMinCheck(temp_beer_base, temp_beer_dev, temp_beer, error_cat)
     [error_flag, error_details] = SetErrorInfo(error_flag, error_details, error)
-    
+
     read.error_flag = error_flag
     read.error_details = error_details
     return read.error_flag
@@ -144,7 +157,7 @@ def BuildErrorEmail(active_config, read, error_details):
 
 def isTimeBefore(reference, current, delta):
     '''Returns true if reference is before current minus delta
-    (5AM, 7AM, 1 hour) -> True; (5AM, 7AM, 3 hours) -> False'''    
+    (5AM, 7AM, 1 hour) -> True; (5AM, 7AM, 3 hours) -> False'''
     return (reference <= current - delta)
 
 def SendErrorEmail(active_config, message):
@@ -153,7 +166,7 @@ def SendErrorEmail(active_config, message):
     email_last_instant = active_config.email_last_instant
     right_now = datetime.datetime.now()
     time_delta = datetime.timedelta(minutes=email_timeout)
-    
+
     if send_email and bool(message): #Email if no last instant or if cooldown is over
         if not bool(email_last_instant) or isTimeBefore(email_last_instant, right_now, time_delta):
             active_config.email_last_instant = right_now
@@ -193,8 +206,8 @@ def api(request):
     key = stringFromPost(request, 'key')
     if (key == 'beer') or (key == 'test'):
 
-        active_config = Config.objects.filter()[:1].get()
-        active_beer = active_config.beer #Get active beer
+        active_config = getActiveConfig()
+        active_beer = getActiveBeer() #Get active beer
 
         read = Reading(beer=active_beer) #Create reading record
 
@@ -252,7 +265,7 @@ def send_command(request, command_char=None):
         command_status = str('')
     else:
         command_status = send2middleware(command_char)
-    request.session['command_status']= command_status                
+    request.session['command_status']= command_status
     return HttpResponseRedirect(reverse('commands'))
 
 def commands(request):
@@ -260,7 +273,7 @@ def commands(request):
     command_status = blank
     error = blank
     details = blank
-    
+
     if request.session.has_key('command_status'):
         command_status = request.session.get('command_status')
         del request.session['command_status']
@@ -271,7 +284,7 @@ def commands(request):
         error = blank
     if not bool(details):
         details = blank
-        
+
     command_options = [('f','Force a log'),
                        ('m','Show log freq'),
                        ('m=1','Log freq = 1'),
@@ -288,9 +301,8 @@ def commands(request):
                        ('e','Turn remote logging off')
                       ]
 
-    active_config = Config.objects.filter()[:1].get()
-    active_beer = active_config.beer
-    all_beers = Beer.objects.all()
+    active_beer = getActiveBeer()
+    all_beers = getAllBeer()
     beer_name = active_beer
     beer_date = active_beer.brew_date
 
@@ -298,12 +310,13 @@ def commands(request):
     'all_beers': all_beers,
     'beer_name': beer_name,
     'beer_date': beer_date,
+    'active_beer': getActiveBeer(),
     'command_status': command_status,
     'command_options': command_options,
     'error': error,
     'details': details
     }
-    
+
     return render_to_response('commands.html', data)
 
 def ConvertDateTime(obj):
@@ -321,11 +334,10 @@ def ConvertDateTime(obj):
 
 def chart(request, cur_beer=None):
     #Plan to depricate this function
-    all_beers = Beer.objects.all()
+    all_beers = getAllBeer()
 
     if cur_beer is None:
-        active_config = Config.objects.filter()[:1].get()
-        active_beer = active_config.beer
+        active_beer = getActiveBeer()
     else:
         active_beer = Beer.objects.get(pk=cur_beer)
 
@@ -415,55 +427,97 @@ def chart(request, cur_beer=None):
         }
     }
     return render_to_response('chart.html', data)
+
+def getReadings(active_beer):
+    '''Return all readings for active_beer ordered by instant_actual'''
+    active_readings = Reading.objects.filter(beer=active_beer).order_by('instant_actual')
+    return active_readings
     
-def graph(request,cur_beer=None):
-    import mpld3 
+def getArchives(active_beer):
+    active_archives = Archive.objects.filter(beer=active_beer).order_by('reading_date')
+    return active_archives
+
+def createDF(active_beer):
+    '''Return a DF of reading/archive data, ordered by instant'''
+    import matplotlib.dates as mpld
+    import pandas as pd
+
+    df = pd.DataFrame(columns = ['Instant', 'Temp Amb', 'Temp Beer', 'Light Amb'])
+    #Add logic for instances where no data exists
+
+    active_archives = getArchives(active_beer)
+    for archive in active_archives:
+        counter = 0
+        instant_actual_a = archive.get_instant_actual()        
+        temp_amb_a = archive.get_temp_amb()        
+        temp_beer_a = archive.get_temp_beer()        
+        light_amb_a = archive.get_light_amb()                     
         
+        while counter < archive.count:        
+            instant_actual = instant_actual_a[counter]
+            temp_amb = temp_amb_a[counter]
+            temp_beer = temp_beer_a[counter]
+            light_amb = light_amb_a[counter]
+            counter += 1            
+            
+            i = len(df)
+            df.loc[i] = [instant_actual, temp_amb, temp_beer, light_amb]
+
+    active_readings = getReadings(active_beer)
+    for reading in active_readings:        
+
+        instant = mpld.date2num(reading.instant_actual)
+        temp_amb = reading.get_temp_amb()
+        temp_beer = reading.get_temp_beer()
+        light_amb = reading.get_light_amb()        
+        
+        i = len(df)
+        df.loc[i] = [instant, temp_amb, temp_beer, light_amb]
+    
+    #Add logic to remove assumption that data is ordered; sort by instant?    
+    df = df.sort('Instant') #Note - this breaks tooltips for unordered data
+    df = df.reset_index(drop=True)
+    return df
+
+def graph(request,cur_beer=None):
+    import mpld3
+
     if cur_beer is None:
-        active_config = Config.objects.filter()[:1].get()
-        active_beer = active_config.beer
+        active_beer = getActiveBeer()
     else:
         active_beer = Beer.objects.get(pk=cur_beer)
-    
-    all_beers = Beer.objects.all()
+
+    all_beers = getAllBeer()
     beer_name = active_beer
     beer_date = active_beer.brew_date
-    
+
     fig1=createFig(1, active_beer)
     fig2=createFig(2, active_beer)
 
     fig1_html = mpld3.fig_to_html(fig1)
     fig2_html = mpld3.fig_to_html(fig2)
-    
+
     data = {
         'all_beers': all_beers,
         'beer_name': beer_name,
         'beer_date': beer_date,
+        'active_beer': getActiveBeer(),
         'fig1': fig1_html,
         'fig2': fig2_html
     }
-    
+
     return render_to_response('graph.html',data)
 
 def createFig(vers, active_beer):
     import matplotlib.pyplot as plt
     import matplotlib.dates as mpld
-    import pandas as pd
-    import numpy as np
     from mpld3 import plugins
-
-    active_readings = Reading.objects.filter(beer=active_beer).order_by('instant_actual')
-    instant_data = [mpld.date2num(n.instant_actual) for n in active_readings]
-    
-    x_count = len(active_readings)
-    x_range = range(x_count)
-    df = pd.DataFrame(index=x_range)
-    df['x_instant'] = instant_data
 
     fig, ax = plt.subplots()
     ax.grid(True, alpha=0.3)
-        
-    # Define some CSS to control our custom labels
+    fig.set_figheight(6)
+    fig.set_figwidth(12)
+
     css = """
     table
     {
@@ -484,85 +538,83 @@ def createFig(vers, active_beer):
       border: 1px solid black;
       text-align: right;
     }
-    """        
-        
-    if vers==1:
-        temp_amb_data = [n.get_temp_amb() for n in active_readings]
-        df['y_temp_amb'] = temp_amb_data        
-        y_temp_amb = ax.plot_date(df['x_instant'],df['y_temp_amb'],'b.-',label='amb')   
-        ax.set_ylabel('Temp')      
-        title = str(active_beer) + ' - Temp'
+    """
+
+    df = createDF(active_beer)
 
     if vers==1:
-        temp_beer_data = [n.get_temp_beer() for n in active_readings]
-        df['y_temp_beer'] = temp_beer_data
-        y_temp_beer = ax.plot_date(df['x_instant'],df['y_temp_beer'],'r.-',label='beer')
+        y_temp_amb = ax.plot_date(df['Instant'],df['Temp Amb'],'b.-',label='Temp Amb')
         ax.set_ylabel('Temp')
         title = str(active_beer) + ' - Temp'
-        
-    if vers==2:
-        light_amb_data = [n.get_light_amb() for n in active_readings]
-        df['y_light_amb'] = light_amb_data
-        y_light_amb = ax.plot_date(df['x_instant'],df['y_light_amb'],'y.-',label='light')  
-        ax.set_ylabel('Light') 
-        title = str(active_beer) + ' - Light' 
 
-    instant_data = [mpld.num2date(n).strftime('%Y-%m-%d %H:%M') for n in instant_data]
-    df.drop('x_instant',axis=1,inplace=True)    
-    
-    #Create chart labels
-    labels = []   
-    for i in range(x_count):
+        y_temp_beer = ax.plot_date(df['Instant'],df['Temp Beer'],'r.-',label='Temp Beer')
+        ax.set_ylabel('Temp')
+        title = 'Temp'
+
+        df.drop('Light Amb',axis=1,inplace=True)
+
+    if vers==2:
+        y_light_amb = ax.plot_date(df['Instant'],df['Light Amb'],'y.-',label='Light Amb')
+        ax.set_ylabel('Light')
+        title = 'Light'
+
+        df.drop('Temp Amb',axis=1,inplace=True)
+        df.drop('Temp Beer',axis=1,inplace=True)
+
+    instant_data = [mpld.num2date(n).strftime('%Y-%m-%d %H:%M') for n in df['Instant']]
+    df.drop('Instant',axis=1,inplace=True)
+
+    labels = []
+    for i in range(len(df.index)):
         label = df.ix[[i], :].T
         label.columns = [instant_data[i]]
         # .to_html() is unicode; so make leading 'u' go away with str()
-        labels.append(str(label.to_html()))   
+        labels.append(str(label.to_html()))
 
     if vers==1:
         tooltip = plugins.PointHTMLTooltip(y_temp_amb[0], labels,
                                    voffset=10, hoffset=10, css=css)
-        plugins.connect(fig, tooltip)   
+        plugins.connect(fig, tooltip)
 
-    if vers==1:
         tooltip2 = plugins.PointHTMLTooltip(y_temp_beer[0], labels,
                                    voffset=10, hoffset=10, css=css)
         plugins.connect(fig, tooltip2)
-        
+
     if vers==2:
         tooltip = plugins.PointHTMLTooltip(y_light_amb[0], labels,
                                    voffset=10, hoffset=10, css=css)
-        plugins.connect(fig, tooltip)   
+        plugins.connect(fig, tooltip)
 
-    ax.set_xlabel('Instant')   
-    ax.set_title(title, size=20)        
-    ax.legend(loc='best', fancybox=True, framealpha=0.5, title='')  
-    
+    ax.set_xlabel('Instant')
+    ax.set_title(title, size=20)
+    ax.legend(loc='best', fancybox=True, framealpha=0.5, title='')
+
     return fig
-    
+
 def dashboard(request):
     # To do:
     # -Add button to force a log and refresh page
     # -Add footnote of time of last log
     # -Function to find bgcol (and fgcol) and paint cells
     # -Add red and/or yellow ranges to gauges and cell painting
-    
+
     active_config = Config.objects.filter()[:1].get()
     active_beer = active_config.beer
-    
+
     cur_reading = Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1].get()
-    
+
     cur_temp_amb = cur_reading.get_temp_amb()
     cur_temp_beer = cur_reading.get_temp_beer()
     cur_light_amb = cur_reading.get_light_amb()
     cur_pres_beer = cur_reading.get_pres_beer()
-    
+
     if active_config.temp_amb_base != None and active_config.temp_amb_dev != None:
         temp_amb_rng = [active_config.temp_amb_base - active_config.temp_amb_dev, active_config.temp_amb_base + active_config.temp_amb_dev]
     else: temp_amb_rng = (0,0)
     if active_config.temp_beer_base != None and active_config.temp_beer_dev != None:
         temp_beer_rng = [active_config.temp_beer_base - active_config.temp_beer_dev, active_config.temp_beer_base + active_config.temp_beer_dev]
     else: temp_beer_rng = (0,0)
-    
+
     data = {
         "vals": {
             "temp_amb": cur_temp_amb,
@@ -583,31 +635,40 @@ def dashboard(request):
         "last_log_date": cur_reading.instant_actual.strftime("%Y-%m-%d"),
         "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
         "last_log_ago": get_date_diff(cur_reading.instant_actual, datetime.datetime.now()),
-        'all_beers': Beer.objects.all()
+        'all_beers': Beer.objects.all(),
+        'active_beer': getActiveBeer(),
     }
-    
+
     return render_to_response('dashboard.html',data)
 def get_date_diff(d1,d2):
     diff = abs(d2-d1)
 
     if(diff.days > 0): out = str(diff.days) + " day(s) ago"
+<<<<<<< HEAD
     elif(diff.seconds < 60): out = "less than a minute ago"
     elif(diff.seconds < 60*60): out = str(round(diff.seconds/60,0)) + " minute(s) ago"
     else: out = str(round(diff.seconds/(60*60),0)) + " hour(s) ago"
     
+=======
+    elif(diff.seconds < 1): out = "now"
+    elif(diff.seconds < 60): out = str(round(diff.seconds,0)) + " second(s) ago"
+    elif(diff.seconds < 60*60): out = str(round(diff.seconds/60,1)) + " minute(s) ago"
+    else: out = str(round(diff.seconds/(60*60),1)) + " hour(s) ago"
+
+>>>>>>> cutreth/master
     return(out)
 def get_paint_cols(val, rng = None):
     if rng == None: bgcol = "#FFFFFF" #White
     elif(rng[0] <= val <= rng[1]): bgcol = "#008000" #Green
     else: bgcol = "#FF0000" #Red
-    
+
     fgcol = "#000000" #Black
     return((bgcol, fgcol))
 def dashboard_update(request):
     active_config = Config.objects.filter()[:1].get()
     active_beer = active_config.beer
     old_reading = Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1].get()
-    
+
     for i in range(4):
         command_status = send2middleware("F")
         if command_status[0] == "Success": break
