@@ -17,7 +17,7 @@ class Command(BaseCommand):
 
         #Return readings for active_beer before the date limit
         active_beer = getActiveBeer()
-        active_readings = getReadings()
+        active_readings = getReadings(active_beer)
         active_readings = active_readings.filter(instant_actual__lte=week_ago)
 
         for day in active_readings.dates('instant_actual', 'day', order='DESC'):
