@@ -150,9 +150,9 @@ def BuildErrorEmail(active_config, read, error_details):
     else:
         email_text_body = 'Unspecified error'
 
-    message = PMMail(api_key = email_api_key, sender = email_sender,
-                     to = email_to, subject = email_subject,
-                     text_body = email_text_body)
+    message = PMMail(api_key=email_api_key, sender=email_sender,
+                     to=email_to, subject=email_subject,
+                     text_body=email_text_body)
     return message
 
 def isTimeBefore(reference, current, delta):
@@ -265,7 +265,7 @@ def send_command(request, command_char=None):
         command_status = str('')
     else:
         command_status = send2middleware(command_char)
-    request.session['command_status']= command_status
+    request.session['command_status'] = command_status
     return HttpResponseRedirect(reverse('commands'))
 
 def commands(request):
@@ -307,15 +307,15 @@ def commands(request):
     beer_date = active_beer.brew_date
 
     data = {
-    'all_beers': all_beers,
-    'beer_name': beer_name,
-    'beer_date': beer_date,
-    'active_beer': getActiveBeer(),
-    'command_status': command_status,
-    'command_options': command_options,
-    'error': error,
-    'details': details
-    }
+            'all_beers': all_beers,
+            'beer_name': beer_name,
+            'beer_date': beer_date,
+            'active_beer': getActiveBeer(),
+            'command_status': command_status,
+            'command_options': command_options,
+            'error': error,
+            'details': details
+           }
 
     return render_to_response('commands.html', data)
 
@@ -432,7 +432,7 @@ def getReadings(active_beer):
     '''Return all readings for active_beer ordered by instant_actual'''
     active_readings = Reading.objects.filter(beer=active_beer).order_by('instant_actual')
     return active_readings
-    
+
 def getArchives(active_beer):
     active_archives = Archive.objects.filter(beer=active_beer).order_by('reading_date')
     return active_archives
@@ -442,44 +442,44 @@ def createDF(active_beer):
     import matplotlib.dates as mpld
     import pandas as pd
 
-    df = pd.DataFrame(columns = ['Instant', 'Temp Amb', 'Temp Beer', 'Light Amb'])
+    df = pd.DataFrame(columns=['Instant', 'Temp Amb', 'Temp Beer', 'Light Amb'])
     #Add logic for instances where no data exists
 
     active_archives = getArchives(active_beer)
     for archive in active_archives:
         counter = 0
-        instant_actual_a = archive.get_instant_actual()        
-        temp_amb_a = archive.get_temp_amb()        
-        temp_beer_a = archive.get_temp_beer()        
-        light_amb_a = archive.get_light_amb()                     
-        
-        while counter < archive.count:        
+        instant_actual_a = archive.get_instant_actual()
+        temp_amb_a = archive.get_temp_amb()
+        temp_beer_a = archive.get_temp_beer()
+        light_amb_a = archive.get_light_amb()
+
+        while counter < archive.count:
             instant_actual = instant_actual_a[counter]
             temp_amb = temp_amb_a[counter]
             temp_beer = temp_beer_a[counter]
             light_amb = light_amb_a[counter]
-            counter += 1            
-            
+            counter += 1
+
             i = len(df)
             df.loc[i] = [instant_actual, temp_amb, temp_beer, light_amb]
 
     active_readings = getReadings(active_beer)
-    for reading in active_readings:        
+    for reading in active_readings:
 
         instant = mpld.date2num(reading.instant_actual)
         temp_amb = reading.get_temp_amb()
         temp_beer = reading.get_temp_beer()
-        light_amb = reading.get_light_amb()        
-        
+        light_amb = reading.get_light_amb()
+
         i = len(df)
         df.loc[i] = [instant, temp_amb, temp_beer, light_amb]
-    
-    #Add logic to remove assumption that data is ordered; sort by instant?    
+
+    #Add logic to remove assumption that data is ordered; sort by instant?
     df = df.sort('Instant') #Note - this breaks tooltips for unordered data
     df = df.reset_index(drop=True)
     return df
 
-def graph(request,cur_beer=None):
+def graph(request, cur_beer=None):
     import mpld3
 
     if cur_beer is None:
@@ -491,8 +491,8 @@ def graph(request,cur_beer=None):
     beer_name = active_beer
     beer_date = active_beer.brew_date
 
-    fig1=createFig(1, active_beer)
-    fig2=createFig(2, active_beer)
+    fig1 = createFig(1, active_beer)
+    fig2 = createFig(2, active_beer)
 
     fig1_html = mpld3.fig_to_html(fig1)
     fig2_html = mpld3.fig_to_html(fig2)
@@ -506,7 +506,7 @@ def graph(request,cur_beer=None):
         'fig2': fig2_html
     }
 
-    return render_to_response('graph.html',data)
+    return render_to_response('graph.html', data)
 
 def createFig(vers, active_beer):
     import matplotlib.pyplot as plt
@@ -542,27 +542,27 @@ def createFig(vers, active_beer):
 
     df = createDF(active_beer)
 
-    if vers==1:
-        y_temp_amb = ax.plot_date(df['Instant'],df['Temp Amb'],'b.-',label='Temp Amb')
+    if vers == 1:
+        y_temp_amb = ax.plot_date(df['Instant'], df['Temp Amb'], 'b.-', label='Temp Amb')
         ax.set_ylabel('Temp')
         title = str(active_beer) + ' - Temp'
 
-        y_temp_beer = ax.plot_date(df['Instant'],df['Temp Beer'],'r.-',label='Temp Beer')
+        y_temp_beer = ax.plot_date(df['Instant'], df['Temp Beer'], 'r.-', label='Temp Beer')
         ax.set_ylabel('Temp')
         title = 'Temp'
 
-        df.drop('Light Amb',axis=1,inplace=True)
+        df.drop('Light Amb', axis=1, inplace=True)
 
-    if vers==2:
-        y_light_amb = ax.plot_date(df['Instant'],df['Light Amb'],'y.-',label='Light Amb')
+    if vers == 2:
+        y_light_amb = ax.plot_date(df['Instant'], df['Light Amb'], 'y.-', label='Light Amb')
         ax.set_ylabel('Light')
         title = 'Light'
 
-        df.drop('Temp Amb',axis=1,inplace=True)
-        df.drop('Temp Beer',axis=1,inplace=True)
+        df.drop('Temp Amb', axis=1, inplace=True)
+        df.drop('Temp Beer', axis=1, inplace=True)
 
     instant_data = [mpld.num2date(n).strftime('%Y-%m-%d %H:%M') for n in df['Instant']]
-    df.drop('Instant',axis=1,inplace=True)
+    df.drop('Instant', axis=1, inplace=True)
 
     labels = []
     for i in range(len(df.index)):
@@ -571,18 +571,18 @@ def createFig(vers, active_beer):
         # .to_html() is unicode; so make leading 'u' go away with str()
         labels.append(str(label.to_html()))
 
-    if vers==1:
+    if vers == 1:
         tooltip = plugins.PointHTMLTooltip(y_temp_amb[0], labels,
-                                   voffset=10, hoffset=10, css=css)
+                                           voffset=10, hoffset=10, css=css)
         plugins.connect(fig, tooltip)
 
         tooltip2 = plugins.PointHTMLTooltip(y_temp_beer[0], labels,
-                                   voffset=10, hoffset=10, css=css)
+                                            voffset=10, hoffset=10, css=css)
         plugins.connect(fig, tooltip2)
 
-    if vers==2:
+    if vers == 2:
         tooltip = plugins.PointHTMLTooltip(y_light_amb[0], labels,
-                                   voffset=10, hoffset=10, css=css)
+                                           voffset=10, hoffset=10, css=css)
         plugins.connect(fig, tooltip)
 
     ax.set_xlabel('Instant')
@@ -647,7 +647,7 @@ def get_date_diff(d1,d2):
     elif(diff.seconds < 60): out = "less than a minute ago"
     elif(diff.seconds < 60*60): out = str(round(diff.seconds/60,0)) + " minute(s) ago"
     else: out = str(round(diff.seconds/(60*60),0)) + " hour(s) ago"
-    
+
     return(out)
 def get_paint_cols(val, rng = None):
     if rng == None: bgcol = "#FFFFFF" #White
