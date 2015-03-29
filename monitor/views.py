@@ -598,8 +598,8 @@ def dashboard(request):
     # -Function to find bgcol (and fgcol) and paint cells
     # -Add red and/or yellow ranges to gauges and cell painting
 
-    active_config = Config.objects.filter()[:1].get()
-    active_beer = active_config.beer
+    active_config = getActiveConfig()
+    active_beer = getActiveBeer() #Get active beer
 
     cur_reading = Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1].get()
 
@@ -636,7 +636,8 @@ def dashboard(request):
         "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
         "last_log_ago": get_date_diff(cur_reading.instant_actual, datetime.datetime.now()),
         'all_beers': Beer.objects.all(),
-        'active_beer': getActiveBeer(),
+        'active_beer': active_beer,
+        'beer_date': active_beer.brew_date,
     }
 
     return render_to_response('dashboard.html',data)
@@ -645,14 +646,15 @@ def get_date_diff(d1,d2):
 
     if(diff.days > 0): out = str(diff.days) + " day(s) ago"
     elif(diff.seconds < 60): out = "less than a minute ago"
-    elif(diff.seconds < 60*60): out = str(round(diff.seconds/60,0)) + " minute(s) ago"
-    else: out = str(round(diff.seconds/(60*60),0)) + " hour(s) ago"
+    elif(diff.seconds < 60*60): out = str(int(round(diff.seconds/60,0))) + " minute(s) ago"
+    else: out = str(int(round(diff.seconds/(60*60),0))) + " hour(s) ago"
 
     return(out)
 def get_paint_cols(val, rng = None):
-    if rng == None: bgcol = "#FFFFFF" #White
+    if rng == None or rng == (0,0): bgcol = "#FFFFFF" #White
     elif(rng[0] <= val <= rng[1]): bgcol = "#008000" #Green
-    else: bgcol = "#FF0000" #Red
+    elif(not (rng[0] <= val <= rng[1])): bgcol = "#FF0000" #Red
+    
 
     fgcol = "#000000" #Black
     return((bgcol, fgcol))
