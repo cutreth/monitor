@@ -1,9 +1,7 @@
 from django.core.management.base import BaseCommand
-from monitor.models import Archive
 from monitor.views import getActiveBeer, getReadings
 from monitor.archive import getArchive, createArchive, updateArchive
 
-import matplotlib.dates as mpld
 import datetime
 
 class Command(BaseCommand):
