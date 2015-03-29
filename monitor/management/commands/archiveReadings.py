@@ -24,10 +24,10 @@ class Command(BaseCommand):
             day_readings = active_readings.filter(instant_actual__gte=day)
             for reading in day_readings:
                 new_archive.instant_actual = str(mpld.date2num(reading.instant_actual)) + '^'
-                new_archive.light_amb = str(reading.light_amb) + '^'
-                new_archive.pres_beer = str(reading.pres_beer) + '^'
-                new_archive.temp_amb = str(reading.temp_amb) + '^'
-                new_archive.temp_beer = str(reading.temp_beer) + '^'
+                new_archive.light_amb = str(reading.get_light_amb) + '^'
+                new_archive.pres_beer = str(reading.get_pres_beer) + '^'
+                new_archive.temp_amb = str(reading.get_temp_amb) + '^'
+                new_archive.temp_beer = str(reading.get_temp_beer) + '^'
                 new_archive.count += 1
                 new_archive.save()
                 reading.delete()
