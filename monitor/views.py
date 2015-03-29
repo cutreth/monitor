@@ -644,18 +644,10 @@ def get_date_diff(d1,d2):
     diff = abs(d2-d1)
 
     if(diff.days > 0): out = str(diff.days) + " day(s) ago"
-<<<<<<< HEAD
     elif(diff.seconds < 60): out = "less than a minute ago"
     elif(diff.seconds < 60*60): out = str(round(diff.seconds/60,0)) + " minute(s) ago"
     else: out = str(round(diff.seconds/(60*60),0)) + " hour(s) ago"
     
-=======
-    elif(diff.seconds < 1): out = "now"
-    elif(diff.seconds < 60): out = str(round(diff.seconds,0)) + " second(s) ago"
-    elif(diff.seconds < 60*60): out = str(round(diff.seconds/60,1)) + " minute(s) ago"
-    else: out = str(round(diff.seconds/(60*60),1)) + " hour(s) ago"
-
->>>>>>> cutreth/master
     return(out)
 def get_paint_cols(val, rng = None):
     if rng == None: bgcol = "#FFFFFF" #White

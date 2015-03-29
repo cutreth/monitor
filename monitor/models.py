@@ -19,7 +19,6 @@ class Archive(models.Model):
     temp_amb = models.TextField('Ambient Temp')
     temp_beer = models.TextField('Beer Temp')
     count = models.PositiveIntegerField('Count', default=0)
-    #Add conversion to F in archiving code
     
     def __str__(self):
         value = str(self.beer) + ': '
