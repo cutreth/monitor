@@ -588,9 +588,9 @@ def data_chk(request, page_name, cur_beer = None):
     if cur_beer is None: active_beer = getActiveBeer()
     else: active_beer = Beer.objects.get(pk=cur_beer)
     
-    readings = getReadings(active_beer).order_by("-instant_actual")[:1]
+    read_chk = getReadings(active_beer)[:1]
     
-    if(readings.count() == 0): out = gen_unableToLoad(page_name)
+    if(not bool(read_chk)): out = gen_unableToLoad(page_name)
     else:
         if page_name.upper() == "DASHBOARD": out = dashboard(request)
         elif page_name.upper() == "GRAPH": out = graph(request, cur_beer)
