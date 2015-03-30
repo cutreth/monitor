@@ -487,47 +487,8 @@ def dashboard(request):
     # -Function to find bgcol (and fgcol) and paint cells
     # -Add red and/or yellow ranges to gauges and cell painting
 
-    readings = getReadings(getActiveBeer()).order_by("-instant_actual")
-    
-    if(readings.count() > 0): out = gen_dashboard(readings)
-    else: out = gen_unableToLoad("Dashboard")
-        
-    return out
-def get_date_diff(d1,d2):
-    diff = abs(d2-d1)
-
-    if(diff.days > 0): out = str(diff.days) + " day(s) ago"
-    elif(diff.seconds < 60): out = "less than a minute ago"
-    elif(diff.seconds < 60*60): out = str(int(round(diff.seconds/60,0))) + " minute(s) ago"
-    else: out = str(int(round(diff.seconds/(60*60),0))) + " hour(s) ago"
-
-    return(out)
-def get_paint_cols(val, rng = None):
-    if rng == None or rng == (0,0): bgcol = "#FFFFFF" #White
-    elif(rng[0] <= val <= rng[1]): bgcol = "#008000" #Green
-    elif(not (rng[0] <= val <= rng[1])): bgcol = "#FF0000" #Red
-    
-
-    fgcol = "#000000" #Black
-    return((bgcol, fgcol))
-def dashboard_update(request):
-    active_config = Config.objects.filter()[:1].get()
-    active_beer = active_config.beer
-    old_reading = Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1].get()
-
-    for i in range(4):
-        command_status = send2middleware("F")
-        if command_status[0] == "Success": break
-        sleep(.1)
-    if command_status[0] == "Success":
-        for i in range(49):
-            if Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1].get() != old_reading: break
-            sleep(.1)
-    print(command_status[0])
-    return HttpResponseRedirect(reverse('dashboard'))
-def gen_dashboard(readings):
     active_config = getActiveConfig()
-    cur_reading = readings[:1].get()
+    cur_reading = getReadings(getActiveBeer()).order_by("-instant_actual")[:1].get()
     
     active_beer = getActiveBeer()
 
@@ -568,6 +529,38 @@ def gen_dashboard(readings):
         'beer_date': active_beer.brew_date,
     }
     return render_to_response('dashboard.html',data)
+def get_date_diff(d1,d2):
+    diff = abs(d2-d1)
+
+    if(diff.days > 0): out = str(diff.days) + " day(s) ago"
+    elif(diff.seconds < 60): out = "less than a minute ago"
+    elif(diff.seconds < 60*60): out = str(int(round(diff.seconds/60,0))) + " minute(s) ago"
+    else: out = str(int(round(diff.seconds/(60*60),0))) + " hour(s) ago"
+
+    return(out)
+def get_paint_cols(val, rng = None):
+    if rng == None or rng == (0,0): bgcol = "#FFFFFF" #White
+    elif(rng[0] <= val <= rng[1]): bgcol = "#008000" #Green
+    elif(not (rng[0] <= val <= rng[1])): bgcol = "#FF0000" #Red
+    
+
+    fgcol = "#000000" #Black
+    return((bgcol, fgcol))
+def dashboard_update(request):
+    active_config = Config.objects.filter()[:1].get()
+    active_beer = active_config.beer
+    old_reading = Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1].get()
+
+    for i in range(4):
+        command_status = send2middleware("F")
+        if command_status[0] == "Success": break
+        sleep(.1)
+    if command_status[0] == "Success":
+        for i in range(49):
+            if Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1].get() != old_reading: break
+            sleep(.1)
+    print(command_status[0])
+    return HttpResponseRedirect(reverse('dashboard')) 
 def gen_unableToLoad(page_name):
     data = {
         'all_beers': Beer.objects.all(),
@@ -592,3 +585,17 @@ def annotationchart(request, cur_beer = None):
         "beer_date": active_beer.brew_date,
     }
     return render_to_response('annotationchart.html', data)
+def data_chk(request, page_name, cur_beer = None):
+    if cur_beer is None: active_beer = getActiveBeer()
+    else: active_beer = Beer.objects.get(pk=cur_beer)
+    
+    readings = getReadings(active_beer).order_by("-instant_actual")
+    
+    if(readings.count() == 0): out = gen_unableToLoad(page_name)
+    else:
+        if page_name.upper() == "DASHBOARD": out = dashboard(readings)
+        elif page_name.upper() == "GRAPH": out = graph(request, cur_beer)
+        elif page_name.upper() == "ANNOTATIONCHART": out = annotationchart(request, cur_beer)
+        else: out = "404 Page Not Found"
+    
+    return out
