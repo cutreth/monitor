@@ -488,9 +488,8 @@ def dashboard(request):
     # -Add red and/or yellow ranges to gauges and cell painting
 
     active_config = getActiveConfig()
-    cur_reading = getReadings(getActiveBeer()).order_by("-instant_actual")[:1].get()
-    
     active_beer = getActiveBeer()
+    cur_reading = getReadings(active_beer).order_by("-instant_actual")[:1].get()
 
     cur_temp_amb = cur_reading.get_temp_amb()
     cur_temp_beer = cur_reading.get_temp_beer()
@@ -589,11 +588,11 @@ def data_chk(request, page_name, cur_beer = None):
     if cur_beer is None: active_beer = getActiveBeer()
     else: active_beer = Beer.objects.get(pk=cur_beer)
     
-    readings = getReadings(active_beer).order_by("-instant_actual")
+    readings = getReadings(active_beer).order_by("-instant_actual")[:1]
     
     if(readings.count() == 0): out = gen_unableToLoad(page_name)
     else:
-        if page_name.upper() == "DASHBOARD": out = dashboard(readings)
+        if page_name.upper() == "DASHBOARD": out = dashboard(request)
         elif page_name.upper() == "GRAPH": out = graph(request, cur_beer)
         elif page_name.upper() == "ANNOTATIONCHART": out = annotationchart(request, cur_beer)
         else: out = "404 Page Not Found"
