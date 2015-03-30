@@ -598,7 +598,7 @@ def dashboard(request):
     # -Function to find bgcol (and fgcol) and paint cells
     # -Add red and/or yellow ranges to gauges and cell painting
 
-    readings = Reading.objects.filter(beer=getActiveBeer()).order_by("-instant_actual")
+    readings = getReadings().order_by("-instant_actual")
     
     if(readings.count() > 0): out = gen_dashboard(readings)
     else: out = gen_unableToLoad("Dashboard")
@@ -639,6 +639,8 @@ def dashboard_update(request):
 def gen_dashboard(readings):
     active_config = getActiveConfig()
     cur_reading = readings[:1].get()
+    
+    active_beer = getActiveBeer()
 
     cur_temp_amb = cur_reading.get_temp_amb()
     cur_temp_beer = cur_reading.get_temp_beer()
@@ -673,8 +675,8 @@ def gen_dashboard(readings):
         "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
         "last_log_ago": get_date_diff(cur_reading.instant_actual, datetime.datetime.now()),
         'all_beers': Beer.objects.all(),
-        'active_beer': getActiveBeer(),
-        'beer_date': getActiveBeer().brew_date,
+        'active_beer': active_beer,
+        'beer_date': active_beer.brew_date,
     }
     return render_to_response('dashboard.html',data)
 def gen_unableToLoad(page_name):
