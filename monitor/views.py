@@ -434,6 +434,7 @@ def getReadings(active_beer):
     return active_readings
 
 def getArchives(active_beer):
+    '''Return all archives for active_beer ordered by reading_date'''
     active_archives = Archive.objects.filter(beer=active_beer).order_by('reading_date')
     return active_archives
 
