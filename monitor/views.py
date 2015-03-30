@@ -487,7 +487,7 @@ def dashboard(request):
     # -Function to find bgcol (and fgcol) and paint cells
     # -Add red and/or yellow ranges to gauges and cell painting
 
-    readings = getReadings().order_by("-instant_actual")
+    readings = getReadings(getActiveBeer()).order_by("-instant_actual")
     
     if(readings.count() > 0): out = gen_dashboard(readings)
     else: out = gen_unableToLoad("Dashboard")
