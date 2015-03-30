@@ -10,6 +10,7 @@ urlpatterns = patterns('',
     url(r'^graph/(?P<cur_beer>\d+)/$', views.graph),
     url(r'^dashboard/$', views.dashboard, name='dashboard'),
     url(r'^dashboard/update/$', views.dashboard_update, name='dashboard_update'),
+    url(r'^annotationchart/$', views.annotationchart, name='annotationchart'),
     url(r'^$', views.dashboard),
 )
 

@@ -575,3 +575,20 @@ def gen_unableToLoad(page_name):
         'page_name': page_name,
     }
     return render_to_response('unabletoload.html',data)
+def annotationchart(request, cur_beer = None):
+    if cur_beer is None: active_beer = getActiveBeer()
+    else: active_beer = Beer.objects.get(pk=cur_beer)
+    
+    readings = getReadings(active_beer)
+    plot_data = []
+    for r in readings:
+        add = [r.instant_actual.isoformat(), r.get_temp_amb(), 'undefined', 'undefined', r.get_temp_beer(), 'undefined', 'undefined']
+        plot_data.append(add)
+    
+    data = {
+        'all_beers': Beer.objects.all(),
+        'active_beer': active_beer,
+        'plot_data': plot_data,
+        "beer_date": active_beer.brew_date,
+    }
+    return render_to_response('annotationchart.html', data)
