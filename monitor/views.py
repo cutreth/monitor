@@ -575,22 +575,20 @@ def gen_unableToLoad(page_name):
         'page_name': page_name,
     }
     return render_to_response('unabletoload.html',data)
-def handler(obj):
-    if hasattr(obj, 'isoformat'):
-        if type(obj) is datetime.datetime: return "new Date('" + str(obj.isoformat()) +  "')"
-        else: return obj.isoformat()
-    elif isinstance(obj, ...): return ...
-    else: raise TypeError
-def annotationchart(request):
-    from json import dumps
-    plot_data = [
-        [datetime.datetime(2015,3,29,11,34,59).isoformat(), 12400, 'undefined', 'undefined', 10645, 'undefined', 'undefined'],
-        [datetime.datetime(2015,3,30,11,34,59).isoformat(), 12410, 'undefined', 'undefined', 10645, 'undefined', 'undefined']
-    ]
+def annotationchart(request, cur_beer = None):
+    if cur_beer is None: active_beer = getActiveBeer()
+    else: active_beer = Beer.objects.get(pk=cur_beer)
+    
+    readings = getReadings(active_beer)
+    plot_data = []
+    for r in readings:
+        add = [r.instant_actual.isoformat(), r.get_temp_amb(), 'undefined', 'undefined', r.get_temp_beer(), 'undefined', 'undefined']
+        plot_data.append(add)
     
     data = {
         'all_beers': Beer.objects.all(),
-        'active_beer': getActiveBeer(),
-        'plot_data': plot_data
+        'active_beer': active_beer,
+        'plot_data': plot_data,
+        "beer_date": active_beer.brew_date,
     }
     return render_to_response('annotationchart.html', data)
