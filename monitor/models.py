@@ -101,6 +101,12 @@ class Reading(models.Model):
     error_flag = models.NullBooleanField('Error?')
     error_details = models.CharField('Error Details',blank=True,max_length=150)
             
+    def get_instant_actual(self):
+        import matplotlib.dates as mpld
+        value = self.instant_actual
+        value = mpld.date2num(value)
+        return value
+        
     #Break out conversion into a new function, combine with get_temp_beer
     def get_temp_amb(self):
         if self.temp_unit is 'F' or self.temp_unit is None:

@@ -9,7 +9,7 @@ from monitor.models import Beer, Reading, Config, Archive
 from time import sleep
 from datetime import timedelta
 from postmark import PMMail
-import calendar, datetime
+import datetime
 
 def floatFromPost(request, field):
     '''Returns float() or float(0) for a given POST parameter'''
@@ -331,7 +331,6 @@ def getArchives(active_beer):
 
 def createDF(active_beer):
     '''Return a DF of reading/archive data, ordered by instant'''
-    import matplotlib.dates as mpld
     import pandas as pd
 
     df = pd.DataFrame(columns=['Instant', 'Temp Amb', 'Temp Beer', 'Light Amb'])
@@ -357,7 +356,7 @@ def createDF(active_beer):
 
     active_readings = getReadings(active_beer)
     for reading in active_readings:
-        instant = mpld.date2num(reading.instant_actual)
+        instant = reading.get_instant_actual()
         temp_amb = reading.get_temp_amb()
         temp_beer = reading.get_temp_beer()
         light_amb = reading.get_light_amb()
