@@ -465,7 +465,6 @@ def createDF(active_beer):
 
     active_readings = getReadings(active_beer)
     for reading in active_readings:
-
         instant = mpld.date2num(reading.instant_actual)
         temp_amb = reading.get_temp_amb()
         temp_beer = reading.get_temp_beer()
@@ -474,8 +473,7 @@ def createDF(active_beer):
         i = len(df)
         df.loc[i] = [instant, temp_amb, temp_beer, light_amb]
 
-    #Add logic to remove assumption that data is ordered; sort by instant?
-    df = df.sort('Instant') #Note - this breaks tooltips for unordered data
+    df = df.sort('Instant')
     df = df.reset_index(drop=True)
     return df
 

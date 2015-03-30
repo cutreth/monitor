@@ -65,6 +65,10 @@ class Archive(models.Model):
             del out[-1]
             out = [float(n) for n in out]
         return out
+        
+    def get_count(self):
+        value = self.count
+        return value
     
 class Reading(models.Model):
 
