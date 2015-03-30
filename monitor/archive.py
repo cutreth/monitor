@@ -1,4 +1,4 @@
-from monitor.models import Archive
+from monitor.models import Archive, Reading
 
 import matplotlib.dates as mpld
 
@@ -15,6 +15,10 @@ def getArchive(active_beer, day):
         active_archive = Archive.objects.get(beer=active_beer, reading_date=day)
     finally:
         return active_archive
+
+def getArchiveCount(archive):
+    count = archive.count
+    return count
 
 def createArchive(active_beer, day):
     archive = None
@@ -39,3 +43,11 @@ def updateArchive(archive, reading):
         result = True
     finally:
         return result
+
+'''
+def getArchiveReading(archive, count=None):
+    if count == None:
+        return archive.count
+    else:
+        reading = Reading()
+'''
