@@ -488,9 +488,8 @@ def dashboard(request):
     # -Add red and/or yellow ranges to gauges and cell painting
 
     active_config = getActiveConfig()
-    active_beer = getActiveBeer() #Get active beer
-
-    cur_reading = Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1].get()
+    active_beer = getActiveBeer()
+    cur_reading = getReadings(active_beer).order_by("-instant_actual")[:1].get()
 
     cur_temp_amb = cur_reading.get_temp_amb()
     cur_temp_beer = cur_reading.get_temp_beer()
@@ -528,7 +527,6 @@ def dashboard(request):
         'active_beer': active_beer,
         'beer_date': active_beer.brew_date,
     }
-
     return render_to_response('dashboard.html',data)
 def get_date_diff(d1,d2):
     diff = abs(d2-d1)
@@ -561,4 +559,42 @@ def dashboard_update(request):
             if Reading.objects.filter(beer=active_beer).order_by("-instant_actual")[:1].get() != old_reading: break
             sleep(.1)
     print(command_status[0])
-    return HttpResponseRedirect(reverse('dashboard'))
+    return HttpResponseRedirect(reverse('dashboard')) 
+def gen_unableToLoad(page_name):
+    data = {
+        'all_beers': Beer.objects.all(),
+        'active_beer': getActiveBeer(),
+        'page_name': page_name,
+    }
+    return render_to_response('unabletoload.html',data)
+def annotationchart(request, cur_beer = None):
+    if cur_beer is None: active_beer = getActiveBeer()
+    else: active_beer = Beer.objects.get(pk=cur_beer)
+    
+    readings = getReadings(active_beer)
+    plot_data = []
+    for r in readings:
+        add = [r.instant_actual.isoformat(), r.get_temp_amb(), 'undefined', 'undefined', r.get_temp_beer(), 'undefined', 'undefined']
+        plot_data.append(add)
+    
+    data = {
+        'all_beers': Beer.objects.all(),
+        'active_beer': active_beer,
+        'plot_data': plot_data,
+        "beer_date": active_beer.brew_date,
+    }
+    return render_to_response('annotationchart.html', data)
+def data_chk(request, page_name, cur_beer = None):
+    if cur_beer is None: active_beer = getActiveBeer()
+    else: active_beer = Beer.objects.get(pk=cur_beer)
+    
+    read_chk = getReadings(active_beer)[:1]
+    
+    if(not bool(read_chk)): out = gen_unableToLoad(page_name)
+    else:
+        if page_name.upper() == "DASHBOARD": out = dashboard(request)
+        elif page_name.upper() == "GRAPH": out = graph(request, cur_beer)
+        elif page_name.upper() == "ANNOTATIONCHART": out = annotationchart(request, cur_beer)
+        else: out = "404 Page Not Found"
+    
+    return out
