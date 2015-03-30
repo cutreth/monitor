@@ -3,8 +3,9 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 
+from monitor.archive import getAllArchives
 from monitor.middleware import send2middleware
-from monitor.models import Beer, Reading, Config, Archive
+from monitor.models import Beer, Reading, Config
 
 from time import sleep
 from datetime import timedelta
@@ -324,11 +325,6 @@ def getReadings(active_beer):
     active_readings = Reading.objects.filter(beer=active_beer).order_by('instant_actual')
     return active_readings
 
-def getArchives(active_beer):
-    '''Return all archives for active_beer ordered by reading_date'''
-    active_archives = Archive.objects.filter(beer=active_beer).order_by('reading_date')
-    return active_archives
-
 def createDF(active_beer):
     '''Return a DF of reading/archive data, ordered by instant'''
     import pandas as pd
@@ -336,7 +332,7 @@ def createDF(active_beer):
     df = pd.DataFrame(columns=['Instant', 'Temp Amb', 'Temp Beer', 'Light Amb'])
     #Add logic for instances where no data exists
 
-    active_archives = getArchives(active_beer)
+    active_archives = getAllArchives(active_beer)
     for archive in active_archives:
         counter = 0
         instant_actual_a = archive.get_instant_actual()

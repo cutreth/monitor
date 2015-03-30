@@ -5,7 +5,7 @@ import matplotlib.dates as mpld
 def getAllArchives(active_beer):
     all_archives = None
     try:
-        all_archives = Archive.objects.filter(beer=active_beer)
+        all_archives = Archive.objects.filter(beer=active_beer).order_by('reading_date')
     finally:
         return all_archives
 
