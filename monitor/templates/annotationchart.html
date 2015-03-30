@@ -22,7 +22,10 @@
                 data.addColumn('number', 'Beer Temp');
                 data.addColumn('string', 'Beer Temp title');
                 data.addColumn('string', 'Beer Temp text');
-                data.addRows( {{plot_data|safe}} );
+                data.addRows([  {% for row in plot_data %}
+                                    [new Date("{{ row.0|safe }}"), {{ row.1|safe }}, {{ row.2|safe }}, {{ row.3|safe }}, {{ row.4|safe }}, {{ row.5|safe }}, {{ row.6|safe }}],
+                                {% endfor%}
+                            ]);
 
                 var chart = new google.visualization.AnnotationChart(document.getElementById('chart_div'));
 
