@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<!-- Template by html.am -->
+
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>Annotation Chart</title>
+        
+		{% load staticfiles %}
+        <link rel="stylesheet" type="text/css" href="{% static 'allStyle.css' %}">
+        
+        <script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization','version':'1','packages':['annotationchart']}]}"></script>
+        <script type='text/javascript'>
+            google.load('visualization', '1', {'packages':['annotationchart']});
+            google.setOnLoadCallback(drawChart);
+            function drawChart() {
+                var data = new google.visualization.DataTable();
+                data.addColumn('datetime', 'Log Time');
+                data.addColumn('number', 'Ambient Temp');
+                data.addColumn('string', 'Ambient Temp title');
+                data.addColumn('string', 'Ambient Temp text');
+                data.addColumn('number', 'Beer Temp');
+                data.addColumn('string', 'Beer Temp title');
+                data.addColumn('string', 'Beer Temp text');
+                data.addRows( {{plot_data|safe}} );
+
+                var chart = new google.visualization.AnnotationChart(document.getElementById('chart_div'));
+
+                var options = {
+                    displayAnnotations: true
+                };
+
+                chart.draw(data, options);
+            }
+        </script>
+	</head>
+	
+	<body>		
+				
+		<main>
+            <h1>{{active_beer}} - {{beer_date}}</h1>
+            
+            <div id='chart_div' style='width: 900px; height: 500px;'></div>
+		</main>
+	
+		<nav id="nav">
+			<div class="innertube">
+			
+			<h3>Beers</h3>
+			<ul>
+				<li><a href="/monitor/graph/">Active Beer</a></li>
+                {% for beer in all_beers %}
+                {% if beer == active_beer %}
+                    <b><li><a href="/monitor/graph/{{ beer.id }}/">{{ beer }}</a></li></b>                
+                {% else %}
+                    <li><a href="/monitor/graph/{{ beer.id }}/">{{ beer }}</a></li>
+                {% endif %}
+                {% endfor %}
+			</ul>
+			<h3>Options</h3>
+			<ul>
+                <li><a href="/monitor/dashboard/">Dashboard</a></li>
+				<li><a href="/monitor/commands/">Commands</a></li>
+				<li><a href="/admin/">Admin</a></li>
+			</ul>
+			</div>
+		</nav>
+	
+	</body>
+</html>
