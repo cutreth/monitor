@@ -9,7 +9,7 @@ from monitor.models import Beer, Reading, Config, Archive
 from time import sleep
 from datetime import timedelta
 from postmark import PMMail
-import calendar, datetime
+import datetime
 
 def floatFromPost(request, field):
     '''Returns float() or float(0) for a given POST parameter'''
@@ -319,127 +319,18 @@ def commands(request):
 
     return render_to_response('commands.html', data)
 
-def ConvertDateTime(obj):
-    #Defunct after views.chart is removed
-    if isinstance(obj, datetime.datetime):
-        if obj.utcoffset() is not None:
-            obj = obj - obj.utcoffset()
-        else:
-            obj = obj + timedelta(hours=5)
-    millis = int(
-        calendar.timegm(obj.timetuple()) * 1000 +
-        obj.microsecond / 1000
-    )
-    return millis
-
-def chart(request, cur_beer=None):
-    #Plan to depricate this function
-    all_beers = getAllBeer()
-
-    if cur_beer is None:
-        active_beer = getActiveBeer()
-    else:
-        active_beer = Beer.objects.get(pk=cur_beer)
-
-    active_readings = Reading.objects.filter(beer=active_beer)
-
-    #I should use instant_actual here; rework when we rewrite this code
-    xdata = [ConvertDateTime(n.instant_actual) for n in active_readings]
-    if not bool(xdata):
-        xdata.append(ConvertDateTime(datetime.datetime.now()))
-
-    #Update to only show y-data where non-zero values exist
-    temp_amb_data = [n.get_temp_amb() for n in active_readings]
-    temp_beer_data = [n.get_temp_beer() for n in active_readings]
-    light_amb_data = [n.get_light_amb() for n in active_readings]
-    pres_beer_data = [n.get_pres_beer() for n in active_readings]
-
-    #Doesn't respect ordering via Reading.instant_actual()
-    error_readings = Reading.objects.filter(beer=active_beer).filter(error_flag=True)
-
-    y1data = temp_amb_data
-    y2data = temp_beer_data
-    y3data = light_amb_data
-    y4data = pres_beer_data
-
-    xdata.append(min(xdata)-1)
-    y1data.append(float(0))
-    y2data.append(float(0))
-    y3data.append(float(0))
-    y4data.append(float(100))
-
-    xydata = zip(xdata, y1data, y2data, y3data, y4data)
-    xydata = sorted(xydata)
-
-    xdata = [n[0] for n in xydata]
-    y1data = [n[1] for n in xydata]
-    y2data = [n[2] for n in xydata]
-    y3data = [n[3] for n in xydata]
-    y4data = [n[4] for n in xydata]
-
-    beer_name = active_beer
-    beer_date = active_beer.brew_date
-
-    tooltip_date = "%m/%d %H:%M"
-    extra_serie1 = {
-        "tooltip": {"y_start": "", "y_end": " cal"},
-        "date_format": tooltip_date,
-        #'color': '#a239c6',
-    }
-    extra_serie2 = {
-        "tooltip": {"y_start": "", "y_end": " cal"},
-        "date_format": tooltip_date,
-        #'color': '#395ec6',
-    }
-    extra_serie3 = {
-        "tooltip": {"y_start": "", "y_end": " cal"},
-        "date_format": tooltip_date,
-        #'color': '#395ec6',
-    }
-    extra_serie4 = {
-        "tooltip": {"y_start": "", "y_end": " cal"},
-        "date_format": tooltip_date,
-        #'color': '#395ec6',
-    }
-
-    chartdata = {'x': xdata,
-                 'name1': 'Amb Temp', 'y1': y1data, 'extra1': extra_serie1,
-                 'name2': 'Beer Temp', 'y2': y2data, 'extra2': extra_serie2,
-                 'name3': 'Amb Light', 'y3': y3data, 'extra3': extra_serie3,
-                 'name4': 'Pres Beer', 'y4': y4data, 'extra4': extra_serie4}
-
-    charttype = "lineChart"
-    chartcontainer = 'chart_container'  # container name
-    data = {
-        'all_beers': all_beers,
-        'error_readings': error_readings,
-        'beer_name': beer_name,
-        'beer_date': beer_date,
-        'charttype': charttype,
-        'chartdata': chartdata,
-        'chartcontainer': chartcontainer,
-        'extra': {
-            'x_is_date': True,
-            'x_axis_format': '%m/%d %H:%M',
-            'tag_script_js': True,
-            'jquery_on_ready': False,
-            'chart_attr': {'color':['orange', 'blue', 'green', 'purple']},
-        }
-    }
-    return render_to_response('chart.html', data)
-
 def getReadings(active_beer):
     '''Return all readings for active_beer ordered by instant_actual'''
     active_readings = Reading.objects.filter(beer=active_beer).order_by('instant_actual')
     return active_readings
 
 def getArchives(active_beer):
+    '''Return all archives for active_beer ordered by reading_date'''
     active_archives = Archive.objects.filter(beer=active_beer).order_by('reading_date')
     return active_archives
 
 def createDF(active_beer):
     '''Return a DF of reading/archive data, ordered by instant'''
-    import matplotlib.dates as mpld
     import pandas as pd
 
     df = pd.DataFrame(columns=['Instant', 'Temp Amb', 'Temp Beer', 'Light Amb'])
@@ -465,8 +356,7 @@ def createDF(active_beer):
 
     active_readings = getReadings(active_beer)
     for reading in active_readings:
-
-        instant = mpld.date2num(reading.instant_actual)
+        instant = reading.get_instant_actual()
         temp_amb = reading.get_temp_amb()
         temp_beer = reading.get_temp_beer()
         light_amb = reading.get_light_amb()
@@ -474,8 +364,7 @@ def createDF(active_beer):
         i = len(df)
         df.loc[i] = [instant, temp_amb, temp_beer, light_amb]
 
-    #Add logic to remove assumption that data is ordered; sort by instant?
-    df = df.sort('Instant') #Note - this breaks tooltips for unordered data
+    df = df.sort('Instant')
     df = df.reset_index(drop=True)
     return df
 
@@ -598,7 +487,7 @@ def dashboard(request):
     # -Function to find bgcol (and fgcol) and paint cells
     # -Add red and/or yellow ranges to gauges and cell painting
 
-    readings = Reading.objects.filter(beer=getActiveBeer()).order_by("-instant_actual")
+    readings = getReadings(getActiveBeer()).order_by("-instant_actual")
     
     if(readings.count() > 0): out = gen_dashboard(readings)
     else: out = gen_unableToLoad("Dashboard")
@@ -639,6 +528,8 @@ def dashboard_update(request):
 def gen_dashboard(readings):
     active_config = getActiveConfig()
     cur_reading = readings[:1].get()
+    
+    active_beer = getActiveBeer()
 
     cur_temp_amb = cur_reading.get_temp_amb()
     cur_temp_beer = cur_reading.get_temp_beer()
@@ -673,8 +564,8 @@ def gen_dashboard(readings):
         "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
         "last_log_ago": get_date_diff(cur_reading.instant_actual, datetime.datetime.now()),
         'all_beers': Beer.objects.all(),
-        'active_beer': getActiveBeer(),
-        'beer_date': getActiveBeer().brew_date,
+        'active_beer': active_beer,
+        'beer_date': active_beer.brew_date,
     }
     return render_to_response('dashboard.html',data)
 def gen_unableToLoad(page_name):
