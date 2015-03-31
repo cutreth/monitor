@@ -185,7 +185,7 @@ def createHttpResp(read, value):
         response['temp_unit'] = read.temp_unit
         response['instant_override'] = read.instant_override
         response['instant'] = read.instant
-        response['instant_actual'] = read.instant_actual
+        response['instant_actual'] = read.instant_actual_iso
         response['error_flag'] = read.error_flag
         response['error_details'] = read.error_details
     return response
@@ -322,49 +322,37 @@ def commands(request):
 
 def getReadings(active_beer):
     '''Return all readings for active_beer ordered by instant_actual'''
-    active_readings = Reading.objects.filter(beer=active_beer).order_by('instant_actual')
+    active_readings = Reading.objects.filter(beer=active_beer).order_by('-instant_actual_iso')
     return active_readings
+    
+def getLastReading(active_beer):
+    '''Returns the most recent reading for active_beer if it exists'''
+    last_read = None
+    last_read = getReadings(active_beer)[:1].get()
+    return last_read
 
-def createDF(active_beer):
+def getAllData(active_beer):
     '''Return a DF of reading/archive data, ordered by instant'''
-    import pandas as pd
-    import numpy as np
-
-    df = pd.DataFrame(columns=['Instant', 'Temp Amb', 'Temp Beer', 'Light Amb'])
-    #Add logic for instances where no data exists
+    all_data = []
 
     active_archives = getAllArchives(active_beer)
     for archive in active_archives:
+        instant_actual_arch = archive.get_instant_actual()
+        temp_amb_arch = archive.get_temp_amb()
+        temp_beer_arch = archive.get_temp_beer()
+        light_amb_arch = archive.get_light_amb()
         counter = 0
-        instant_actual_a = archive.get_instant_actual()
-        temp_amb_a = archive.get_temp_amb()
-        temp_beer_a = archive.get_temp_beer()
-        light_amb_a = archive.get_light_amb()
-
-        #Remove loop and duplicate Readings grab below*************
         while counter < archive.count:
-            instant_actual = instant_actual_a[counter]
-            temp_amb = temp_amb_a[counter]
-            temp_beer = temp_beer_a[counter]
-            light_amb = light_amb_a[counter]
+            data = [instant_actual_arch[counter],temp_amb_arch[counter],temp_beer_arch[counter],light_amb_arch[counter]]
+            all_data.append(data)
             counter += 1
 
-            i = len(df) #Don't use this!    ***********************
-            df.loc[i] = [instant_actual, temp_amb, temp_beer, light_amb]
-
     active_readings = getReadings(active_beer) 
-
-    all_data = []
     for reading in active_readings:
         data = [reading.get_instant_actual(),reading.get_temp_amb(),reading.get_temp_beer(),reading.get_light_amb()]
         all_data.append(data)
-                  
-    glob_df = pd.DataFrame(all_data, columns=['Instant', 'Temp Amb', 'Temp Beer', 'Light Amb'])
-    glob_df = df.sort('Instant')
-    glob_df = df.reset_index(drop=True)
-    df = glob_df
-
-    return df
+        
+    return all_data
 
 def dashboard(request):
     '''Creates dashboard (gauges and table) page for the active beer'''
@@ -455,6 +443,7 @@ def gen_unableToLoad(page_name, cur_beer):
     return render_to_response('unabletoload.html',data)
 def chart(request, cur_beer = None):
     '''Creates a chart page with the Google Annotation Chart'''
+    #In future: send alerts too
     if cur_beer is None: active_beer = getActiveBeer()
     else: active_beer = Beer.objects.get(pk=cur_beer)
     
@@ -469,19 +458,21 @@ def chart(request, cur_beer = None):
                 "pres_beer": [r.get_pres_beer(), 'undefined', 'undefined']
             }
         plot_data.append(add)
-    
+    #Get start_date which is 7 days before the last logged date. In future: change to function
+    start_date = readings.order_by("-instant_actual")[:1].get().instant_actual.date() - timedelta(days=7)
     data = {
         'all_beers': Beer.objects.all(),
         'active_beer': active_beer,
         'plot_data': plot_data,
-        "beer_date": active_beer.brew_date,
+        'beer_date': active_beer.brew_date,
+        'start_date': start_date.isoformat()
     }
     return render_to_response('chart.html', data)
 def data_chk(request, page_name, cur_beer = None):
     '''Checks if we have readings for cur_beer then if page_name exists and then creates appropriate page'''
     if cur_beer is None: active_beer = getActiveBeer()
     else: active_beer = Beer.objects.get(pk=cur_beer)
-    
+    #In Future: change to function
     read_chk = getReadings(active_beer)[:1]
     
     if(not bool(read_chk)): out = gen_unableToLoad(page_name, active_beer)
