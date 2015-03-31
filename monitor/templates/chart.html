@@ -22,6 +22,12 @@
                 data.addColumn('number', 'Beer Temp');
                 data.addColumn('string', 'Beer Temp title');
                 data.addColumn('string', 'Beer Temp text');
+                data.addColumn('number', 'Ambient Light');
+                data.addColumn('string', 'Ambient Light title');
+                data.addColumn('string', 'Ambient Light text');
+                data.addColumn('number', 'Beer Pressure');
+                data.addColumn('string', 'Beer Pressure title');
+                data.addColumn('string', 'Beer Pressure text');
                 data.addRows([  {% for row in plot_data %}
                                     [new Date("{{ row.dt|safe }}"),
                                         {{ row.temp_amb.0|safe }},
@@ -29,18 +35,76 @@
                                         {{ row.temp_amb.2|safe }},
                                         {{ row.temp_beer.0|safe }},
                                         {{ row.temp_beer.1|safe }},
-                                        {{ row.temp_beer.2|safe }}
+                                        {{ row.temp_beer.2|safe }},
+                                        {{ row.light_amb.0|safe }},
+                                        {{ row.light_amb.1|safe }},
+                                        {{ row.light_amb.2|safe }},
+                                        {{ row.pres_beer.0|safe }},
+                                        {{ row.pres_beer.1|safe }},
+                                        {{ row.pres_beer.2|safe }},
                                     ],
                                 {% endfor%}
                             ]);
 
-                var chart = new google.visualization.AnnotationChart(document.getElementById('chart_div'));
+                var columnsTable = new google.visualization.DataTable();
+                columnsTable.addColumn('number', 'colIndex');
+                columnsTable.addColumn('string', 'colLabel');
+                var initState= {selectedValues: ['Ambient Temp', 'Beer Temp']};
+                // put the columns into this data table (skip column 0)
+                for (var i = 1; i < data.getNumberOfColumns(); i = i + 3) {
+                    columnsTable.addRow([i, data.getColumnLabel(i)]);
+                }
 
-                var options = {
-                    displayAnnotations: true
-                };
-
-                chart.draw(data, options);
+                var chart = new google.visualization.ChartWrapper({
+                    chartType: 'AnnotationChart',
+                    containerId: 'chart_div',
+                    dataTable: data,
+                    options: {
+                        displayAnnotations: true,
+                        scaleType: 'allmaximized',
+                    }
+                });
+                
+                var columnFilter = new google.visualization.ControlWrapper({
+                    controlType: 'CategoryFilter',
+                    containerId: 'colFilter_div',
+                    dataTable: columnsTable,
+                    options: {
+                        filterColumnLabel: 'colLabel',
+                        ui: {
+                            label: 'Measurements to display:',
+                            allowTyping: false,
+                            allowMultiple: true,
+                            allowNone: false,
+                            selectedValuesLayout: 'aside'
+                        }
+                    },
+                    state: initState
+                });
+                
+                function setChartView () {
+                    var state = columnFilter.getState();
+                    var row;
+                    var view = {
+                        columns: [0]
+                    };
+                    for (var i = 0; i < state.selectedValues.length; i++) {
+                        row = columnsTable.getFilteredRows([{column: 1, value: state.selectedValues[i]}])[0];
+                        view.columns.push(columnsTable.getValue(row, 0));
+                        view.columns.push(columnsTable.getValue(row, 0)+1);
+                        view.columns.push(columnsTable.getValue(row, 0)+2);
+                    }
+                    // sort the indices into their original order
+                    view.columns.sort(function (a, b) {
+                        return (a - b);
+                    });
+                    chart.setView(view);
+                    chart.draw();
+                }
+                google.visualization.events.addListener(columnFilter, 'statechange', setChartView);
+                
+                setChartView();
+                columnFilter.draw();
             }
         </script>
 	</head>
@@ -50,7 +114,8 @@
 		<main>
             <h1>{{active_beer}} - {{beer_date}}</h1>
             
-            <div id='chart_div' style='width: 900px; height: 500px;'></div>
+            <div id='chart_div' style='width: 900px; height: 500px;'></div><br>
+            <div id="colFilter_div"></div>
 		</main>
 	
 		<nav id="nav">
