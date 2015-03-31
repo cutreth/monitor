@@ -328,6 +328,7 @@ def getReadings(active_beer):
 def createDF(active_beer):
     '''Return a DF of reading/archive data, ordered by instant'''
     import pandas as pd
+    import numpy as np
 
     df = pd.DataFrame(columns=['Instant', 'Temp Amb', 'Temp Beer', 'Light Amb'])
     #Add logic for instances where no data exists
@@ -340,6 +341,7 @@ def createDF(active_beer):
         temp_beer_a = archive.get_temp_beer()
         light_amb_a = archive.get_light_amb()
 
+        #Remove loop and duplicate Readings grab below*************
         while counter < archive.count:
             instant_actual = instant_actual_a[counter]
             temp_amb = temp_amb_a[counter]
@@ -347,21 +349,21 @@ def createDF(active_beer):
             light_amb = light_amb_a[counter]
             counter += 1
 
-            i = len(df)
+            i = len(df) #Don't use this!    ***********************
             df.loc[i] = [instant_actual, temp_amb, temp_beer, light_amb]
 
-    active_readings = getReadings(active_beer)
+    active_readings = getReadings(active_beer) 
+
+    all_data = []
     for reading in active_readings:
-        instant = reading.get_instant_actual()
-        temp_amb = reading.get_temp_amb()
-        temp_beer = reading.get_temp_beer()
-        light_amb = reading.get_light_amb()
+        data = [reading.get_instant_actual(),reading.get_temp_amb(),reading.get_temp_beer(),reading.get_light_amb()]
+        all_data.append(data)
+                  
+    glob_df = pd.DataFrame(all_data, columns=['Instant', 'Temp Amb', 'Temp Beer', 'Light Amb'])
+    glob_df = df.sort('Instant')
+    glob_df = df.reset_index(drop=True)
+    df = glob_df
 
-        i = len(df)
-        df.loc[i] = [instant, temp_amb, temp_beer, light_amb]
-
-    df = df.sort('Instant')
-    df = df.reset_index(drop=True)
     return df
 
 def graph(request, cur_beer=None):
