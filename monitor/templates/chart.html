@@ -51,12 +51,12 @@
 			
 			<h3>Beers</h3>
 			<ul>
-				<li><a href="/monitor/graph/">Active Beer</a></li>
+				<li><a href="/monitor/chart/">Active Beer</a></li>
                 {% for beer in all_beers %}
                 {% if beer == active_beer %}
-                    <b><li><a href="/monitor/graph/{{ beer.id }}/">{{ beer }}</a></li></b>                
+                    <b><li><a href="/monitor/chart/{{ beer.id }}/">{{ beer }}</a></li></b>                
                 {% else %}
-                    <li><a href="/monitor/graph/{{ beer.id }}/">{{ beer }}</a></li>
+                    <li><a href="/monitor/chart/{{ beer.id }}/">{{ beer }}</a></li>
                 {% endif %}
                 {% endfor %}
 			</ul>

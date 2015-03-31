@@ -1,7 +1,5 @@
 from monitor.models import Archive
 
-import matplotlib.dates as mpld
-
 def getAllArchives(active_beer):
     all_archives = None
     try:
@@ -26,6 +24,7 @@ def createArchive(active_beer, day):
         return archive
     
 def updateArchive(archive, reading):
+    import matplotlib.dates as mpld
     result = None
     try:
         archive.instant_actual += str(mpld.date2num(reading.instant_actual)) + '^'
