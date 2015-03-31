@@ -470,12 +470,14 @@ def chart(request, cur_beer = None):
                 "pres_beer": [r.get_pres_beer(), 'undefined', 'undefined']
             }
         plot_data.append(add)
-    
+    #Get start_date which is 7 days before the last logged date. In future: change to function
+    start_date = readings.order_by("-instant_actual")[:1].get().instant_actual.date() - timedelta(days=7)
     data = {
         'all_beers': Beer.objects.all(),
         'active_beer': active_beer,
         'plot_data': plot_data,
-        "beer_date": active_beer.brew_date,
+        'beer_date': active_beer.brew_date,
+        'start_date': start_date.isoformat()
     }
     return render_to_response('chart.html', data)
 def data_chk(request, page_name, cur_beer = None):

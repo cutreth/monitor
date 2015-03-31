@@ -60,8 +60,10 @@
                     containerId: 'chart_div',
                     dataTable: data,
                     options: {
+                        displayAnnotationsFilter: true,
                         displayAnnotations: true,
                         scaleType: 'allmaximized',
+                        zoomStartTime: new Date("{{start_date}}"),
                     }
                 });
                 
