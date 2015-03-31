@@ -23,7 +23,14 @@
                 data.addColumn('string', 'Beer Temp title');
                 data.addColumn('string', 'Beer Temp text');
                 data.addRows([  {% for row in plot_data %}
-                                    [new Date("{{ row.0|safe }}"), {{ row.1|safe }}, {{ row.2|safe }}, {{ row.3|safe }}, {{ row.4|safe }}, {{ row.5|safe }}, {{ row.6|safe }}],
+                                    [new Date("{{ row.dt|safe }}"),
+                                        {{ row.temp_amb.0|safe }},
+                                        {{ row.temp_amb.1|safe }},
+                                        {{ row.temp_amb.2|safe }},
+                                        {{ row.temp_beer.0|safe }},
+                                        {{ row.temp_beer.1|safe }},
+                                        {{ row.temp_beer.2|safe }}
+                                    ],
                                 {% endfor%}
                             ]);
 
@@ -51,12 +58,12 @@
 			
 			<h3>Beers</h3>
 			<ul>
-				<li><a href="/monitor/graph/">Active Beer</a></li>
+				<li><a href="/monitor/chart/">Active Beer</a></li>
                 {% for beer in all_beers %}
                 {% if beer == active_beer %}
-                    <b><li><a href="/monitor/graph/{{ beer.id }}/">{{ beer }}</a></li></b>                
+                    <b><li><a href="/monitor/chart/{{ beer.id }}/">{{ beer }}</a></li></b>                
                 {% else %}
-                    <li><a href="/monitor/graph/{{ beer.id }}/">{{ beer }}</a></li>
+                    <li><a href="/monitor/chart/{{ beer.id }}/">{{ beer }}</a></li>
                 {% endif %}
                 {% endfor %}
 			</ul>

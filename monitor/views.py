@@ -366,118 +366,6 @@ def createDF(active_beer):
 
     return df
 
-def graph(request, cur_beer=None):
-    import mpld3
-
-    if cur_beer is None:
-        active_beer = getActiveBeer()
-    else:
-        active_beer = Beer.objects.get(pk=cur_beer)
-
-    all_beers = getAllBeer()
-    beer_name = active_beer
-    beer_date = active_beer.brew_date
-
-    fig1 = createFig(1, active_beer)
-    fig2 = createFig(2, active_beer)
-
-    fig1_html = mpld3.fig_to_html(fig1)
-    fig2_html = mpld3.fig_to_html(fig2)
-
-    data = {
-        'all_beers': all_beers,
-        'beer_name': beer_name,
-        'beer_date': beer_date,
-        'active_beer': getActiveBeer(),
-        'fig1': fig1_html,
-        'fig2': fig2_html
-    }
-
-    return render_to_response('graph.html', data)
-
-def createFig(vers, active_beer):
-    import matplotlib.pyplot as plt
-    import matplotlib.dates as mpld
-    from mpld3 import plugins
-
-    fig, ax = plt.subplots()
-    ax.grid(True, alpha=0.3)
-    fig.set_figheight(6)
-    fig.set_figwidth(12)
-
-    css = """
-    table
-    {
-      border-collapse: collapse;
-    }
-    th
-    {
-      color: #ffffff;
-      background-color: #000000;
-    }
-    td
-    {
-      background-color: #cccccc;
-    }
-    table, th, td
-    {
-      font-family:Arial, Helvetica, sans-serif;
-      border: 1px solid black;
-      text-align: right;
-    }
-    """
-
-    df = createDF(active_beer)
-
-    if vers == 1:
-        y_temp_amb = ax.plot_date(df['Instant'], df['Temp Amb'], 'b.-', label='Temp Amb')
-        ax.set_ylabel('Temp')
-        title = str(active_beer) + ' - Temp'
-
-        y_temp_beer = ax.plot_date(df['Instant'], df['Temp Beer'], 'r.-', label='Temp Beer')
-        ax.set_ylabel('Temp')
-        title = 'Temp'
-
-        df.drop('Light Amb', axis=1, inplace=True)
-
-    if vers == 2:
-        y_light_amb = ax.plot_date(df['Instant'], df['Light Amb'], 'y.-', label='Light Amb')
-        ax.set_ylabel('Light')
-        title = 'Light'
-
-        df.drop('Temp Amb', axis=1, inplace=True)
-        df.drop('Temp Beer', axis=1, inplace=True)
-
-    instant_data = [mpld.num2date(n).strftime('%Y-%m-%d %H:%M') for n in df['Instant']]
-    df.drop('Instant', axis=1, inplace=True)
-
-    labels = []
-    for i in range(len(df.index)):
-        label = df.ix[[i], :].T
-        label.columns = [instant_data[i]]
-        # .to_html() is unicode; so make leading 'u' go away with str()
-        labels.append(str(label.to_html()))
-
-    if vers == 1:
-        tooltip = plugins.PointHTMLTooltip(y_temp_amb[0], labels,
-                                           voffset=10, hoffset=10, css=css)
-        plugins.connect(fig, tooltip)
-
-        tooltip2 = plugins.PointHTMLTooltip(y_temp_beer[0], labels,
-                                            voffset=10, hoffset=10, css=css)
-        plugins.connect(fig, tooltip2)
-
-    if vers == 2:
-        tooltip = plugins.PointHTMLTooltip(y_light_amb[0], labels,
-                                           voffset=10, hoffset=10, css=css)
-        plugins.connect(fig, tooltip)
-
-    ax.set_xlabel('Instant')
-    ax.set_title(title, size=20)
-    ax.legend(loc='best', fancybox=True, framealpha=0.5, title='')
-
-    return fig
-
 def dashboard(request):
     # To do:
     # -Add button to force a log and refresh page
@@ -565,14 +453,19 @@ def gen_unableToLoad(page_name):
         'page_name': page_name,
     }
     return render_to_response('unabletoload.html',data)
-def annotationchart(request, cur_beer = None):
+def chart(request, cur_beer = None):
     if cur_beer is None: active_beer = getActiveBeer()
     else: active_beer = Beer.objects.get(pk=cur_beer)
     
     readings = getReadings(active_beer)
     plot_data = []
     for r in readings:
-        add = [r.instant_actual.isoformat(), r.get_temp_amb(), 'undefined', 'undefined', r.get_temp_beer(), 'undefined', 'undefined']
+        add = {
+                "dt":r.instant_actual.isoformat(),
+                "temp_amb": [r.get_temp_amb(), 'undefined', 'undefined'],
+                "temp_beer": [r.get_temp_beer(), 'undefined', 'undefined'],
+                "light_amb": [r.get_light_amb(), 'undefined', 'undefined']
+            }
         plot_data.append(add)
     
     data = {
@@ -581,7 +474,7 @@ def annotationchart(request, cur_beer = None):
         'plot_data': plot_data,
         "beer_date": active_beer.brew_date,
     }
-    return render_to_response('annotationchart.html', data)
+    return render_to_response('chart.html', data)
 def data_chk(request, page_name, cur_beer = None):
     if cur_beer is None: active_beer = getActiveBeer()
     else: active_beer = Beer.objects.get(pk=cur_beer)
@@ -591,8 +484,7 @@ def data_chk(request, page_name, cur_beer = None):
     if(not bool(read_chk)): out = gen_unableToLoad(page_name)
     else:
         if page_name.upper() == "DASHBOARD": out = dashboard(request)
-        elif page_name.upper() == "GRAPH": out = graph(request, cur_beer)
-        elif page_name.upper() == "ANNOTATIONCHART": out = annotationchart(request, cur_beer)
+        elif page_name.upper() == "CHART": out = chart(request, cur_beer)
         else: out = "404 Page Not Found"
     
     return out
