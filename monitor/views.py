@@ -455,6 +455,7 @@ def gen_unableToLoad(page_name, cur_beer):
     return render_to_response('unabletoload.html',data)
 def chart(request, cur_beer = None):
     '''Creates a chart page with the Google Annotation Chart'''
+    #In future: send alerts too
     if cur_beer is None: active_beer = getActiveBeer()
     else: active_beer = Beer.objects.get(pk=cur_beer)
     
@@ -481,7 +482,7 @@ def data_chk(request, page_name, cur_beer = None):
     '''Checks if we have readings for cur_beer then if page_name exists and then creates appropriate page'''
     if cur_beer is None: active_beer = getActiveBeer()
     else: active_beer = Beer.objects.get(pk=cur_beer)
-    
+    #In Future: change to function
     read_chk = getReadings(active_beer)[:1]
     
     if(not bool(read_chk)): out = gen_unableToLoad(page_name, active_beer)
