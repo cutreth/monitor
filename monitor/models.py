@@ -82,7 +82,9 @@ class Reading(models.Model):
     instant_override = models.DateTimeField('Instant Override',blank=True,
                                             null=True,default=None)
     instant_actual = models.DateTimeField('Instant Actual',blank=True,
-                                            null=True,default=None)
+                                          null=True,default=None)
+    instant_actual_iso = models.SlugField('Instant Actual (ISO)', blank = True,
+                                          null=True,default=None)
     light_amb = models.DecimalField('Ambient Light', max_digits=5,
                                     decimal_places=2,blank=True,null=False,
                                     default=0)
@@ -102,9 +104,7 @@ class Reading(models.Model):
     error_details = models.CharField('Error Details',blank=True,max_length=150)
             
     def get_instant_actual(self):
-        import matplotlib.dates as mpld
-        value = self.instant_actual
-        value = mpld.date2num(value)
+        value = self.instant_actual_iso
         return value
         
     #Break out conversion into a new function, combine with get_temp_beer
@@ -139,14 +139,14 @@ class Reading(models.Model):
         return value
         
     def save(self, *args, **kwargs):
-        
+              
         super(Reading, self).save(*args, **kwargs)
         
-        #Set instant_actual before each save            
         if bool(self.instant_override):
             self.instant_actual = self.instant_override
         else:
             self.instant_actual = self.instant
+        self.instant_actual_iso = self.instant_actual.isoformat()
 
         super(Reading, self).save(*args, **kwargs)
 

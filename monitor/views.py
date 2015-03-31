@@ -185,7 +185,7 @@ def createHttpResp(read, value):
         response['temp_unit'] = read.temp_unit
         response['instant_override'] = read.instant_override
         response['instant'] = read.instant
-        response['instant_actual'] = read.instant_actual
+        response['instant_actual'] = read.instant_actual_iso
         response['error_flag'] = read.error_flag
         response['error_details'] = read.error_details
     return response
@@ -322,13 +322,12 @@ def commands(request):
 
 def getReadings(active_beer):
     '''Return all readings for active_beer ordered by instant_actual'''
-    active_readings = Reading.objects.filter(beer=active_beer).order_by('instant_actual')
+    active_readings = Reading.objects.filter(beer=active_beer).order_by('-instant_actual_iso')
     return active_readings
 
 def createDF(active_beer):
     '''Return a DF of reading/archive data, ordered by instant'''
     import pandas as pd
-    import numpy as np
 
     df = pd.DataFrame(columns=['Instant', 'Temp Amb', 'Temp Beer', 'Light Amb'])
     #Add logic for instances where no data exists
@@ -358,13 +357,7 @@ def createDF(active_beer):
     for reading in active_readings:
         data = [reading.get_instant_actual(),reading.get_temp_amb(),reading.get_temp_beer(),reading.get_light_amb()]
         all_data.append(data)
-                  
-    glob_df = pd.DataFrame(all_data, columns=['Instant', 'Temp Amb', 'Temp Beer', 'Light Amb'])
-    glob_df = df.sort('Instant')
-    glob_df = df.reset_index(drop=True)
-    df = glob_df
-
-    return df
+    return all_data
 
 def dashboard(request):
     '''Creates dashboard (gauges and table) page for the active beer'''
