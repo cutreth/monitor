@@ -464,7 +464,8 @@ def chart(request, cur_beer = None):
                 "dt":r.instant_actual.isoformat(),
                 "temp_amb": [r.get_temp_amb(), 'undefined', 'undefined'],
                 "temp_beer": [r.get_temp_beer(), 'undefined', 'undefined'],
-                "light_amb": [r.get_light_amb(), 'undefined', 'undefined']
+                "light_amb": [r.get_light_amb(), 'undefined', 'undefined'],
+                "pres_beer": [r.get_pres_beer(), 'undefined', 'undefined']
             }
         plot_data.append(add)
     
