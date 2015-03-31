@@ -324,39 +324,34 @@ def getReadings(active_beer):
     '''Return all readings for active_beer ordered by instant_actual'''
     active_readings = Reading.objects.filter(beer=active_beer).order_by('-instant_actual_iso')
     return active_readings
+    
+def getLastReading(active_beer):
+    '''Returns the most recent reading for active_beer if it exists'''
+    last_read = None
+    last_read = getReadings(active_beer)[:1].get()
+    return last_read
 
-def createDF(active_beer):
+def getAllData(active_beer):
     '''Return a DF of reading/archive data, ordered by instant'''
-    import pandas as pd
-
-    df = pd.DataFrame(columns=['Instant', 'Temp Amb', 'Temp Beer', 'Light Amb'])
-    #Add logic for instances where no data exists
+    all_data = []
 
     active_archives = getAllArchives(active_beer)
     for archive in active_archives:
+        instant_actual_arch = archive.get_instant_actual()
+        temp_amb_arch = archive.get_temp_amb()
+        temp_beer_arch = archive.get_temp_beer()
+        light_amb_arch = archive.get_light_amb()
         counter = 0
-        instant_actual_a = archive.get_instant_actual()
-        temp_amb_a = archive.get_temp_amb()
-        temp_beer_a = archive.get_temp_beer()
-        light_amb_a = archive.get_light_amb()
-
-        #Remove loop and duplicate Readings grab below*************
         while counter < archive.count:
-            instant_actual = instant_actual_a[counter]
-            temp_amb = temp_amb_a[counter]
-            temp_beer = temp_beer_a[counter]
-            light_amb = light_amb_a[counter]
+            data = [instant_actual_arch[counter],temp_amb_arch[counter],temp_beer_arch[counter],light_amb_arch[counter]]
+            all_data.append(data)
             counter += 1
 
-            i = len(df) #Don't use this!    ***********************
-            df.loc[i] = [instant_actual, temp_amb, temp_beer, light_amb]
-
     active_readings = getReadings(active_beer) 
-
-    all_data = []
     for reading in active_readings:
         data = [reading.get_instant_actual(),reading.get_temp_amb(),reading.get_temp_beer(),reading.get_light_amb()]
         all_data.append(data)
+        
     return all_data
 
 def dashboard(request):

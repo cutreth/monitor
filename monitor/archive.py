@@ -24,10 +24,9 @@ def createArchive(active_beer, day):
         return archive
     
 def updateArchive(archive, reading):
-    import matplotlib.dates as mpld
     result = None
     try:
-        archive.instant_actual += str(mpld.date2num(reading.instant_actual)) + '^'
+        archive.instant_actual += str(reading.get_instant_actual()) + '^'
         archive.light_amb += str(reading.get_light_amb()) + '^'
         archive.pres_beer += str(reading.get_pres_beer()) + '^'
         archive.temp_amb += str(reading.get_temp_amb()) + '^'
