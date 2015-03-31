@@ -460,11 +460,12 @@ def chart(request, cur_beer = None):
     readings = getReadings(active_beer)
     plot_data = []
     for r in readings:
-        add = [r.instant_actual.isoformat(),
-                r.get_temp_amb(), 'undefined', 'undefined',
-                r.get_temp_beer(), 'undefined', 'undefined',
-                r.get_light_amb(), 'undefined', 'undefined'
-            ]
+        add = {
+                "dt":r.instant_actual.isoformat(),
+                "temp_amb": [r.get_temp_amb(), 'undefined', 'undefined'],
+                "temp_beer": [r.get_temp_beer(), 'undefined', 'undefined'],
+                "light_amb": [r.get_light_amb(), 'undefined', 'undefined']
+            }
         plot_data.append(add)
     
     data = {
