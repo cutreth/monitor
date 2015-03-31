@@ -446,11 +446,12 @@ def dashboard_update(request):
             sleep(.1)
     print(command_status[0])
     return HttpResponseRedirect(reverse('dashboard')) 
-def gen_unableToLoad(page_name):
+def gen_unableToLoad(page_name, cur_beer):
     data = {
         'all_beers': Beer.objects.all(),
         'active_beer': getActiveBeer(),
         'page_name': page_name,
+        'cur_beer': cur_beer,
     }
     return render_to_response('unabletoload.html',data)
 def chart(request, cur_beer = None):
@@ -482,7 +483,7 @@ def data_chk(request, page_name, cur_beer = None):
     
     read_chk = getReadings(active_beer)[:1]
     
-    if(not bool(read_chk)): out = gen_unableToLoad(page_name)
+    if(not bool(read_chk)): out = gen_unableToLoad(page_name, active_beer)
     else:
         if page_name.upper() == "DASHBOARD": out = dashboard(request)
         elif page_name.upper() == "CHART": out = chart(request, cur_beer)
