@@ -439,6 +439,7 @@ def chart(request, cur_beer = None):
     data = {
         'all_beers': Beer.objects.all(),
         'active_beer': active_beer,
+        'cur_beer': cur_beer,
         'plot_data': plot_data,
         'beer_date': active_beer.brew_date,
         'start_date': start_date.isoformat()

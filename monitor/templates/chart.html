@@ -127,7 +127,7 @@
 			<ul>
 				<li><a href="/monitor/chart/">Active Beer</a></li>
                 {% for beer in all_beers %}
-                {% if beer == active_beer %}
+                {% if beer == cur_beer %}
                     <b><li><a href="/monitor/chart/{{ beer.id }}/">{{ beer }}</a></li></b>                
                 {% else %}
                     <li><a href="/monitor/chart/{{ beer.id }}/">{{ beer }}</a></li>
