@@ -14,6 +14,8 @@
         google.load('visualization', '1', {'packages':['annotationchart']});
         google.setOnLoadCallback(drawChart);
         function drawChart() {
+            init_vals = typeof init_vals !== 'undefined' ? init_vals : ['Ambient Temp', 'Beer Temp'];
+            
             var data = new google.visualization.DataTable();
             data.addColumn('datetime', 'Log Time');
             data.addColumn('number', 'Ambient Temp');
@@ -49,7 +51,7 @@
             var columnsTable = new google.visualization.DataTable();
             columnsTable.addColumn('number', 'colIndex');
             columnsTable.addColumn('string', 'colLabel');
-            var initState= {selectedValues: ['Ambient Temp', 'Beer Temp']};
+            var initState= {selectedValues: init_vals};
             // put the columns into this data table (skip column 0)
             for (var i = 1; i < data.getNumberOfColumns(); i = i + 3) {
                 columnsTable.addRow([i, data.getColumnLabel(i)]);
@@ -119,6 +121,11 @@
             
             <div id='chart_div' style='width: 900px; height: 500px;'></div><br>
             <div id="colFilter_div"></div>
+            <h3>Quick Selections:</h3>
+            <input id="button_temp" type="button" value="Temperature Values" onclick="drawChart(init_vals=['Ambient Temp', 'Beer Temp']);" />
+            <input id="button_nontemp" type="button" value="Non-temperature Values" onclick="drawChart(init_vals=['Ambient Light', 'Beer Pressure']);" />
+            <input id="button_amb" type="button" value="Ambient Values" onclick="drawChart(init_vals=['Ambient Temp', 'Ambient Light']);" />
+            <input id="button_beer" type="button" value="Beer Values" onclick="drawChart(init_vals=['Beer Temp', 'Beer Pressure']);" />
         </div>
 		</main>
 	
