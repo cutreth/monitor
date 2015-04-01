@@ -182,6 +182,10 @@ class Config(models.Model):
                                      max_length=150)
     email_last_instant = models.DateTimeField('Last Email Instant',blank=True,
                                 null=True,default=None)
-        
+    
+    api_server_url = models.CharField('Server URL',default='',blank=True,max_length=50)
+    api_prod_key = models.CharField('Prod API Key',default='',blank=True,max_length=50)
+    api_test_key = models.CharField('Test API Key',default='',blank=True,max_length=50)
+    
     def __str__(self):
         return 'Config' + ': ' + str(self.pk)
