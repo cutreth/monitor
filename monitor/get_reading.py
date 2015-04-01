@@ -7,6 +7,7 @@ def getReadings(active_beer):
 
 def getLastReading(active_beer):
     '''Returns the most recent reading for active_beer if it exists'''
-    last_read = None
-    last_read = getReadings(active_beer)[:1].get()
+    readings = getReadings(active_beer)
+    if readings.count() == 0: last_read = None
+    else: last_read = readings[:1].get()
     return last_read
