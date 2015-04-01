@@ -33,7 +33,7 @@ class Archive(models.Model):
         if bool(val):
             out = val.split('^')
             del out[-1]
-            out = [float(n) for n in out]
+            out = [str(n) for n in out]
         return out     
         
     def get_light_amb(self):

@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from monitor.views import getActiveBeer, getReadings
-from monitor.archive import getArchive, createArchive, updateArchive
+from monitor.get_archive import getArchive, createArchive, updateArchive
 
 import datetime
 
@@ -12,7 +12,8 @@ class Command(BaseCommand):
 
         #Define a datetime one week ago
         today = datetime.date.today()
-        week_ago = today - datetime.timedelta(days=6)
+        week_ago = today - datetime.timedelta(days=-1)
+        #Normally set days=6 for one week
 
         #Return readings for active_beer before the date limit
         active_beer = getActiveBeer()

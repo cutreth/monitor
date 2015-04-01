@@ -319,15 +319,26 @@ def getAllData(active_beer):
         temp_amb_arch = archive.get_temp_amb()
         temp_beer_arch = archive.get_temp_beer()
         light_amb_arch = archive.get_light_amb()
+        pres_beer_arch = archive.get_pres_beer()
         counter = 0
         while counter < archive.count:
-            data = [instant_actual_arch[counter],temp_amb_arch[counter],temp_beer_arch[counter],light_amb_arch[counter]]
+            data = {'dt':instant_actual_arch[counter] + "-05:00",
+                    'temp_amb':[temp_amb_arch[counter],'undefined','undefined'],
+                    'temp_beer':[temp_beer_arch[counter],'undefined','undefined'],
+                    'light_amb':[light_amb_arch[counter],'undefined','undefined'],
+                    'pres_beer':[pres_beer_arch[counter],'undefined','undefined'],
+            }
             all_data.append(data)
             counter += 1
 
     active_readings = getReadings(active_beer) 
     for reading in active_readings:
-        data = [reading.get_instant_actual(),reading.get_temp_amb(),reading.get_temp_beer(),reading.get_light_amb()]
+        data = {'dt':reading.get_instant_actual() + "-05:00",
+                'temp_amb':[reading.get_temp_amb(),'undefined','undefined'],
+                'temp_beer':[reading.get_temp_beer(),'undefined','undefined'],
+                'light_amb':[reading.get_light_amb(),'undefined','undefined'],
+                'pres_beer':[reading.get_pres_beer(),'undefined','undefined'],
+        }
         all_data.append(data)
         
     return all_data
@@ -426,18 +437,9 @@ def chart(request, cur_beer = None):
     active_beer = getActiveBeer()
     #active_beer is the system config active
     #cur_beer is the beer that is being charted    
-    
-    readings = getReadings(cur_beer)
-    plot_data = []
-    for r in readings:
-        add = {
-                "dt":r.get_instant_actual() + "-05:00",
-                "temp_amb": [r.get_temp_amb(), 'undefined', 'undefined'],
-                "temp_beer": [r.get_temp_beer(), 'undefined', 'undefined'],
-                "light_amb": [r.get_light_amb(), 'undefined', 'undefined'],
-                "pres_beer": [r.get_pres_beer(), 'undefined', 'undefined']
-            }
-        plot_data.append(add)
+
+    plot_data = getAllData(cur_beer)   
+   
     #Get start_date which is 7 days before the last logged date.
     start_date = getLastReading(cur_beer).instant_actual.date() - timedelta(days=7)
     data = {
