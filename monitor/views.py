@@ -397,7 +397,7 @@ def get_paint_cols(val, rng = None):
 def dashboard_update(request):
     '''Forces a log then returns to dashboard page'''
     active_beer = getActiveBeer()
-    old_reading = getLastReadings(active_beer)
+    old_reading = getLastReading(active_beer)
 
     for i in range(4):
         command_status = send2middleware("F")
