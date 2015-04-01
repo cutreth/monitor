@@ -3,9 +3,12 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 
-from monitor.archive import getAllArchives
+from monitor.get_config import getActiveConfig, getActiveBeer, SetReadInstant
+from monitor.get_beer import getAllBeer
+from monitor.get_reading import getReadings, getLastReading
+from monitor.get_archive import getAllArchives
 from monitor.middleware import send2middleware
-from monitor.models import Beer, Reading, Config
+from monitor.models import Beer, Reading
 
 from time import sleep
 from datetime import timedelta
@@ -81,19 +84,6 @@ def getInstantOverride(request):
             instant_override = int(0)
     finally:
         return instant_override
-
-def getActiveConfig():
-    active_config = Config.objects.filter()[:1].get()
-    return active_config
-
-def getActiveBeer():
-    active_config = getActiveConfig()
-    active_beer = active_config.beer
-    return active_beer
-
-def getAllBeer():
-    all_beer = Beer.objects.all()
-    return all_beer
 
 def MaxMinCheck(base, deviation, value, category):
     '''Returns an error string if the input value exceeds the calculated bounds'''
@@ -189,13 +179,6 @@ def createHttpResp(read, value):
         response['error_flag'] = read.error_flag
         response['error_details'] = read.error_details
     return response
-
-def SetReadInstant(active_config):
-    '''Set the current instant as active_config.read_last_instant'''
-    right_now = datetime.datetime.now()
-    active_config.read_last_instant = right_now
-    active_config.save()
-    return
 
 #C:\Python34\python -m pdb manage.py runserver
 #Then press 'c'
@@ -319,18 +302,7 @@ def commands(request):
            }
 
     return render_to_response('commands.html', data)
-
-def getReadings(active_beer):
-    '''Return all readings for active_beer ordered by instant_actual'''
-    active_readings = Reading.objects.filter(beer=active_beer).order_by('-instant_actual_iso')
-    return active_readings
     
-def getLastReading(active_beer):
-    '''Returns the most recent reading for active_beer if it exists'''
-    last_read = None
-    last_read = getReadings(active_beer)[:1].get()
-    return last_read
-
 def getAllData(active_beer):
     '''Return a DF of reading/archive data, ordered by instant'''
     all_data = []
