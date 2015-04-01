@@ -1,4 +1,5 @@
 from monitor.models import Archive
+from datetime import datetime
 
 def getAllArchives(active_beer):
     all_archives = None
@@ -19,6 +20,7 @@ def createArchive(active_beer, day):
     try:
         if not bool(getArchive(active_beer, day)):
             archive = Archive(beer=active_beer, reading_date=day)
+            archive.update_instant = datetime.now()
             archive.save()
     finally:
         return archive
@@ -31,6 +33,7 @@ def updateArchive(archive, reading):
         archive.pres_beer += str(reading.get_pres_beer()) + '^'
         archive.temp_amb += str(reading.get_temp_amb()) + '^'
         archive.temp_beer += str(reading.get_temp_beer()) + '^'
+        archive.update_instant = datetime.now()
         archive.count += 1
         archive.save()
         reading.delete()
