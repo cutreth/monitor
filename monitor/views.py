@@ -336,7 +336,7 @@ def dashboard(request):
     '''Creates dashboard (gauges and table) page for the active beer'''
     active_config = getActiveConfig()
     active_beer = getActiveBeer()
-    cur_reading = getReadings(active_beer).order_by("-instant_actual")[:1].get()
+    cur_reading = getLastReadings(active_beer)
 
     cur_temp_amb = cur_reading.get_temp_amb()
     cur_temp_beer = cur_reading.get_temp_beer()
@@ -397,8 +397,7 @@ def get_paint_cols(val, rng = None):
 def dashboard_update(request):
     '''Forces a log then returns to dashboard page'''
     active_beer = getActiveBeer()
-    #In future, use function to get most recent reading (see below too):
-    old_reading = getReadings(active_beer).order_by("-instant_actual")[:1].get()
+    old_reading = getLastReadings(active_beer)
 
     for i in range(4):
         command_status = send2middleware("F")
@@ -406,7 +405,7 @@ def dashboard_update(request):
         sleep(.1)
     if command_status[0] == "Success":
         for i in range(49):
-            if getReadings(active_beer).order_by("-instant_actual")[:1].get() != old_reading: break
+            if getLastReading(active_beer) != old_reading: break
             sleep(.1)
     return HttpResponseRedirect(reverse('dashboard')) 
 def gen_unableToLoad(page_name, cur_beer):
@@ -432,15 +431,15 @@ def chart(request, cur_beer = None):
     plot_data = []
     for r in readings:
         add = {
-                "dt":r.instant_actual.isoformat(),
+                "dt":r.get_instant_actual(),
                 "temp_amb": [r.get_temp_amb(), 'undefined', 'undefined'],
                 "temp_beer": [r.get_temp_beer(), 'undefined', 'undefined'],
                 "light_amb": [r.get_light_amb(), 'undefined', 'undefined'],
                 "pres_beer": [r.get_pres_beer(), 'undefined', 'undefined']
             }
         plot_data.append(add)
-    #Get start_date which is 7 days before the last logged date. In future: change to function
-    start_date = readings.order_by("-instant_actual")[:1].get().instant_actual.date() - timedelta(days=7)
+    #Get start_date which is 7 days before the last logged date.
+    start_date = getLastReading(cur_beer).instant_actual.date() - timedelta(days=7)
     data = {
         'all_beers': Beer.objects.all(),
         'active_beer': active_beer,
@@ -454,8 +453,8 @@ def data_chk(request, page_name, cur_beer = None):
     '''Checks if we have readings for cur_beer then if page_name exists and then creates appropriate page'''
     if cur_beer is None: active_beer = getActiveBeer()
     else: active_beer = Beer.objects.get(pk=cur_beer)
-    #In Future: change to function
-    read_chk = getReadings(active_beer)[:1]
+    
+    read_chk = getLastReading(active_beer)
     
     if(not bool(read_chk)): out = gen_unableToLoad(page_name, active_beer)
     else:
