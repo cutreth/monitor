@@ -420,10 +420,13 @@ def gen_unableToLoad(page_name, cur_beer):
 def chart(request, cur_beer = None):
     '''Creates a chart page with the Google Annotation Chart'''
     #In future: send alerts too
-    if cur_beer is None: active_beer = getActiveBeer()
-    else: active_beer = Beer.objects.get(pk=cur_beer)
+    if cur_beer is None: cur_beer = getActiveBeer()
+    else: cur_beer = Beer.objects.get(pk=cur_beer)
+    active_beer = getActiveBeer()
+    #active_beer is the system config active
+    #cur_beer is the beer that is being charted    
     
-    readings = getReadings(active_beer)
+    readings = getReadings(cur_beer)
     plot_data = []
     for r in readings:
         add = {
@@ -441,7 +444,7 @@ def chart(request, cur_beer = None):
         'active_beer': active_beer,
         'cur_beer': cur_beer,
         'plot_data': plot_data,
-        'beer_date': active_beer.brew_date,
+        'beer_date': cur_beer.brew_date,
         'start_date': start_date.isoformat()
     }
     return render_to_response('chart.html', data)
