@@ -431,7 +431,7 @@ def chart(request, cur_beer = None):
     plot_data = []
     for r in readings:
         add = {
-                "dt":r.get_instant_actual(),
+                "dt":r.get_instant_actual() + "-05:00",
                 "temp_amb": [r.get_temp_amb(), 'undefined', 'undefined'],
                 "temp_beer": [r.get_temp_beer(), 'undefined', 'undefined'],
                 "light_amb": [r.get_light_amb(), 'undefined', 'undefined'],
