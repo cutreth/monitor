@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.admin.views.decorators import staff_member_required
 from django.template import RequestContext
 
-from monitor.get_config import getActiveConfig, getActiveBeer, SetReadInstant
+from monitor.get_config import getActiveConfig, getActiveBeer, SetReadInstant, getProdKey, getTestKey
 from monitor.get_beer import getAllBeer
 from monitor.get_reading import getReadings, getLastReading
 from monitor.get_archive import getAllArchives
@@ -190,7 +190,9 @@ def createHttpResp(read, value):
 def api(request):
 
     key = stringFromPost(request, 'key')
-    if (key == 'beer') or (key == 'test'):
+    prod_key = getProdKey()
+    test_key = getTestKey()
+    if (key == prod_key) or (key == test_key):
 
         active_config = getActiveConfig()
         active_beer = getActiveBeer() #Get active beer
@@ -227,7 +229,7 @@ def api(request):
             error_flag = ErrorCheck(active_config, read)
 
             #And finally, save the record
-            if key == 'beer':
+            if key == prod_key:
                 read.save()
                 SetReadInstant(active_config)
                 if error_flag: #Send error emails if necessary

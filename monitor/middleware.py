@@ -5,6 +5,7 @@ def send2middleware(message, testMode = False):
     import socket
     import platform
     import signal    
+    from monitor.get_config import getServerUrl
  
     if platform.system() != 'Windows': 
         signal.signal(signal.SIGALRM, handler)
@@ -15,7 +16,8 @@ def send2middleware(message, testMode = False):
  
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     if testMode == False:
-        server_ip = socket.gethostbyname('benjeye.ddns.net')
+        server_url = getServerUrl
+        server_ip = socket.gethostbyname(server_url)
         server_address = (server_ip, 6005)
     else: server_address = ('localhost', 6005)
     
