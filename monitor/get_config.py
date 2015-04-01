@@ -16,3 +16,18 @@ def SetReadInstant(active_config):
     active_config.read_last_instant = right_now
     active_config.save()
     return
+
+def getServerUrl():
+    active_config = getActiveConfig()
+    url = active_config.api_server_url
+    return url
+    
+def getProdKey():
+    active_config = getActiveConfig()
+    key = active_config.api_prod_key
+    return key    
+    
+def getTestKey():
+    active_config = getActiveConfig()
+    key = active_config.api_test_key
+    return key
