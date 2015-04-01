@@ -29,10 +29,10 @@ class ReadingAdmin(admin.ModelAdmin):
 class ArchiveAdmin(admin.ModelAdmin):
     
     fields = ('beer','reading_date','count','instant_actual',
-              'light_amb','pres_beer','temp_amb','temp_beer',)
+              'light_amb','pres_beer','temp_amb','temp_beer','update_instant')
 
     readonly_fields = ('beer','reading_date','count','instant_actual',
-                       'light_amb','pres_beer','temp_amb','temp_beer',)
+                       'light_amb','pres_beer','temp_amb','temp_beer','update_instant')
 
 admin.site.register(Beer, BeerAdmin)
 admin.site.register(Config)
