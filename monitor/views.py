@@ -2,6 +2,8 @@ from django.shortcuts import render_to_response
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.admin.views.decorators import staff_member_required
+from django.template import RequestContext
 
 from monitor.get_config import getActiveConfig, getActiveBeer, SetReadInstant
 from monitor.get_beer import getAllBeer
@@ -244,6 +246,7 @@ def api(request):
     response = createHttpResp(read, status)
     return response
 
+@staff_member_required
 def send_command(request, command_char=None):
     if command_char == None:
         command_status = str('')
@@ -252,6 +255,7 @@ def send_command(request, command_char=None):
     request.session['command_status'] = command_status
     return HttpResponseRedirect(reverse('commands'))
 
+@staff_member_required
 def commands(request):
     blank = str('')
     command_status = blank
@@ -301,7 +305,7 @@ def commands(request):
             'details': details
            }
 
-    return render_to_response('commands.html', data)
+    return render_to_response('commands.html', data, context_instance=RequestContext(request))
     
 def getAllData(active_beer):
     '''Return a DF of reading/archive data, ordered by instant'''
