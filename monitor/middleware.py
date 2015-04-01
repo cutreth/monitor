@@ -16,7 +16,7 @@ def send2middleware(message, testMode = False):
  
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     if testMode == False:
-        server_url = getServerUrl
+        server_url = getServerUrl()
         server_ip = socket.gethostbyname(server_url)
         server_address = (server_ip, 6005)
     else: server_address = ('localhost', 6005)
