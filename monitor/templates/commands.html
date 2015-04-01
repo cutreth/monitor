@@ -18,7 +18,7 @@
 				
 				<h1>Server Commands</h1>
                 {% for command,description in command_options %}
-                    <form action="/admin/commands/{{command}}/" method="get">
+                    <form action="/monitor/commands/{{command}}/" method="get">
                         <input type="submit" value="{{description}}">
                     </form>
                 {% endfor %}
@@ -45,7 +45,7 @@
 			<h3>Options</h3>
 			<ul>
                 <li><a href="/monitor/dashboard/">Dashboard</a></li>
-				<li><a href="/admin/commands/">Commands</a></li>
+				<li><a href="/monitor/commands/">Commands</a></li>
 				<li><a href="/admin/">Admin</a></li>
 			</ul>
 			</div>
