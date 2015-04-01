@@ -336,7 +336,7 @@ def dashboard(request):
     '''Creates dashboard (gauges and table) page for the active beer'''
     active_config = getActiveConfig()
     active_beer = getActiveBeer()
-    cur_reading = getLastReadings(active_beer)
+    cur_reading = getLastReading(active_beer)
 
     cur_temp_amb = cur_reading.get_temp_amb()
     cur_temp_beer = cur_reading.get_temp_beer()
