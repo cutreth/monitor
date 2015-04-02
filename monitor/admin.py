@@ -29,12 +29,21 @@ class ReadingAdmin(admin.ModelAdmin):
 class ArchiveAdmin(admin.ModelAdmin):
     
     fields = ('beer','reading_date','count','instant_actual',
-              'light_amb','pres_beer','temp_amb','temp_beer',)
+              'light_amb','pres_beer','temp_amb','temp_beer','update_instant')
 
     readonly_fields = ('beer','reading_date','count','instant_actual',
-                       'light_amb','pres_beer','temp_amb','temp_beer',)
+                       'light_amb','pres_beer','temp_amb','temp_beer','update_instant')
+                       
+class ConfigAdmin(admin.ModelAdmin):
+    fields = ('beer','temp_amb_base','temp_amb_dev','temp_beer_base','temp_beer_dev',
+              'read_missing','read_last_instant','email_enable','email_timeout',
+              'email_api_key','email_sender','email_to','email_subject',
+              'email_last_instant','api_server_url','api_prod_key','api_test_key',
+              'reading_key','archive_key')
+    
+    readonly_fields = ('read_last_instant','reading_key','archive_key')
 
 admin.site.register(Beer, BeerAdmin)
-admin.site.register(Config)
+admin.site.register(Config, ConfigAdmin)
 admin.site.register(Reading,ReadingAdmin)
 admin.site.register(Archive,ArchiveAdmin)

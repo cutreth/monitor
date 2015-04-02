@@ -31,3 +31,13 @@ def getTestKey():
     active_config = getActiveConfig()
     key = active_config.api_test_key
     return key
+    
+def getReadingKey():
+    active_config = getActiveConfig()
+    key = active_config.reading_key
+    return key   
+    
+def getArchiveKey():
+    active_config = getActiveConfig()
+    key = active_config.archive_key
+    return key
