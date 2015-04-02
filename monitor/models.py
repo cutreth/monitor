@@ -12,13 +12,15 @@ class Beer(models.Model):
 class Archive(models.Model):
     
     beer = models.ForeignKey(Beer)
-    reading_date = models.DateField('Reading Date')
+    reading_date = models.DateField('Reading Date',db_index=True)
     instant_actual = models.TextField('Instant Actual')
     light_amb = models.TextField('Ambient Light')
     pres_beer = models.TextField('Beer Pressure')
     temp_amb = models.TextField('Ambient Temp')
     temp_beer = models.TextField('Beer Temp')
     count = models.PositiveIntegerField('Count', default=0)
+    update_instant = models.DateTimeField('Last Updated',blank=True,
+                                      null=True,default=None)    
     
     def __str__(self):
         value = str(self.beer) + ': '
@@ -31,7 +33,7 @@ class Archive(models.Model):
         if bool(val):
             out = val.split('^')
             del out[-1]
-            out = [float(n) for n in out]
+            out = [str(n) for n in out]
         return out     
         
     def get_light_amb(self):
@@ -70,6 +72,20 @@ class Archive(models.Model):
         value = self.count
         return value
     
+    def get_update_instant(self):
+        value = self.update_instant
+        value = value.isoformat()
+        return value
+    
+    def get_reading_date(self):
+        value = self.reading_date
+        value = value.isoformat()
+        return value
+
+    def get_unique_ident(self):
+        value = str(self.get_reading_date()) + '|' + str(self.get_update_instant())
+        return value        
+        
 class Reading(models.Model):
 
     temp_choices = (
@@ -84,7 +100,7 @@ class Reading(models.Model):
     instant_actual = models.DateTimeField('Instant Actual',blank=True,
                                           null=True,default=None)
     instant_actual_iso = models.SlugField('Instant Actual (ISO)', blank = True,
-                                          null=True,default=None)
+                                          null=True,default=None,db_index=True)
     light_amb = models.DecimalField('Ambient Light', max_digits=5,
                                     decimal_places=2,blank=True,null=False,
                                     default=0)
@@ -186,6 +202,9 @@ class Config(models.Model):
     api_server_url = models.CharField('Server URL',default='',blank=True,max_length=50)
     api_prod_key = models.CharField('Prod API Key',default='',blank=True,max_length=50)
     api_test_key = models.CharField('Test API Key',default='',blank=True,max_length=50)
+    
+    reading_key = models.TextField()
+    archive_key = models.TextField()
     
     def __str__(self):
         return 'Config' + ': ' + str(self.pk)
