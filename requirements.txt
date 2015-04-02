@@ -17,3 +17,4 @@ pandas
 mpld3
 matplotlib
 django-picklefield
+pytz
