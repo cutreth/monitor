@@ -1,11 +1,12 @@
 from django.shortcuts import render_to_response
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
+from django.core.cache import cache
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.admin.views.decorators import staff_member_required
 from django.template import RequestContext
 
-from monitor.get_config import getActiveConfig, getActiveBeer, SetReadInstant, getProdKey, getTestKey
+from monitor.get_config import getActiveConfig, getActiveBeer, SetReadInstant, getProdKey, getTestKey, getArchiveKey, getReadingKey
 from monitor.get_beer import getAllBeer
 from monitor.get_reading import getAllReadings, getLastReading
 from monitor.get_archive import getAllArchives, getLastArchive
@@ -309,38 +310,65 @@ def commands(request):
 
     return render_to_response('commands.html', data, context_instance=RequestContext(request))
     
-def getAllData(active_beer):
+def getAllData(cur_beer):
     '''Return a DF of reading/archive data, ordered by instant'''
+    active_beer = getActiveBeer()    
     all_data = []
+    archive_data = []
+    reading_data = []
+    archive_key = ''    
+    reading_key = ''
 
-    active_archives = getAllArchives(active_beer)
-    for archive in active_archives:
-        instant_actual_arch = archive.get_instant_actual()
-        temp_amb_arch = archive.get_temp_amb()
-        temp_beer_arch = archive.get_temp_beer()
-        light_amb_arch = archive.get_light_amb()
-        pres_beer_arch = archive.get_pres_beer()
-        counter = 0
-        while counter < archive.count:
-            data = {'dt':instant_actual_arch[counter] + "-05:00",
-                    'temp_amb':[temp_amb_arch[counter],'undefined','undefined'],
-                    'temp_beer':[temp_beer_arch[counter],'undefined','undefined'],
-                    'light_amb':[light_amb_arch[counter],'undefined','undefined'],
-                    'pres_beer':[pres_beer_arch[counter],'undefined','undefined'],
+    archive_key = getArchiveKey()
+    cache_key = cache.get('archive_key')
+    if (archive_key == cache_key) and (active_beer == cur_beer):
+        archive_data = cache.get('archive_data')
+    else:
+        archive_key = ''
+        active_archives = getAllArchives(cur_beer)
+        for archive in active_archives:
+            archive_key = archive_key + '^' + archive.get_unique_ident()
+            instant_actual_arch = archive.get_instant_actual()
+            temp_amb_arch = archive.get_temp_amb()
+            temp_beer_arch = archive.get_temp_beer()
+            light_amb_arch = archive.get_light_amb()
+            pres_beer_arch = archive.get_pres_beer()
+            counter = 0
+            while counter < archive.count:
+                data = {'dt':instant_actual_arch[counter] + "-05:00",
+                        'temp_amb':[temp_amb_arch[counter],'undefined','undefined'],
+                        'temp_beer':[temp_beer_arch[counter],'undefined','undefined'],
+                        'light_amb':[light_amb_arch[counter],'undefined','undefined'],
+                        'pres_beer':[pres_beer_arch[counter],'undefined','undefined'],
+                }
+                archive_data.append(data)
+                counter += 1
+        if active_beer == cur_beer:
+            cache.set('archive_key', archive_key)
+            cache.set('archive_data', archive_data)
+    all_data = all_data + archive_data
+    
+    reading_key = getReadingKey()
+    cache_key = cache.get('reading_key')
+    if (reading_key == cache_key) and (active_beer == cur_beer):
+        reading_data = cache.get('reading_data')
+    else:
+        reading_key = ''
+        active_readings = getAllReadings(cur_beer) 
+        for reading in active_readings:
+            reading_key = reading_key + '^' + reading.get_instant_actual()
+            data = {'dt':reading.get_instant_actual() + "-05:00",
+                    'temp_amb':[reading.get_temp_amb(),'undefined','undefined'],
+                    'temp_beer':[reading.get_temp_beer(),'undefined','undefined'],
+                    'light_amb':[reading.get_light_amb(),'undefined','undefined'],
+                    'pres_beer':[reading.get_pres_beer(),'undefined','undefined'],
             }
-            all_data.append(data)
-            counter += 1
-
-    active_readings = getAllReadings(active_beer) 
-    for reading in active_readings:
-        data = {'dt':reading.get_instant_actual() + "-05:00",
-                'temp_amb':[reading.get_temp_amb(),'undefined','undefined'],
-                'temp_beer':[reading.get_temp_beer(),'undefined','undefined'],
-                'light_amb':[reading.get_light_amb(),'undefined','undefined'],
-                'pres_beer':[reading.get_pres_beer(),'undefined','undefined'],
-        }
-        all_data.append(data)
-        
+            reading_data.append(data)
+        if active_beer == cur_beer:
+            cache.set('reading_key', reading_key)
+            cache.set('reading_data', reading_data)
+    all_data = all_data + reading_data
+    
     return all_data
 
 def dashboard(request):

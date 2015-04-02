@@ -77,6 +77,15 @@ class Archive(models.Model):
         value = value.isoformat()
         return value
     
+    def get_reading_date(self):
+        value = self.reading_date
+        value = value.isoformat()
+        return value
+
+    def get_unique_ident(self):
+        value = str(self.get_reading_date()) + '|' + str(self.get_update_instant())
+        return value        
+        
 class Reading(models.Model):
 
     temp_choices = (
@@ -193,6 +202,9 @@ class Config(models.Model):
     api_server_url = models.CharField('Server URL',default='',blank=True,max_length=50)
     api_prod_key = models.CharField('Prod API Key',default='',blank=True,max_length=50)
     api_test_key = models.CharField('Test API Key',default='',blank=True,max_length=50)
+    
+    reading_key = models.TextField()
+    archive_key = models.TextField()
     
     def __str__(self):
         return 'Config' + ': ' + str(self.pk)
