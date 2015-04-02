@@ -15,6 +15,12 @@
         google.setOnLoadCallback(drawChart);
         function drawChart() {
             init_vals = typeof init_vals !== 'undefined' ? init_vals : ['Ambient Temp', 'Beer Temp'];
+            default_cols = ["#3366cc","#dc3912","#ff9900","#109618","#990099","#0099c6","#dd4477","#aa aa11","#22aa99","#994499"];
+            col_list = []
+            if (init_vals.indexOf('Ambient Temp')   >= 0) col_list.push(default_cols[0]);
+            if (init_vals.indexOf('Beer Temp')      >= 0) col_list.push(default_cols[1]);
+            if (init_vals.indexOf('Ambient Light')  >= 0) col_list.push(default_cols[2]);
+            if (init_vals.indexOf('Beer Pressure')  >= 0) col_list.push(default_cols[3]);
             
             var data = new google.visualization.DataTable();
             data.addColumn('datetime', 'Log Time');
@@ -65,7 +71,9 @@
                     displayAnnotationsFilter: true,
                     displayAnnotations: true,
                     scaleType: 'allmaximized',
+                    displayZoomButtons: false,
                     zoomStartTime: new Date("{{start_date}}"),
+                    colors: col_list,
                 }
             });
             
@@ -120,12 +128,12 @@
             <h1>{{cur_beer}} - {{beer_date}}</h1>
             
             <div id='chart_div' style='width: 900px; height: 500px;'></div><br>
-            <div id="colFilter_div"></div>
-            <h3>Quick Selections:</h3>
+            <h3>Measurement selection:</h3>
             <input id="button_temp" type="button" value="Temperature Values" onclick="drawChart(init_vals=['Ambient Temp', 'Beer Temp']);" />
-            <input id="button_nontemp" type="button" value="Non-temperature Values" onclick="drawChart(init_vals=['Ambient Light', 'Beer Pressure']);" />
-            <input id="button_amb" type="button" value="Ambient Values" onclick="drawChart(init_vals=['Ambient Temp', 'Ambient Light']);" />
-            <input id="button_beer" type="button" value="Beer Values" onclick="drawChart(init_vals=['Beer Temp', 'Beer Pressure']);" />
+            <input id="button_light" type="button" value="Ambient Light" onclick="drawChart(init_vals=['Ambient Light']);" />
+            <input id="button_pres" type="button" value="Beer Pressure" onclick="drawChart(init_vals=['Beer Pressure']);" />
+            <input id="button_all" type="button" value="All" onclick="drawChart(init_vals=['Ambient Temp', 'Beer Temp', 'Ambient Light', 'Beer Pressure']);" />
+            <div id='colFilter_div' style="display: none;"></div>
         </div>
 		</main>
 	
