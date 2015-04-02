@@ -120,6 +120,13 @@ POSTMARK_API_TOKEN = '8912d7b5-aa44-472f-bef9-2519cb3befa8'
 POSTMARK_SMTP_SERVER = 'smtp.postmarkapp.com'
 POSTMARK_INBOUDN_ADDRESS = 'c26b0a5f30c7c7d3af9c6871d39bf837@inbound.postmarkapp.com'
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': None,
+    }
+}
 
 try:
     from .local_settings import *
