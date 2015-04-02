@@ -4,7 +4,7 @@ from datetime import datetime
 def getAllArchives(active_beer):
     all_archives = None
     try:
-        all_archives = Archive.objects.filter(beer=active_beer).order_by('reading_date')
+        all_archives = Archive.objects.filter(beer=active_beer).order_by('-reading_date')
     finally:
         return all_archives
 
@@ -14,6 +14,13 @@ def getArchive(active_beer, day):
         active_archive = Archive.objects.get(beer=active_beer, reading_date=day)
     finally:
         return active_archive
+
+def getLastArchive(active_beer):
+    '''Returns the most recent archive for active_beer if it exists'''
+    archives = getAllArchives(active_beer)
+    if archives.count() == 0: last_archive = None
+    else: last_archive = archives[:1].get()
+    return last_archive
 
 def createArchive(active_beer, day):
     archive = None

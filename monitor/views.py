@@ -8,7 +8,7 @@ from django.template import RequestContext
 from monitor.get_config import getActiveConfig, getActiveBeer, SetReadInstant, getProdKey, getTestKey
 from monitor.get_beer import getAllBeer
 from monitor.get_reading import getReadings, getLastReading
-from monitor.get_archive import getAllArchives
+from monitor.get_archive import getAllArchives, getLastArchive
 from monitor.middleware import send2middleware
 from monitor.models import Beer, Reading
 
@@ -440,8 +440,22 @@ def chart(request, cur_beer = None):
 
     plot_data = getAllData(cur_beer)   
    
+    last_read = getLastReading(cur_beer)
+    last_archive = None
+    
+    if bool(last_read):
+        start_date = getLastReading(cur_beer).instant_actual.date()
+    else:
+        last_archive = getLastArchive(cur_beer)
+    
+    if bool(last_archive):
+        start_date = last_archive.reading_date
+    else:
+        start_date = datetime.date.today()
+   
     #Get start_date which is 7 days before the last logged date.
-    start_date = getLastReading(cur_beer).instant_actual.date() - timedelta(days=7)
+    start_date = start_date - timedelta(days=7)   
+    
     data = {
         'all_beers': Beer.objects.all(),
         'active_beer': active_beer,
@@ -456,9 +470,17 @@ def data_chk(request, page_name, cur_beer = None):
     if cur_beer is None: active_beer = getActiveBeer()
     else: active_beer = Beer.objects.get(pk=cur_beer)
     
+    isData = False
     read_chk = getLastReading(active_beer)
+    if bool(read_chk):
+        isData = True
+    else:
+        arch_chk = getLastArchive(active_beer)
+        if bool(arch_chk):
+            isData = True
     
-    if(not bool(read_chk)): out = gen_unableToLoad(page_name, active_beer)
+    if not bool(isData):
+        out = gen_unableToLoad(page_name, active_beer)
     else:
         if page_name.upper() == "DASHBOARD": out = dashboard(request)
         elif page_name.upper() == "CHART": out = chart(request, cur_beer)
