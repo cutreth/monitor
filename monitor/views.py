@@ -7,7 +7,7 @@ from django.template import RequestContext
 
 from monitor.get_config import getActiveConfig, getActiveBeer, SetReadInstant, getProdKey, getTestKey
 from monitor.get_beer import getAllBeer
-from monitor.get_reading import getReadings, getLastReading
+from monitor.get_reading import getAllReadings, getLastReading
 from monitor.get_archive import getAllArchives, getLastArchive
 from monitor.middleware import send2middleware
 from monitor.models import Beer, Reading
@@ -331,7 +331,7 @@ def getAllData(active_beer):
             all_data.append(data)
             counter += 1
 
-    active_readings = getReadings(active_beer) 
+    active_readings = getAllReadings(active_beer) 
     for reading in active_readings:
         data = {'dt':reading.get_instant_actual() + "-05:00",
                 'temp_amb':[reading.get_temp_amb(),'undefined','undefined'],
