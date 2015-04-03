@@ -83,7 +83,7 @@ def getInstantOverride(request):
         instant_override = intFromPost(request, 'instant_override')
         if instant_override > 0:
             instant_override = datetime.datetime.fromtimestamp(instant_override)
-            instant_override = instant_override - timedelta(hours=1)
+            instant_override = instant_override - timedelta(hours=7)
         else:
             instant_override = int(0)
     finally:
