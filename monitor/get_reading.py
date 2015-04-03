@@ -1,5 +1,4 @@
 from monitor.models import Reading
-from monitor.get_config import getActiveBeer
 
 def getAllReadings(active_beer):
     '''Return all readings for active_beer ordered by instant_actual'''
@@ -13,8 +12,7 @@ def getLastReading(active_beer):
     else: last_read = readings[:1].get()
     return last_read
 
-def genReadingKey():
-    active_beer = getActiveBeer()
+def genReadingKey(active_beer):
     reading_key = ''
     
     active_readings = getAllReadings(active_beer) 

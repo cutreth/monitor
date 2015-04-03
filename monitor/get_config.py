@@ -57,12 +57,14 @@ def setArchiveKey(archive_key):
     return None
 
 def updateReadingKey():
-    reading_key = genReadingKey()
+    active_beer = getActiveBeer()
+    reading_key = genReadingKey(active_beer)
     setReadingKey(reading_key)
     return None
     
 def updateArchiveKey():
-    archive_key = genArchiveKey()
+    active_beer = getActiveBeer()
+    archive_key = genArchiveKey(active_beer)
     setArchiveKey(archive_key)
     return None        
 

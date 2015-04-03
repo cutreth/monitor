@@ -495,7 +495,7 @@ def chart(request, cur_beer = None):
         'start_date': start_date.isoformat()
     }
     return render_to_response('chart.html', data)
-def data_chk(request, page_name, cur_beer = None):
+def data_chk(request, page_name = "dashboard", cur_beer = None):
     '''Checks if we have readings for cur_beer then if page_name exists and then creates appropriate page'''
     if cur_beer is None: active_beer = getActiveBeer()
     else: active_beer = Beer.objects.get(pk=cur_beer)
