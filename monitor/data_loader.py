@@ -30,6 +30,7 @@ def gen_two_weeks():
     name = "Two Weeks"
     b2 = Beer.objects.filter(beer_text = name)
     Reading.objects.filter(beer=b2).delete()
+    b2.delete()
     b2 = Beer(beer_text = name, brew_date = now)
     b2.save()
     
