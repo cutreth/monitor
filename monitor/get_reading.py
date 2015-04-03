@@ -22,3 +22,8 @@ def genReadingKey():
         reading_key = reading_key + '^' + reading.get_unique_ident()
 
     return reading_key
+
+def addReadingKey(reading):
+    reading_key = ''
+    reading_key = '^' + reading.get_unique_ident()
+    return reading_key

@@ -58,3 +58,8 @@ def genArchiveKey():
         archive_key = archive_key + '^' + archive.get_unique_ident()
 
     return archive_key
+
+def addArchiveKey(archive):
+    archive_key = ''
+    archive_key = '^' + archive.get_unique_ident()
+    return archive_key
