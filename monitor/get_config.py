@@ -1,4 +1,6 @@
 from monitor.models import Config
+from monitor.get_reading import genReadingKey
+from monitor.get_archive import genArchiveKey
 import datetime
 
 def getActiveConfig():
@@ -55,11 +57,11 @@ def setArchiveKey(archive_key):
     return None
 
 def updateReadingKey():
-    reading_key = getReadingKey()
+    reading_key = genReadingKey()
     setReadingKey(reading_key)
     return None
     
 def updateArchiveKey():
-    archive_key = getArchiveKey()
+    archive_key = genArchiveKey()
     setArchiveKey(archive_key)
     return None        

@@ -49,7 +49,7 @@ def updateArchive(archive, reading):
     finally:
         return result
 
-def getArchiveKey():
+def genArchiveKey():
     active_beer = getActiveBeer()
     archive_key = ''
     

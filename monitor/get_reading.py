@@ -13,7 +13,7 @@ def getLastReading(active_beer):
     else: last_read = readings[:1].get()
     return last_read
 
-def getReadingKey():
+def genReadingKey():
     active_beer = getActiveBeer()
     reading_key = ''
     
