@@ -18,7 +18,7 @@ class BeerAdmin(admin.ModelAdmin):
 
 class ReadingAdmin(admin.ModelAdmin):
     fieldsets = [
-    ('Instant',    {'fields': ['instant','instant_override','instant_actual']}),    
+    ('Instant',    {'fields': ['instant','instant_override','instant_actual','version']}),    
     ('Data',       {'fields': ['beer','light_amb','pres_beer','temp_amb',
                                'temp_beer','temp_unit']}),    
     ('Errors',     {'fields': ['error_flag','error_details']}),
@@ -27,9 +27,10 @@ class ReadingAdmin(admin.ModelAdmin):
     readonly_fields = ('instant','instant_actual')
     
 class ArchiveAdmin(admin.ModelAdmin):
-    
-    fields = ('beer','reading_date','count','instant_actual',
-              'light_amb','pres_beer','temp_amb','temp_beer','update_instant')
+    fieldsets = [
+        ('Archive Info', {'fields': ['beer','reading_date','count','update_instant']}),
+        ('Data', {'fields': ['instant_actual','light_amb','pres_beer','temp_amb','temp_beer']})
+    ]    
 
     readonly_fields = ('beer','reading_date','count','instant_actual',
                        'light_amb','pres_beer','temp_amb','temp_beer','update_instant')
@@ -38,8 +39,7 @@ class ConfigAdmin(admin.ModelAdmin):
     fields = ('beer','temp_amb_base','temp_amb_dev','temp_beer_base','temp_beer_dev',
               'read_missing','read_last_instant','email_enable','email_timeout',
               'email_api_key','email_sender','email_to','email_subject',
-              'email_last_instant','api_server_url','api_prod_key','api_test_key',
-              'reading_key','archive_key')
+              'email_last_instant','api_server_url','api_prod_key','api_test_key',)
     
     readonly_fields = ('read_last_instant','reading_key','archive_key')
 
