@@ -47,3 +47,17 @@ def updateArchive(archive, reading):
         result = True
     finally:
         return result
+
+def genArchiveKey(active_beer):
+    archive_key = ''
+    
+    active_archives = getAllArchives(active_beer)
+    for archive in active_archives:
+        archive_key = archive_key + '^' + archive.get_unique_ident()
+
+    return archive_key
+
+def addArchiveKey(archive):
+    archive_key = ''
+    archive_key = '^' + archive.get_unique_ident()
+    return archive_key
