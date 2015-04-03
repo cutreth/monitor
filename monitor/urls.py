@@ -12,7 +12,7 @@ urlpatterns = patterns('',
     url(r'^chart/(?P<cur_beer>\d+)/$', views.chart),
     url(r'^dashboard/$', views.dashboard, name='dashboard'),
     url(r'^dashboard/update/$', views.dashboard_update, name='dashboard_update'),
-    url(r'^$', views.dashboard),
+    url(r'^$', views.data_chk),
 )
 
 #http://pythex.org/

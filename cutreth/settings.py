@@ -36,8 +36,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'djangobower',
-    'django_nvd3',
     'monitor',
 )
 
@@ -88,20 +86,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 
 STATICFILES_FINDERS = (
-    'djangobower.finders.BowerFinder',
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 )
-
-#Django-bower settings
-
-BOWER_COMPONENTS_ROOT = os.path.join(BASE_DIR, 'components')
-
-BOWER_INSTALLED_APPS = (
-    'd3#3.3.6',
-    'nvd3#1.1.12-beta',
-)
-
 
 
 #Settings for Heroku overridden in local_settings.py

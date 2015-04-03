@@ -14,7 +14,7 @@ class BeerAdmin(admin.ModelAdmin):
         ('General Information',      {'fields': ['beer_text']}),
         ('Brew Notes',               {'fields': ['brew_date']}),
     ]
-    inlines = [ReadingInLine]
+    #inlines = [ReadingInLine]
 
 class ReadingAdmin(admin.ModelAdmin):
     fieldsets = [
@@ -24,7 +24,7 @@ class ReadingAdmin(admin.ModelAdmin):
     ('Errors',     {'fields': ['error_flag','error_details']}),
     ]
 
-    readonly_fields = ('instant','instant_actual')
+    readonly_fields = ('instant','instant_actual','version')
     
 class ArchiveAdmin(admin.ModelAdmin):
     fieldsets = [
