@@ -14,7 +14,7 @@ class BeerAdmin(admin.ModelAdmin):
         ('General Information',      {'fields': ['beer_text']}),
         ('Brew Notes',               {'fields': ['brew_date']}),
     ]
-    inlines = [ReadingInLine]
+    #inlines = [ReadingInLine]
 
 class ReadingAdmin(admin.ModelAdmin):
     fieldsets = [
