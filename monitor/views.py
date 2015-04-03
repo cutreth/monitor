@@ -6,7 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.admin.views.decorators import staff_member_required
 from django.template import RequestContext
 
-from monitor.get_config import getActiveConfig, getActiveBeer, SetReadInstant, getProdKey, getTestKey, getArchiveKey, getReadingKey
+from monitor.get_config import getActiveConfig, getActiveBeer, SetReadInstant, getProdKey, getTestKey, getArchiveKey, getReadingKey, appendReadingKey
 from monitor.get_beer import getAllBeer
 from monitor.get_reading import getAllReadings, getLastReading
 from monitor.get_archive import getAllArchives, getLastArchive
@@ -234,6 +234,7 @@ def api(request):
             if key == prod_key:
                 read.save()
                 SetReadInstant(active_config)
+                appendReadingKey(read)
                 if error_flag: #Send error emails if necessary
                     message = BuildErrorEmail(active_config, read, None)
                     SendErrorEmail(active_config, message)

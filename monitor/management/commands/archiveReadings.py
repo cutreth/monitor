@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from monitor.views import getActiveBeer, getAllReadings
 from monitor.get_archive import getArchive, createArchive, updateArchive
+from monitor.get_config import updateReadingKey, updateArchiveKey
 
 import datetime
 
@@ -28,6 +29,8 @@ class Command(BaseCommand):
             for reading in day_readings:
                 updateArchive(archive, reading)
 
+        updateArchiveKey()
+        updateReadingKey()
         return None
 
 '''
