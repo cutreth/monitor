@@ -101,6 +101,8 @@ class Reading(models.Model):
                                           null=True,default=None)
     instant_actual_iso = models.SlugField('Instant Actual (ISO)', blank = True,
                                           null=True,default=None,db_index=True)
+    version = models.PositiveIntegerField('Version', default=1)                                          
+                                          
     light_amb = models.DecimalField('Ambient Light', max_digits=5,
                                     decimal_places=2,blank=True,null=False,
                                     default=0)
@@ -148,6 +150,14 @@ class Reading(models.Model):
     def get_pres_beer(self):
         value = self.pres_beer
         return float(value)
+        
+    def get_version(self):
+        value = self.version
+        return str(value)
+    
+    def get_unique_ident(self):
+        value = str(self.get_instant_actual()) + '|' + str(self.get_version())
+        return value  
     
     def __str__(self):
         value = str(self.beer) + ': '    
@@ -163,6 +173,8 @@ class Reading(models.Model):
         else:
             self.instant_actual = self.instant
         self.instant_actual_iso = self.instant_actual.isoformat()
+
+        self.version += 1
 
         super(Reading, self).save(*args, **kwargs)
 
