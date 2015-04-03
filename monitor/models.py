@@ -101,7 +101,7 @@ class Reading(models.Model):
                                           null=True,default=None)
     instant_actual_iso = models.SlugField('Instant Actual (ISO)', blank = True,
                                           null=True,default=None,db_index=True)
-    version = models.PositiveIntegerField('Version', default=1)                                          
+    version = models.PositiveIntegerField('Version', default=0)                                          
                                           
     light_amb = models.DecimalField('Ambient Light', max_digits=5,
                                     decimal_places=2,blank=True,null=False,
@@ -220,3 +220,20 @@ class Config(models.Model):
     
     def __str__(self):
         return 'Config' + ': ' + str(self.pk)
+        
+    def save(self, *args, **kwargs):
+        
+        super(Config, self).save(*args, **kwargs)
+        
+        from monitor.get_reading import genReadingKey
+        from monitor.get_archive import genArchiveKey        
+        
+        active_beer = self.beer
+        reading_key = genReadingKey(active_beer)
+        archive_key = genArchiveKey(active_beer)
+
+        self.reading_key = reading_key
+        self.archive_key = archive_key        
+        
+        super(Config, self).save(*args, **kwargs)
+        

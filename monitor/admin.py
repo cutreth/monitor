@@ -24,7 +24,7 @@ class ReadingAdmin(admin.ModelAdmin):
     ('Errors',     {'fields': ['error_flag','error_details']}),
     ]
 
-    readonly_fields = ('instant','instant_actual')
+    readonly_fields = ('instant','instant_actual','version')
     
 class ArchiveAdmin(admin.ModelAdmin):
     fieldsets = [
