@@ -21,7 +21,7 @@ class Command(BaseCommand):
         reading_key = ''
         active_readings = getAllReadings(active_beer) 
         for reading in active_readings:
-            reading_key = reading_key + '^' + reading.get_instant_actual()
+            reading_key = reading_key + '^' + reading.get_unique_ident()
             
         active_config.archive_key = archive_key
         active_config.reading_key = reading_key
