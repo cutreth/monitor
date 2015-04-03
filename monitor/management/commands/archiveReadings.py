@@ -13,7 +13,7 @@ class Command(BaseCommand):
 
         #Define a datetime one week ago
         today = datetime.date.today()
-        week_ago = today - datetime.timedelta(days=0)
+        week_ago = today - datetime.timedelta(days=1)
         #Normally set days=6 for one week
 
         #Return readings for active_beer before the date limit
