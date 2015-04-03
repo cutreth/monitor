@@ -1,4 +1,5 @@
 from monitor.models import Archive
+from monitor.get_config import getActiveBeer
 from datetime import datetime
 
 def getAllArchives(active_beer):
@@ -47,3 +48,13 @@ def updateArchive(archive, reading):
         result = True
     finally:
         return result
+
+def getArchiveKey():
+    active_beer = getActiveBeer()
+    archive_key = ''
+    
+    active_archives = getAllArchives(active_beer)
+    for archive in active_archives:
+        archive_key = archive_key + '^' + archive.get_unique_ident()
+
+    return archive_key

@@ -1,4 +1,5 @@
 from monitor.models import Reading
+from monitor.get_config import getActiveBeer
 
 def getAllReadings(active_beer):
     '''Return all readings for active_beer ordered by instant_actual'''
@@ -11,3 +12,13 @@ def getLastReading(active_beer):
     if readings.count() == 0: last_read = None
     else: last_read = readings[:1].get()
     return last_read
+
+def getReadingKey():
+    active_beer = getActiveBeer()
+    reading_key = ''
+    
+    active_readings = getAllReadings(active_beer) 
+    for reading in active_readings:
+        reading_key = reading_key + '^' + reading.get_unique_ident()
+
+    return reading_key

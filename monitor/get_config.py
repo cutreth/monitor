@@ -41,3 +41,25 @@ def getArchiveKey():
     active_config = getActiveConfig()
     key = active_config.archive_key
     return key
+
+def setReadingKey(reading_key):
+    active_config = getActiveConfig()
+    active_config.reading_key = reading_key
+    active_config.save()
+    return None
+    
+def setArchiveKey(archive_key):
+    active_config = getActiveConfig()
+    active_config.archive_key = archive_key
+    active_config.save()
+    return None
+
+def updateReadingKey():
+    reading_key = getReadingKey()
+    setReadingKey(reading_key)
+    return None
+    
+def updateArchiveKey():
+    archive_key = getArchiveKey()
+    setArchiveKey(archive_key)
+    return None        
