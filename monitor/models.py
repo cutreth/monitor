@@ -225,8 +225,8 @@ class Config(models.Model):
         
         super(Config, self).save(*args, **kwargs)
         
-        from monitor.get_reading import genReadingKey
-        from monitor.get_archive import genArchiveKey        
+        from monitor.do import genReadingKey
+        from monitor.do import genArchiveKey        
         
         active_beer = self.beer
         reading_key = genReadingKey(active_beer)
@@ -237,3 +237,19 @@ class Config(models.Model):
         
         super(Config, self).save(*args, **kwargs)
         
+class Event(models.Model):
+    
+    cat_choices = (
+        ('Bounds','Bounds'),
+        ('Missing','Missing'),
+    )        
+    beer = models.ForeignKey(Beer)
+    reading = models.ForeignKey(Reading,null=True,blank=True,)
+    instant = models.DateTimeField('Instant',auto_now_add=True)
+    category = models.CharField('Category',max_length=50,
+                                 choices=cat_choices)
+    details = models.CharField('Error Details',blank=True,max_length=150)
+
+    def __str__(self):
+        name = str(self.beer) + ' - ' + str(self.category) + ' - ' + str(self.instant)       
+        return name
