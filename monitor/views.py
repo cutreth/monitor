@@ -392,6 +392,8 @@ def dashboard(request):
     if active_config.temp_beer_base != None and active_config.temp_beer_dev != None:
         temp_beer_rng = [active_config.temp_beer_base - active_config.temp_beer_dev, active_config.temp_beer_base + active_config.temp_beer_dev]
     else: temp_beer_rng = (0,0)
+    
+    cst = pytz.timezone('America/Chicago')
 
     data = {
         "vals": {
@@ -412,7 +414,7 @@ def dashboard(request):
         },
         "last_log_date": cur_reading.instant_actual.strftime("%Y-%m-%d"),
         "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
-        "last_log_ago": get_date_diff(cur_reading.instant_actual, datetime.datetime.now()),
+        "last_log_ago": get_date_diff(cur_reading.instant_actual, datetime.datetime.now(tz=cst)),
         'all_beers': Beer.objects.all(),
         'active_beer': active_beer,
         'beer_date': active_beer.brew_date,
