@@ -415,7 +415,7 @@ def dashboard(request):
         },
         "last_log_date": cur_reading.instant_actual.strftime("%Y-%m-%d"),
         "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
-        "last_log_ago": get_date_diff(cur_reading.instant_actual, datetime.datetime.now(tz=cst)),
+        "last_log_ago": get_date_diff(cur_reading.instant_actual, datetime.datetime.now(tz=utc)),
         'all_beers': Beer.objects.all(),
         'active_beer': active_beer,
         'beer_date': active_beer.brew_date,
