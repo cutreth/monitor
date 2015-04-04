@@ -11,6 +11,7 @@ from monitor.do import getArchiveKey, getReadingKey, appendReadingKey
 from monitor.do import getAllBeer
 from monitor.do import getAllReadings, getLastReading
 from monitor.do import getAllArchives, getLastArchive
+from monitor.do import nowInUtc
 from monitor.middleware import send2middleware
 from monitor.models import Beer, Reading
 
@@ -161,7 +162,7 @@ def SendErrorEmail(active_config, message):
     send_email = active_config.email_enable
     email_timeout = active_config.email_timeout
     email_last_instant = active_config.email_last_instant
-    right_now = datetime.datetime.now()
+    right_now = nowInUtc()
     time_delta = datetime.timedelta(minutes=email_timeout)
 
     if send_email and bool(message): #Email if no last instant or if cooldown is over
@@ -392,9 +393,6 @@ def dashboard(request):
     if active_config.temp_beer_base != None and active_config.temp_beer_dev != None:
         temp_beer_rng = [active_config.temp_beer_base - active_config.temp_beer_dev, active_config.temp_beer_base + active_config.temp_beer_dev]
     else: temp_beer_rng = (0,0)
-    
-    cst = pytz.timezone('America/Chicago')
-    utc = pytz.timezone('UTC')
 
     data = {
         "vals": {
@@ -415,7 +413,7 @@ def dashboard(request):
         },
         "last_log_date": cur_reading.instant_actual.strftime("%Y-%m-%d"),
         "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
-        "last_log_ago": get_date_diff(cur_reading.instant_actual, datetime.datetime.now(tz=utc)),
+        "last_log_ago": get_date_diff(cur_reading.instant_actual, nowInUtc()),
         'all_beers': Beer.objects.all(),
         'active_beer': active_beer,
         'beer_date': active_beer.brew_date,
