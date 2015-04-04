@@ -1,11 +1,12 @@
 from monitor.models import Beer, Reading
-from monitor.views import getActiveBeer
+from monitor.views import getActiveBeer, getActiveConfig, ErrorCheck
 from datetime import datetime, timedelta
 import random
 
 def gen_fake_data(n, beer=None):
     if beer == None:
         beer = getActiveBeer()
+    active_config = getActiveConfig()
     
     #Add readings to beer
     for i in range(n):
@@ -16,6 +17,7 @@ def gen_fake_data(n, beer=None):
                     temp_beer = random.normalvariate(70, 2)
                 )
         r.save()
+        error = ErrorCheck(active_config, r)
 
 def create_or_modify(beer_name,date):
     beer = Beer.objects.filter(beer_text=beer_name)
