@@ -113,7 +113,7 @@ os.environ['MEMCACHE_PASSWORD'] = os.environ.get('MEMCACHIER_PASSWORD', '')
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.PyLibMCCache ',
+        'BACKEND': 'django_pylibmc.memcached.PyLibMCCache',
         'BINARY': True,
         'OPTIONS': {
             'no_block': True,
@@ -124,6 +124,14 @@ CACHES = {
             'dead_timeout': 10,
             '_poll_timeout': 2000
         }
+    }
+}
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': None,
     }
 }
 
