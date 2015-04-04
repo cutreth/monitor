@@ -394,6 +394,7 @@ def dashboard(request):
     else: temp_beer_rng = (0,0)
     
     cst = pytz.timezone('America/Chicago')
+    utc = pytz.timezone('UTC')
 
     data = {
         "vals": {
