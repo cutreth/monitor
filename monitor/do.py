@@ -4,6 +4,7 @@ from monitor.models import Archive
 from monitor.models import Config
 
 from datetime import datetime
+import datetime
 
 '''Beer'''
 
