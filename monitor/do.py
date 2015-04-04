@@ -2,6 +2,7 @@ from monitor.models import Beer
 from monitor.models import Reading
 from monitor.models import Archive
 from monitor.models import Config
+from monitor.models import Event
 
 import datetime
 import pytz
@@ -184,3 +185,32 @@ def appendArchiveKey(archive):
     archive_key = archive_key + archive_tail
     setArchiveKey(archive_key)
     return None
+
+'''Event'''
+
+def createEvent(beer, reading, category, sensor, details):
+    event = Event(beer=beer,reading=reading,category=category,sensor=sensor,details=details)
+    event.save()
+    return event
+    
+def getEventData(reading):
+
+    temp_beer_t = ''
+    temp_beer_d = ''
+    temp_amb_t = ''
+    temp_amb_d = ''
+    event = Event.objects.filter(reading=reading)
+
+    try: amb = event.filter(sensor='temp_amb').get()
+    except: amb = None
+    if bool(amb):
+        temp_amb_t = amb.sensor
+        temp_amb_d = amb.details
+
+    try: beer = event.filter(sensor='temp_beer').get()
+    except: beer = None
+    if bool(beer):
+        temp_beer_t = beer.sensor
+        temp_beer_d = beer.details        
+
+    return [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d]
