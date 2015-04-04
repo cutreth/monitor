@@ -242,12 +242,18 @@ class Event(models.Model):
     cat_choices = (
         ('Bounds','Bounds'),
         ('Missing','Missing'),
-    )        
+    )    
+    cat_sensors = (
+        ('temp_amb','temp_amb'),
+        ('temp_beer','temp_beer'),
+    )            
     beer = models.ForeignKey(Beer)
     reading = models.ForeignKey(Reading,null=True,blank=True,)
     instant = models.DateTimeField('Instant',auto_now_add=True)
     category = models.CharField('Category',max_length=50,
-                                 choices=cat_choices)
+                                choices=cat_choices)
+    sensor = models.CharField('Sensor',max_length=50,
+                              choices=cat_sensors,blank=True)
     details = models.CharField('Error Details',blank=True,max_length=150)
 
     def __str__(self):
