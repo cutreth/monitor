@@ -5,7 +5,7 @@ def send2middleware(message, testMode = False):
     import socket
     import platform
     import signal    
-    from monitor.get_config import getServerUrl
+    from monitor.do import getServerUrl
  
     if platform.system() != 'Windows': 
         signal.signal(signal.SIGALRM, handler)

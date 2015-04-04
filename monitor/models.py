@@ -225,8 +225,8 @@ class Config(models.Model):
         
         super(Config, self).save(*args, **kwargs)
         
-        from monitor.get_reading import genReadingKey
-        from monitor.get_archive import genArchiveKey        
+        from monitor.do import genReadingKey
+        from monitor.do import genArchiveKey        
         
         active_beer = self.beer
         reading_key = genReadingKey(active_beer)

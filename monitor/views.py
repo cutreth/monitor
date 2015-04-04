@@ -6,10 +6,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.admin.views.decorators import staff_member_required
 from django.template import RequestContext
 
-from monitor.get_config import getActiveConfig, getActiveBeer, SetReadInstant, getProdKey, getTestKey, getArchiveKey, getReadingKey, appendReadingKey
-from monitor.get_beer import getAllBeer
-from monitor.get_reading import getAllReadings, getLastReading
-from monitor.get_archive import getAllArchives, getLastArchive
+from monitor.do import getActiveConfig, getActiveBeer, SetReadInstant, getProdKey, getTestKey, getArchiveKey, getReadingKey, appendReadingKey
+from monitor.do import getAllBeer
+from monitor.do import getAllReadings, getLastReading
+from monitor.do import getAllArchives, getLastArchive
 from monitor.middleware import send2middleware
 from monitor.models import Beer, Reading
 
