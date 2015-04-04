@@ -11,7 +11,7 @@ from monitor.do import getArchiveKey, getReadingKey, appendReadingKey
 from monitor.do import getAllBeer
 from monitor.do import getAllReadings, getLastReading
 from monitor.do import getAllArchives, getLastArchive
-from monitor.do import nowInUtc
+from monitor.do import nowInUtc, createEvent, getEventData
 from monitor.middleware import send2middleware
 from monitor.models import Beer, Reading
 
@@ -100,7 +100,8 @@ def MaxMinCheck(base, deviation, value, category):
         upper = base + deviation
         lower = base - deviation
         if not (lower < value < upper):
-            error = '[' + str(value) + ':' + str(lower) + '-' + str(upper) + '] '
+            #error = '[' + str(value) + ':' + str(lower) + '-' + str(upper) + '] '
+            error = str(value) + ':' + str(lower) + '-' + str(upper)
             error = str(category) + ' ' + error
     return error
 
@@ -115,6 +116,8 @@ def ErrorCheck(active_config, read):
     '''Check for errors, update Reading record, output True if errors found'''
     error_flag = False
     error_details = str('')
+    beer = getActiveBeer() 
+    category = 'Bounds'
 
     #Think about breaking these into arrays to simply adding more sensors
     error_cat = 'temp_amb'
@@ -123,6 +126,9 @@ def ErrorCheck(active_config, read):
     temp_amb = read.get_temp_amb()
     error = MaxMinCheck(temp_amb_base, temp_amb_dev, temp_amb, error_cat)
     [error_flag, error_details] = SetErrorInfo(error_flag, error_details, error)
+    if bool(error):
+        createEvent(beer, read, category, error_cat, error)   
+        error = None
 
     error_cat = 'temp_beer'
     temp_beer_base = active_config.temp_beer_base
@@ -130,10 +136,13 @@ def ErrorCheck(active_config, read):
     temp_beer = read.get_temp_beer()
     error = MaxMinCheck(temp_beer_base, temp_beer_dev, temp_beer, error_cat)
     [error_flag, error_details] = SetErrorInfo(error_flag, error_details, error)
-
+    if bool(error):
+        createEvent(beer, read, category, error_cat, error)   
+        error = None     
+     
     read.error_flag = error_flag
     read.error_details = error_details
-    return read.error_flag
+    return error_flag
 
 def BuildErrorEmail(active_config, read, error_details):
     '''Construct an email; read.error_details then error_details (string)'''
@@ -230,6 +239,11 @@ def api(request):
             if bool(instant_override):
                 read.instant_override = instant_override
             #instant_override will either be 0 or a datetime object
+
+            #Duplicate save from below for Event generation.
+            #Need to save the Read so Event can link to it
+            if key == prod_key:
+                read.save()
 
             #Check for deviation errors
             error_flag = ErrorCheck(active_config, read)
@@ -363,9 +377,12 @@ def getAllData(cur_beer):
         active_readings = getAllReadings(cur_beer) 
         for reading in active_readings:
             reading_key = reading_key + '^' + reading.get_instant_actual()
+            
+            [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d] = getEventData(reading)
+
             data = {'dt':reading.get_instant_actual(),
-                    'temp_amb':[reading.get_temp_amb(),'undefined','undefined'],
-                    'temp_beer':[reading.get_temp_beer(),'undefined','undefined'],
+                    'temp_amb':[reading.get_temp_amb(),temp_amb_t,temp_amb_d],
+                    'temp_beer':[reading.get_temp_beer(),temp_beer_t,temp_beer_d],
                     'light_amb':[reading.get_light_amb(),'undefined','undefined'],
                     'pres_beer':[reading.get_pres_beer(),'undefined','undefined'],
             }
