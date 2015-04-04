@@ -107,9 +107,25 @@ POSTMARK_API_TOKEN = '8912d7b5-aa44-472f-bef9-2519cb3befa8'
 POSTMARK_SMTP_SERVER = 'smtp.postmarkapp.com'
 POSTMARK_INBOUDN_ADDRESS = 'c26b0a5f30c7c7d3af9c6871d39bf837@inbound.postmarkapp.com'
 
-from memcacheify import memcacheify
+os.environ['MEMCACHE_SERVERS'] = os.environ.get('MEMCACHIER_SERVERS', '').replace(',', ';')
+os.environ['MEMCACHE_USERNAME'] = os.environ.get('MEMCACHIER_USERNAME', '')
+os.environ['MEMCACHE_PASSWORD'] = os.environ.get('MEMCACHIER_PASSWORD', '')
 
-CACHES = memcacheify()
+CACHES = {
+    'default': {
+        'BACKEND': 'django_pylibmc.memcached.PyLibMCCache',
+        'BINARY': True,
+        'OPTIONS': {
+            'no_block': True,
+            'tcp_nodelay': True,
+            'tcp_keepalive': True,
+            'remove_failed': 4,
+            'retry_timeout': 2,
+            'dead_timeout': 10,
+            '_poll_timeout': 2000
+        }
+    }
+}
 
 try:
     from .local_settings import *

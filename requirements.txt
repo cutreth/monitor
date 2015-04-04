@@ -13,4 +13,4 @@ newrelic
 django-picklefield==0.3.1
 pytz==2014.10
 pylibmc==1.4.0
-django-heroku-memcacheify
+django-pylibmc==0.6.0
