@@ -6,10 +6,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.admin.views.decorators import staff_member_required
 from django.template import RequestContext
 
-from monitor.get_config import getActiveConfig, getActiveBeer, SetReadInstant, getProdKey, getTestKey, getArchiveKey, getReadingKey, appendReadingKey
-from monitor.get_beer import getAllBeer
-from monitor.get_reading import getAllReadings, getLastReading
-from monitor.get_archive import getAllArchives, getLastArchive
+from monitor.do import getActiveConfig, getActiveBeer, SetReadInstant, getProdKey, getTestKey
+from monitor.do import getArchiveKey, getReadingKey, appendReadingKey
+from monitor.do import getAllBeer
+from monitor.do import getAllReadings, getLastReading
+from monitor.do import getAllArchives, getLastArchive
 from monitor.middleware import send2middleware
 from monitor.models import Beer, Reading
 
@@ -82,8 +83,9 @@ def getInstantOverride(request):
     try:
         instant_override = intFromPost(request, 'instant_override')
         if instant_override > 0:
-            instant_override = datetime.datetime.fromtimestamp(instant_override)
-            instant_override = instant_override - timedelta(hours=7)
+            utc = pytz.utc
+            instant_override = datetime.datetime.fromtimestamp(instant_override,tz=utc)
+            #instant_override = instant_override - timedelta(hours=7)
         else:
             instant_override = int(0)
     finally:
@@ -337,7 +339,7 @@ def getAllData(cur_beer):
             pres_beer_arch = archive.get_pres_beer()
             counter = 0
             while counter < archive.count:
-                data = {'dt':instant_actual_arch[counter] + "-05:00",
+                data = {'dt':instant_actual_arch[counter],
                         'temp_amb':[temp_amb_arch[counter],'undefined','undefined'],
                         'temp_beer':[temp_beer_arch[counter],'undefined','undefined'],
                         'light_amb':[light_amb_arch[counter],'undefined','undefined'],
@@ -359,7 +361,7 @@ def getAllData(cur_beer):
         active_readings = getAllReadings(cur_beer) 
         for reading in active_readings:
             reading_key = reading_key + '^' + reading.get_instant_actual()
-            data = {'dt':reading.get_instant_actual() + "-05:00",
+            data = {'dt':reading.get_instant_actual(),
                     'temp_amb':[reading.get_temp_amb(),'undefined','undefined'],
                     'temp_beer':[reading.get_temp_beer(),'undefined','undefined'],
                     'light_amb':[reading.get_light_amb(),'undefined','undefined'],
