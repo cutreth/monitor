@@ -84,6 +84,7 @@ def getInstantOverride(request):
     try:
         instant_override = intFromPost(request, 'instant_override')
         if instant_override > 0:
+            instant_override = instant_override - 25200
             utc = pytz.utc
             instant_override = datetime.datetime.fromtimestamp(instant_override,tz=utc)
             #instant_override = instant_override - timedelta(hours=7)
