@@ -257,5 +257,8 @@ class Event(models.Model):
     details = models.CharField('Error Details',blank=True,max_length=150)
 
     def __str__(self):
-        name = str(self.beer) + ' - ' + str(self.category) + ' - ' + str(self.instant)       
+        fmt = '%Y-%m-%d %H:%M:%S %Z%z'
+        cst = pytz.timezone('America/Chicago')
+        time = self.instant.astimezone(cst).strftime(fmt)
+        name = str(self.beer) + ' - ' + str(self.category) + ' - ' + str(time)       
         return name
