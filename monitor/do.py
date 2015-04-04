@@ -204,13 +204,13 @@ def getEventData(reading):
     try: amb = event.filter(sensor='temp_amb').get()
     except: amb = None
     if bool(amb):
-        temp_amb_t = amb.sensor
+        temp_amb_t = amb.category
         temp_amb_d = amb.details
 
     try: beer = event.filter(sensor='temp_beer').get()
     except: beer = None
     if bool(beer):
-        temp_beer_t = beer.sensor
+        temp_beer_t = beer.category
         temp_beer_d = beer.details        
 
     return [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d]
