@@ -1,5 +1,5 @@
 from django.contrib import admin
-from monitor.models import Beer, Reading, Config, Archive
+from monitor.models import Beer, Reading, Config, Archive, Event
 
 class ReadingInLine(admin.TabularInline):
     model = Reading
@@ -47,3 +47,4 @@ admin.site.register(Beer, BeerAdmin)
 admin.site.register(Config, ConfigAdmin)
 admin.site.register(Reading,ReadingAdmin)
 admin.site.register(Archive,ArchiveAdmin)
+admin.site.register(Event)
