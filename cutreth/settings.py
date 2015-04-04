@@ -113,7 +113,7 @@ os.environ['MEMCACHE_PASSWORD'] = os.environ.get('MEMCACHIER_PASSWORD', '')
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.PyLibMCCache ',
+        'BACKEND': 'django.core.cache.backends.memcached.PyLibMCCache',
         'BINARY': True,
         'OPTIONS': {
             'no_block': True,
