@@ -173,7 +173,7 @@ class Reading(models.Model):
             self.instant_actual = self.instant_override
         else:
             self.instant_actual = self.instant
-        self.instant_actual_iso = self.instant_actual.astimezone(pytz.timezone('America/Chicago')).isoformat()
+        self.instant_actual_iso = self.instant_actual.isoformat()
 
         self.version += 1
 

@@ -3,8 +3,13 @@ from monitor.models import Reading
 from monitor.models import Archive
 from monitor.models import Config
 
-from datetime import datetime
 import datetime
+import pytz
+        
+def nowInUtc():
+    utc = pytz.utc
+    now = datetime.datetime.now(tz=utc)
+    return now
 
 '''Beer'''
 
@@ -66,7 +71,7 @@ def createArchive(cur_beer, day):
     try:
         if not bool(getArchive(cur_beer, day)):
             archive = Archive(beer=cur_beer, reading_date=day)
-            archive.update_instant = datetime.now()
+            archive.update_instant = nowInUtc()
             archive.save()
     finally:
         return archive
@@ -79,7 +84,7 @@ def updateArchive(archive, reading):
         archive.pres_beer += str(reading.get_pres_beer()) + '^'
         archive.temp_amb += str(reading.get_temp_amb()) + '^'
         archive.temp_beer += str(reading.get_temp_beer()) + '^'
-        archive.update_instant = datetime.now()
+        archive.update_instant = nowInUtc()
         archive.count += 1
         archive.save()
         reading.delete()
@@ -112,7 +117,7 @@ def getActiveBeer():
 
 def SetReadInstant(active_config):
     '''Set the current instant as active_config.read_last_instant'''
-    right_now = datetime.datetime.now()
+    right_now = nowInUtc()
     active_config.read_last_instant = right_now
     active_config.save()
     return
