@@ -121,6 +121,8 @@ class Reading(models.Model):
                                  
     error_flag = models.NullBooleanField('Error?')
     error_details = models.CharField('Error Details',blank=True,max_length=150)
+    event_temp_amb = models.ForeignKey('Event',null=True,blank=True,related_name='reading_to_temp_amb')
+    event_temp_beer = models.ForeignKey('Event',null=True,blank=True,related_name='reading_to_temp_beer')
             
     def get_instant_actual(self):
         value = self.instant_actual_iso
@@ -161,9 +163,12 @@ class Reading(models.Model):
         return value  
     
     def __str__(self):
-        value = str(self.beer) + ': ' + str(self.get_instant_actual())
-        return value
-        
+        fmt = '%Y-%m-%d %H:%M:%S %Z%z'
+        cst = pytz.timezone('America/Chicago')
+        time = self.instant_actual.astimezone(cst).strftime(fmt)
+        name = str(self.beer) + ' - ' + str(time)       
+        return name        
+
     def save(self, *args, **kwargs):
               
         super(Reading, self).save(*args, **kwargs)
@@ -248,7 +253,7 @@ class Event(models.Model):
         ('temp_beer','temp_beer'),
     )            
     beer = models.ForeignKey(Beer)
-    reading = models.ForeignKey(Reading,null=True,blank=True,)
+    reading = models.ForeignKey(Reading,null=True,blank=True,related_name='event_to_reading')
     instant = models.DateTimeField('Instant',auto_now_add=True)
     category = models.CharField('Category',max_length=50,
                                 choices=cat_choices)
