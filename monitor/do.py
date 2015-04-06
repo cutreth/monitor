@@ -85,6 +85,8 @@ def updateArchive(archive, reading):
         archive.pres_beer += str(reading.get_pres_beer()) + '^'
         archive.temp_amb += str(reading.get_temp_amb()) + '^'
         archive.temp_beer += str(reading.get_temp_beer()) + '^'
+        archive.event_temp_amb += str(reading.event_temp_amb.pk) + '^'
+        archive.event_temp_beer += str(reading.event_temp_beer.pk) + '^'
         archive.update_instant = nowInUtc()
         archive.count += 1
         archive.save()
