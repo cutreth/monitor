@@ -29,11 +29,12 @@ class ReadingAdmin(admin.ModelAdmin):
 class ArchiveAdmin(admin.ModelAdmin):
     fieldsets = [
         ('Archive Info', {'fields': ['beer','reading_date','count','update_instant']}),
-        ('Data', {'fields': ['instant_actual','light_amb','pres_beer','temp_amb','temp_beer']})
+        ('Data', {'fields': ['instant_actual','light_amb','pres_beer','temp_amb','temp_beer','event_temp_amb','event_temp_beer']})
     ]    
 
     readonly_fields = ('beer','reading_date','count','instant_actual',
-                       'light_amb','pres_beer','temp_amb','temp_beer','update_instant')
+                       'light_amb','pres_beer','temp_amb','temp_beer',
+                       'event_temp_amb','event_temp_beer','update_instant')
                        
 class ConfigAdmin(admin.ModelAdmin):
     fields = ('beer','temp_amb_base','temp_amb_dev','temp_beer_base','temp_beer_dev',
