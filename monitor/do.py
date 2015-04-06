@@ -199,21 +199,27 @@ def createEvent(beer, reading, category, sensor, details):
         reading.save()
     return event
     
-def getEventData(reading):
+def getEventData(reading=None,event_temp_amb=None,event_temp_beer=None):
 
     temp_beer_t = ''
     temp_beer_d = ''
     temp_amb_t = ''
     temp_amb_d = ''
     
-    temp_amb = reading.event_temp_amb
-    temp_beer = reading.event_temp_beer
-    
+    if bool(reading):
+        temp_amb = reading.event_temp_amb
+        temp_beer = reading.event_temp_beer
+    elif bool(event_temp_amb) or bool(event_temp_beer):
+        if bool(event_temp_amb):
+            temp_amb = Event.objects.get(pk=event_temp_amb)
+        if bool(event_temp_beer):
+            temp_beer = Event.objects.get(pk=event_temp_beer)
+        
     if bool(temp_amb):
         temp_amb_t = temp_amb.category
         temp_amb_d = temp_amb.details
     if bool(temp_beer):
         temp_beer_t = temp_beer.category
-        temp_beer_d = temp_beer.details        
-    
+        temp_beer_d = temp_beer.details      
+        
     return [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d]

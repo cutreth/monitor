@@ -19,6 +19,8 @@ class Archive(models.Model):
     pres_beer = models.TextField('Beer Pressure')
     temp_amb = models.TextField('Ambient Temp')
     temp_beer = models.TextField('Beer Temp')
+    event_temp_amb = models.TextField('Amb Temp Events')
+    event_temp_beer = models.TextField('Beer Temp Events') 
     count = models.PositiveIntegerField('Count', default=0)
     update_instant = models.DateTimeField('Last Updated',blank=True,
                                       null=True,default=None)    
@@ -63,6 +65,22 @@ class Archive(models.Model):
         
     def get_temp_beer(self):
         val = self.temp_beer
+        if bool(val):
+            out = val.split('^')
+            del out[-1]
+            out = [float(n) for n in out]
+        return out
+    
+    def get_event_temp_beer(self):
+        val = self.event_temp_beer
+        if bool(val):
+            out = val.split('^')
+            del out[-1]
+            out = [float(n) for n in out]
+        return out
+        
+    def get_event_temp_amb(self):
+        val = self.event_temp_amb
         if bool(val):
             out = val.split('^')
             del out[-1]
