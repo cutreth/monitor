@@ -1,11 +1,12 @@
 from monitor.models import Beer, Reading
-from monitor.views import getActiveBeer
+from monitor.views import getActiveBeer, getActiveConfig, ErrorCheck
 from datetime import datetime, timedelta
 import random
 
 def gen_fake_data(n, beer=None):
     if beer == None:
         beer = getActiveBeer()
+    active_config = getActiveConfig()
     
     #Add readings to beer
     for i in range(n):
@@ -16,26 +17,36 @@ def gen_fake_data(n, beer=None):
                     temp_beer = normalvariate(70, 2)
                 )
         r.save()
+<<<<<<< HEAD
+=======
+        error = ErrorCheck(active_config, r)
+
+def create_or_modify(beer_name,date):
+    beer = Beer.objects.filter(beer_text=beer_name)
+    if bool(beer):
+        beer = beer.get()
+    else:
+        beer = Beer(beer_text=beer_name, brew_date=date)
+        beer.save()
+    return beer
+>>>>>>> cutreth/master
         
 def gen_blank_beer():
     now = datetime.now()
-    name = "Blank Beer"
-    b1 = Beer.objects.filter(beer_text = name)
-    b1.delete()
-    b1 = Beer(beer_text = name, brew_date = now)
-    b1.save()
+    name = 'Blank Beer'
+    beer = create_or_modify(name,now)
+    
+    readings = Reading.objects.filter(beer=beer)
+    readings.delete()
 
 def gen_two_weeks():
     now = datetime.now()
     name = "Two Weeks"
-    b2 = Beer.objects.filter(beer_text = name)
-    Reading.objects.filter(beer=b2).delete()
-    b2 = Beer(beer_text = name, brew_date = now)
-    b2.save()
+    beer = create_or_modify(name,now)    
     
     cur_datetime = now - timedelta(days = 14)
     while(cur_datetime <= now):
-        r = Reading(beer = b2,
+        r = Reading(beer = beer,
                 instant_override = cur_datetime,
                 light_amb = random.normalvariate(100, 10),
                 pres_beer = random.normalvariate(50, 5),

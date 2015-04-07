@@ -1,4 +1,5 @@
 from django.db import models
+import pytz
 
 class Beer(models.Model):
     
@@ -18,6 +19,8 @@ class Archive(models.Model):
     pres_beer = models.TextField('Beer Pressure')
     temp_amb = models.TextField('Ambient Temp')
     temp_beer = models.TextField('Beer Temp')
+    event_temp_amb = models.TextField('Amb Temp Events')
+    event_temp_beer = models.TextField('Beer Temp Events') 
     count = models.PositiveIntegerField('Count', default=0)
     update_instant = models.DateTimeField('Last Updated',blank=True,
                                       null=True,default=None)    
@@ -67,6 +70,22 @@ class Archive(models.Model):
             del out[-1]
             out = [float(n) for n in out]
         return out
+    
+    def get_event_temp_beer(self):
+        val = self.event_temp_beer
+        if bool(val):
+            out = val.split('^')
+            del out[-1]
+            out = [float(n) for n in out]
+        return out
+        
+    def get_event_temp_amb(self):
+        val = self.event_temp_amb
+        if bool(val):
+            out = val.split('^')
+            del out[-1]
+            out = [float(n) for n in out]
+        return out
         
     def get_count(self):
         value = self.count
@@ -101,7 +120,7 @@ class Reading(models.Model):
                                           null=True,default=None)
     instant_actual_iso = models.SlugField('Instant Actual (ISO)', blank = True,
                                           null=True,default=None,db_index=True)
-    version = models.PositiveIntegerField('Version', default=1)                                          
+    version = models.PositiveIntegerField('Version', default=0)                                          
                                           
     light_amb = models.DecimalField('Ambient Light', max_digits=5,
                                     decimal_places=2,blank=True,null=False,
@@ -120,6 +139,8 @@ class Reading(models.Model):
                                  
     error_flag = models.NullBooleanField('Error?')
     error_details = models.CharField('Error Details',blank=True,max_length=150)
+    event_temp_amb = models.ForeignKey('Event',null=True,blank=True,related_name='reading_to_temp_amb')
+    event_temp_beer = models.ForeignKey('Event',null=True,blank=True,related_name='reading_to_temp_beer')
             
     def get_instant_actual(self):
         value = self.instant_actual_iso
@@ -160,10 +181,12 @@ class Reading(models.Model):
         return value  
     
     def __str__(self):
-        value = str(self.beer) + ': '    
-        value = value + str(self.instant_actual.strftime("%Y-%m-%d %H:%M:%S"))
-        return value
-        
+        fmt = '%Y-%m-%d %H:%M:%S %Z%z'
+        cst = pytz.timezone('America/Chicago')
+        time = self.instant_actual.astimezone(cst).strftime(fmt)
+        name = str(self.beer) + ' - ' + str(time)       
+        return name        
+
     def save(self, *args, **kwargs):
               
         super(Reading, self).save(*args, **kwargs)
@@ -220,3 +243,45 @@ class Config(models.Model):
     
     def __str__(self):
         return 'Config' + ': ' + str(self.pk)
+        
+    def save(self, *args, **kwargs):
+        
+        super(Config, self).save(*args, **kwargs)
+        
+        from monitor.do import genReadingKey
+        from monitor.do import genArchiveKey        
+        
+        active_beer = self.beer
+        reading_key = genReadingKey(active_beer)
+        archive_key = genArchiveKey(active_beer)
+
+        self.reading_key = reading_key
+        self.archive_key = archive_key        
+        
+        super(Config, self).save(*args, **kwargs)
+        
+class Event(models.Model):
+    
+    cat_choices = (
+        ('Bounds','Bounds'),
+        ('Missing','Missing'),
+    )    
+    cat_sensors = (
+        ('temp_amb','temp_amb'),
+        ('temp_beer','temp_beer'),
+    )            
+    beer = models.ForeignKey(Beer)
+    reading = models.ForeignKey(Reading,null=True,blank=True,related_name='event_to_reading')
+    instant = models.DateTimeField('Instant',auto_now_add=True)
+    category = models.CharField('Category',max_length=50,
+                                choices=cat_choices)
+    sensor = models.CharField('Sensor',max_length=50,
+                              choices=cat_sensors,blank=True)
+    details = models.CharField('Error Details',blank=True,max_length=150)
+
+    def __str__(self):
+        fmt = '%Y-%m-%d %H:%M:%S %Z%z'
+        cst = pytz.timezone('America/Chicago')
+        time = self.instant.astimezone(cst).strftime(fmt)
+        name = str(self.beer) + ' - ' + str(self.category) + ' - ' + str(time)       
+        return name

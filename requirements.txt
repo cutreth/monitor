@@ -1,11 +1,8 @@
 dj-database-url==0.3.0
 Django==1.7.6
-django-bower==5.0.2
-django-nvd3==0.7.8
 gunicorn==19.3.0
 Jinja2==2.7.3
 MarkupSafe==0.23
-python-nvd3==0.13.5
 python-slugify==0.0.9
 six==1.9.0
 Unidecode==0.4.17
@@ -13,8 +10,7 @@ whitenoise==1.0.6
 psycopg2==2.5.4
 python-postmark==0.4.7
 newrelic
-pandas
-mpld3
-matplotlib
-django-picklefield
-pytz
+django-picklefield==0.3.1
+pytz==2014.10
+pylibmc==1.4.0
+django-pylibmc==0.6.0

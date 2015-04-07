@@ -6,10 +6,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.admin.views.decorators import staff_member_required
 from django.template import RequestContext
 
-from monitor.get_config import getActiveConfig, getActiveBeer, SetReadInstant, getProdKey, getTestKey, getArchiveKey, getReadingKey
-from monitor.get_beer import getAllBeer
-from monitor.get_reading import getAllReadings, getLastReading
-from monitor.get_archive import getAllArchives, getLastArchive
+from monitor.do import getActiveConfig, getActiveBeer, SetReadInstant, getProdKey, getTestKey
+from monitor.do import getArchiveKey, getReadingKey, appendReadingKey
+from monitor.do import getAllBeer
+from monitor.do import getAllReadings, getLastReading
+from monitor.do import getAllArchives, getLastArchive
+from monitor.do import nowInUtc, createEvent, getEventData
 from monitor.middleware import send2middleware
 from monitor.models import Beer, Reading
 
@@ -82,8 +84,9 @@ def getInstantOverride(request):
     try:
         instant_override = intFromPost(request, 'instant_override')
         if instant_override > 0:
-            instant_override = datetime.datetime.fromtimestamp(instant_override)
-            instant_override = instant_override - timedelta(hours=1)
+            instant_override = instant_override - (6*60*60)
+            utc = pytz.utc
+            instant_override = datetime.datetime.fromtimestamp(instant_override,tz=utc)
         else:
             instant_override = int(0)
     finally:
@@ -96,8 +99,8 @@ def MaxMinCheck(base, deviation, value, category):
         upper = base + deviation
         lower = base - deviation
         if not (lower < value < upper):
-            error = '[' + str(value) + ':' + str(lower) + '-' + str(upper) + '] '
-            error = str(category) + ' ' + error
+            error = 'Sensor value of ' + str(round(value,2)) + ' outside range of ['
+            error = error + str(lower) + ', ' + str(upper) + '] '
     return error
 
 def SetErrorInfo(error_flag, error_details, error):
@@ -111,6 +114,8 @@ def ErrorCheck(active_config, read):
     '''Check for errors, update Reading record, output True if errors found'''
     error_flag = False
     error_details = str('')
+    beer = getActiveBeer() 
+    category = 'Bounds'
 
     #Think about breaking these into arrays to simply adding more sensors
     error_cat = 'temp_amb'
@@ -119,6 +124,9 @@ def ErrorCheck(active_config, read):
     temp_amb = read.get_temp_amb()
     error = MaxMinCheck(temp_amb_base, temp_amb_dev, temp_amb, error_cat)
     [error_flag, error_details] = SetErrorInfo(error_flag, error_details, error)
+    if bool(error):
+        createEvent(beer, read, category, error_cat, error)   
+        error = None
 
     error_cat = 'temp_beer'
     temp_beer_base = active_config.temp_beer_base
@@ -126,10 +134,13 @@ def ErrorCheck(active_config, read):
     temp_beer = read.get_temp_beer()
     error = MaxMinCheck(temp_beer_base, temp_beer_dev, temp_beer, error_cat)
     [error_flag, error_details] = SetErrorInfo(error_flag, error_details, error)
-
+    if bool(error):
+        createEvent(beer, read, category, error_cat, error)   
+        error = None     
+     
     read.error_flag = error_flag
     read.error_details = error_details
-    return read.error_flag
+    return error_flag
 
 def BuildErrorEmail(active_config, read, error_details):
     '''Construct an email; read.error_details then error_details (string)'''
@@ -159,7 +170,7 @@ def SendErrorEmail(active_config, message):
     send_email = active_config.email_enable
     email_timeout = active_config.email_timeout
     email_last_instant = active_config.email_last_instant
-    right_now = datetime.datetime.now()
+    right_now = nowInUtc()
     time_delta = datetime.timedelta(minutes=email_timeout)
 
     if send_email and bool(message): #Email if no last instant or if cooldown is over
@@ -227,6 +238,11 @@ def api(request):
                 read.instant_override = instant_override
             #instant_override will either be 0 or a datetime object
 
+            #Duplicate save from below for Event generation.
+            #Need to save the Read so Event can link to it
+            if key == prod_key:
+                read.save()
+
             #Check for deviation errors
             error_flag = ErrorCheck(active_config, read)
 
@@ -234,6 +250,7 @@ def api(request):
             if key == prod_key:
                 read.save()
                 SetReadInstant(active_config)
+                appendReadingKey(read)
                 if error_flag: #Send error emails if necessary
                     message = BuildErrorEmail(active_config, read, None)
                     SendErrorEmail(active_config, message)
@@ -334,11 +351,16 @@ def getAllData(cur_beer):
             temp_beer_arch = archive.get_temp_beer()
             light_amb_arch = archive.get_light_amb()
             pres_beer_arch = archive.get_pres_beer()
+            event_temp_amb_arch = archive.get_event_temp_amb()
+            event_temp_beer_arch = archive.get_event_temp_beer()
             counter = 0
             while counter < archive.count:
-                data = {'dt':instant_actual_arch[counter] + "-05:00",
-                        'temp_amb':[temp_amb_arch[counter],'undefined','undefined'],
-                        'temp_beer':[temp_beer_arch[counter],'undefined','undefined'],
+                event_temp_beer = event_temp_amb_arch[counter]
+                event_temp_amb = event_temp_beer_arch[counter]
+                [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d] = getEventData(None,event_temp_beer,event_temp_amb)
+                data = {'dt':instant_actual_arch[counter],
+                        'temp_amb':[temp_amb_arch[counter],temp_amb_t,temp_amb_d],
+                        'temp_beer':[temp_beer_arch[counter],temp_beer_t,temp_beer_d],
                         'light_amb':[light_amb_arch[counter],'undefined','undefined'],
                         'pres_beer':[pres_beer_arch[counter],'undefined','undefined'],
                 }
@@ -358,9 +380,12 @@ def getAllData(cur_beer):
         active_readings = getAllReadings(cur_beer) 
         for reading in active_readings:
             reading_key = reading_key + '^' + reading.get_instant_actual()
-            data = {'dt':reading.get_instant_actual() + "-05:00",
-                    'temp_amb':[reading.get_temp_amb(),'undefined','undefined'],
-                    'temp_beer':[reading.get_temp_beer(),'undefined','undefined'],
+            
+            [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d] = getEventData(reading)
+
+            data = {'dt':reading.get_instant_actual(),
+                    'temp_amb':[reading.get_temp_amb(),temp_amb_t,temp_amb_d],
+                    'temp_beer':[reading.get_temp_beer(),temp_beer_t,temp_beer_d],
                     'light_amb':[reading.get_light_amb(),'undefined','undefined'],
                     'pres_beer':[reading.get_pres_beer(),'undefined','undefined'],
             }
@@ -409,7 +434,7 @@ def dashboard(request):
         },
         "last_log_date": cur_reading.instant_actual.strftime("%Y-%m-%d"),
         "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
-        "last_log_ago": get_date_diff(cur_reading.instant_actual, datetime.datetime.now()),
+        "last_log_ago": get_date_diff(cur_reading.instant_actual, nowInUtc()),
         'all_beers': Beer.objects.all(),
         'active_beer': active_beer,
         'beer_date': active_beer.brew_date,
@@ -494,7 +519,7 @@ def chart(request, cur_beer = None):
         'start_date': start_date.isoformat()
     }
     return render_to_response('chart.html', data)
-def data_chk(request, page_name, cur_beer = None):
+def data_chk(request, page_name = "dashboard", cur_beer = None):
     '''Checks if we have readings for cur_beer then if page_name exists and then creates appropriate page'''
     if cur_beer is None: active_beer = getActiveBeer()
     else: active_beer = Beer.objects.get(pk=cur_beer)
