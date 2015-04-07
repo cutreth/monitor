@@ -1,6 +1,7 @@
 from monitor.models import Beer, Reading
 from monitor.views import getActiveBeer, getActiveConfig, ErrorCheck
 from datetime import datetime, timedelta
+import pytz
 import random
 
 def gen_fake_data(n, beer=None):
@@ -29,7 +30,7 @@ def create_or_modify(beer_name,date):
     return beer
         
 def gen_blank_beer():
-    now = datetime.now()
+    now = datetime.utcnow().replace(tzinfo=pytz.utc)
     name = 'Blank Beer'
     beer = create_or_modify(name,now)
     
@@ -37,7 +38,7 @@ def gen_blank_beer():
     readings.delete()
 
 def gen_two_weeks():
-    now = datetime.now()
+    now = datetime.utcnow().replace(tzinfo=pytz.utc)
     name = "Two Weeks"
     beer = create_or_modify(name,now)    
     
