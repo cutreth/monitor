@@ -17,8 +17,6 @@ def gen_fake_data(n, beer=None):
                     temp_beer = normalvariate(70, 2)
                 )
         r.save()
-<<<<<<< HEAD
-=======
         error = ErrorCheck(active_config, r)
 
 def create_or_modify(beer_name,date):
@@ -29,7 +27,6 @@ def create_or_modify(beer_name,date):
         beer = Beer(beer_text=beer_name, brew_date=date)
         beer.save()
     return beer
->>>>>>> cutreth/master
         
 def gen_blank_beer():
     now = datetime.now()
