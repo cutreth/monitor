@@ -216,6 +216,9 @@ def getEventData(reading=None,event_temp_amb=None,event_temp_beer=None):
             temp_amb = Event.objects.get(pk=event_temp_amb)
         if bool(event_temp_beer):
             temp_beer = Event.objects.get(pk=event_temp_beer)
+    else:
+        temp_amb = None
+        temp_beer = None
         
     if bool(temp_amb):
         temp_amb_t = temp_amb.category
