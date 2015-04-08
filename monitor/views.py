@@ -356,9 +356,13 @@ def getAllData(cur_beer):
             counter = 0
             while counter < archive.count:
                 if bool(event_temp_amb_arch):#Remove this and below when old archives are deleted (missing this field)
-                    event_temp_beer = event_temp_amb_arch[counter]
+                    event_temp_amb = event_temp_amb_arch[counter]
+                else:
+                    event_temp_amb = None
                 if bool(event_temp_beer_arch):
-                    event_temp_amb = event_temp_beer_arch[counter]
+                    event_temp_beer = event_temp_beer_arch[counter]
+                else:
+                    event_temp_beer = None
                 [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d] = getEventData(None,event_temp_beer,event_temp_amb)
                 data = {'dt':instant_actual_arch[counter],
                         'temp_amb':[temp_amb_arch[counter],temp_amb_t,temp_amb_d],
