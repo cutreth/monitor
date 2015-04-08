@@ -32,67 +32,74 @@ class Archive(models.Model):
         return value
     
     def get_instant_actual(self):
-        out = None
         val = self.instant_actual
         if bool(val):
             out = val.split('^')
             del out[-1]
             out = [str(n) for n in out]
-        return out     
+            return out     
+        else:
+            return None
         
     def get_light_amb(self):
-        out = None
         val = self.light_amb
         if bool(val):
             out = val.split('^')
             del out[-1]
             out = [float(n) for n in out]
-        return out
+            return out     
+        else:
+            return None
 
     def get_pres_beer(self):
-        out = None
         val = self.pres_beer
         if bool(val):
             out = val.split('^')
             del out[-1]
             out = [float(n) for n in out]
-        return out
+            return out     
+        else:
+            return None
         
     def get_temp_amb(self):
-        out = None
         val = self.temp_amb
         if bool(val):
             out = val.split('^')
             del out[-1]
             out = [float(n) for n in out]
-        return out
+            return out     
+        else:
+            return None
         
     def get_temp_beer(self):
-        out = None
         val = self.temp_beer
         if bool(val):
             out = val.split('^')
             del out[-1]
             out = [float(n) for n in out]
-        return out
+            return out     
+        else:
+            return None
     
     def get_event_temp_beer(self):
-        out = None
         val = self.event_temp_beer
         if bool(val):
             out = val.split('^')
             del out[-1]
             out = [float(n) for n in out]
-        return out
+            return out     
+        else:
+            return None
         
     def get_event_temp_amb(self):
-        out = None
         val = self.event_temp_amb
         if bool(val):
             out = val.split('^')
             del out[-1]
             out = [float(n) for n in out]
-        return out
+            return out     
+        else:
+            return None
         
     def get_count(self):
         value = self.count
