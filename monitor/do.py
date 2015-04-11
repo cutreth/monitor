@@ -1,3 +1,5 @@
+from django.core.cache import cache
+
 from monitor.models import Beer
 from monitor.models import Reading
 from monitor.models import Archive
@@ -6,7 +8,7 @@ from monitor.models import Event
 
 import datetime
 import pytz
-        
+
 def nowInUtc():
     utc = pytz.utc
     now = datetime.datetime.now(tz=utc)
@@ -34,7 +36,7 @@ def getLastReading(cur_beer):
 
 def genReadingKey(cur_beer):
     reading_key = ''
-    active_readings = getAllReadings(cur_beer) 
+    active_readings = getAllReadings(cur_beer)
     for reading in active_readings:
         reading_key = reading_key + '^' + reading.get_unique_ident()
     return reading_key
@@ -43,7 +45,7 @@ def addReadingKey(reading):
     reading_key = ''
     reading_key = '^' + reading.get_unique_ident()
     return reading_key
-    
+
 '''Archive'''
 
 def getAllArchives(cur_beer):
@@ -54,7 +56,7 @@ def getAllArchives(cur_beer):
         return all_archives
 
 def getArchive(cur_beer, day):
-    active_archive = None    
+    active_archive = None
     try:
         active_archive = Archive.objects.get(beer=cur_beer, reading_date=day)
     finally:
@@ -76,7 +78,7 @@ def createArchive(cur_beer, day):
             archive.save()
     finally:
         return archive
-    
+
 def updateArchive(archive, reading):
     result = None
     try:
@@ -118,7 +120,7 @@ def getActiveBeer():
     active_beer = active_config.beer
     return active_beer
 
-def SetReadInstant(active_config):
+def setReadInstant(active_config):
     '''Set the current instant as active_config.read_last_instant'''
     right_now = nowInUtc()
     active_config.read_last_instant = right_now
@@ -129,22 +131,22 @@ def getServerUrl():
     active_config = getActiveConfig()
     url = active_config.api_server_url
     return url
-    
+
 def getProdKey():
     active_config = getActiveConfig()
     key = active_config.api_prod_key
-    return key    
-    
+    return key
+
 def getTestKey():
     active_config = getActiveConfig()
     key = active_config.api_test_key
     return key
-    
+
 def getReadingKey():
     active_config = getActiveConfig()
     key = active_config.reading_key
-    return key   
-    
+    return key
+
 def getArchiveKey():
     active_config = getActiveConfig()
     key = active_config.archive_key
@@ -155,7 +157,7 @@ def setReadingKey(reading_key):
     active_config.reading_key = reading_key
     active_config.save()
     return None
-    
+
 def setArchiveKey(archive_key):
     active_config = getActiveConfig()
     active_config.archive_key = archive_key
@@ -167,12 +169,12 @@ def updateReadingKey():
     reading_key = genReadingKey(active_beer)
     setReadingKey(reading_key)
     return None
-    
+
 def updateArchiveKey():
     active_beer = getActiveBeer()
     archive_key = genArchiveKey(active_beer)
     setArchiveKey(archive_key)
-    return None        
+    return None
 
 def appendReadingKey(reading):
     reading_key = getReadingKey()
@@ -200,14 +202,14 @@ def createEvent(beer, reading, category, sensor, details):
         reading.event_temp_beer = event
         reading.save()
     return event
-    
+
 def getEventData(reading=None,event_temp_amb=None,event_temp_beer=None):
 
     temp_beer_t = ''
     temp_beer_d = ''
     temp_amb_t = ''
     temp_amb_d = ''
-    
+
     if bool(reading):
         temp_amb = reading.event_temp_amb
         temp_beer = reading.event_temp_beer
@@ -219,12 +221,89 @@ def getEventData(reading=None,event_temp_amb=None,event_temp_beer=None):
     else:
         temp_amb = None
         temp_beer = None
-        
+
     if bool(temp_amb):
         temp_amb_t = temp_amb.category
         temp_amb_d = temp_amb.details
     if bool(temp_beer):
         temp_beer_t = temp_beer.category
-        temp_beer_d = temp_beer.details      
-        
+        temp_beer_d = temp_beer.details
+
     return [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d]
+
+'''Other'''
+
+def getAllData(cur_beer):
+    '''Return a DF of reading/archive data, ordered by instant'''
+    active_beer = getActiveBeer()
+    all_data = []
+    archive_data = []
+    reading_data = []
+    archive_key = ''
+    reading_key = ''
+
+    archive_key = getArchiveKey()
+    cache_key = cache.get('archive_key')
+    if (archive_key == cache_key) and (active_beer == cur_beer):
+        archive_data = cache.get('archive_data')
+    else:
+        archive_key = ''
+        active_archives = getAllArchives(cur_beer)
+        for archive in active_archives:
+            archive_key = archive_key + '^' + archive.get_unique_ident()
+            instant_actual_arch = archive.get_instant_actual()
+            temp_amb_arch = archive.get_temp_amb()
+            temp_beer_arch = archive.get_temp_beer()
+            light_amb_arch = archive.get_light_amb()
+            pres_beer_arch = archive.get_pres_beer()
+            event_temp_amb_arch = archive.get_event_temp_amb()
+            event_temp_beer_arch = archive.get_event_temp_beer()
+            counter = 0
+            while counter < archive.count:
+                if bool(event_temp_amb_arch):#Remove this and below when old archives are deleted (missing this field)
+                    event_temp_amb = event_temp_amb_arch[counter]
+                else:
+                    event_temp_amb = None
+                if bool(event_temp_beer_arch):
+                    event_temp_beer = event_temp_beer_arch[counter]
+                else:
+                    event_temp_beer = None
+                [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d] = getEventData(None,event_temp_beer,event_temp_amb)
+                data = {'dt':instant_actual_arch[counter],
+                        'temp_amb':[temp_amb_arch[counter],temp_amb_t,temp_amb_d],
+                        'temp_beer':[temp_beer_arch[counter],temp_beer_t,temp_beer_d],
+                        'light_amb':[light_amb_arch[counter],'undefined','undefined'],
+                        'pres_beer':[pres_beer_arch[counter],'undefined','undefined'],
+                }
+                archive_data.append(data)
+                counter += 1
+        if active_beer == cur_beer:
+            cache.set('archive_key', archive_key)
+            cache.set('archive_data', archive_data)
+    all_data = all_data + archive_data
+
+    reading_key = getReadingKey()
+    cache_key = cache.get('reading_key')
+    if (reading_key == cache_key) and (active_beer == cur_beer):
+        reading_data = cache.get('reading_data')
+    else:
+        reading_key = ''
+        active_readings = getAllReadings(cur_beer)
+        for reading in active_readings:
+            reading_key = reading_key + '^' + reading.get_instant_actual()
+
+            [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d] = getEventData(reading)
+
+            data = {'dt':reading.get_instant_actual(),
+                    'temp_amb':[reading.get_temp_amb(),temp_amb_t,temp_amb_d],
+                    'temp_beer':[reading.get_temp_beer(),temp_beer_t,temp_beer_d],
+                    'light_amb':[reading.get_light_amb(),'undefined','undefined'],
+                    'pres_beer':[reading.get_pres_beer(),'undefined','undefined'],
+            }
+            reading_data.append(data)
+        if active_beer == cur_beer:
+            cache.set('reading_key', reading_key)
+            cache.set('reading_data', reading_data)
+    all_data = all_data + reading_data
+
+    return all_data
