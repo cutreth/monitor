@@ -301,7 +301,7 @@ def data_chk(request, page_name = "dashboard", cur_beer = None):
 
     return out
 def next_log_estimate():
-    last_reading = getLastReading(getActiveBeer()).instant_actual
+    last_reading = do.getLastReading(do.getActiveBeer()).instant_actual
     log_freq = None
     for i in range(10):
         r, msg = send2middleware("M")
@@ -313,6 +313,6 @@ def next_log_estimate():
     out = "unknown amount of time"
     if log_freq != None:
         next = last_reading + timedelta(minutes = log_freq)
-        now = nowInUtc()
-        if next >= now: out = get_date_diff(nowInUtc(), next, append = None)
+        now = do.nowInUtc()
+        if next >= now: out = get_date_diff(do.nowInUtc(), next, append = None)
     return(out)
