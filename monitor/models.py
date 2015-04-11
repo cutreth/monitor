@@ -1,4 +1,7 @@
 from django.db import models
+
+import monitor.do as do
+
 import pytz
 
 class Beer(models.Model):
@@ -15,12 +18,14 @@ class Archive(models.Model):
     beer = models.ForeignKey(Beer)
     reading_date = models.DateField('Reading Date',db_index=True)
     instant_actual = models.TextField('Instant Actual')
+
     light_amb = models.TextField('Ambient Light')
     pres_beer = models.TextField('Beer Pressure')
     temp_amb = models.TextField('Ambient Temp')
     temp_beer = models.TextField('Beer Temp')
     event_temp_amb = models.TextField('Amb Temp Events')
     event_temp_beer = models.TextField('Beer Temp Events')
+
     count = models.PositiveIntegerField('Count', default=0)
     update_instant = models.DateTimeField('Last Updated',blank=True,
                                       null=True,default=None)
@@ -33,73 +38,38 @@ class Archive(models.Model):
 
     def get_instant_actual(self):
         val = self.instant_actual
-        if bool(val):
-            out = val.split('^')
-            del out[-1]
-            out = [str(n) for n in out]
-            return out
-        else:
-            return None
+        out = parseArchiveList(val,'str')
+        return out
 
     def get_light_amb(self):
         val = self.light_amb
-        if bool(val):
-            out = val.split('^')
-            del out[-1]
-            out = [float(n) for n in out]
-            return out
-        else:
-            return None
+        out = parseArchiveList(val,'float')
+        return out
 
     def get_pres_beer(self):
         val = self.pres_beer
-        if bool(val):
-            out = val.split('^')
-            del out[-1]
-            out = [float(n) for n in out]
-            return out
-        else:
-            return None
+        out = parseArchiveList(val,'float')
+        return out
 
     def get_temp_amb(self):
         val = self.temp_amb
-        if bool(val):
-            out = val.split('^')
-            del out[-1]
-            out = [float(n) for n in out]
-            return out
-        else:
-            return None
+        out = parseArchiveList(val,'float')
+        return out
 
     def get_temp_beer(self):
         val = self.temp_beer
-        if bool(val):
-            out = val.split('^')
-            del out[-1]
-            out = [float(n) for n in out]
-            return out
-        else:
-            return None
+        out = parseArchiveList(val,'float')
+        return out
 
     def get_event_temp_beer(self):
         val = self.event_temp_beer
-        if bool(val):
-            out = val.split('^')
-            del out[-1]
-            out = [float(n) for n in out]
-            return out
-        else:
-            return None
+        out = parseArchiveList(val,'float')
+        return out
 
     def get_event_temp_amb(self):
         val = self.event_temp_amb
-        if bool(val):
-            out = val.split('^')
-            del out[-1]
-            out = [float(n) for n in out]
-            return out
-        else:
-            return None
+        out = parseArchiveList(val,'float')
+        return out
 
     def get_count(self):
         value = self.count
@@ -118,6 +88,20 @@ class Archive(models.Model):
     def get_unique_ident(self):
         value = str(self.get_reading_date()) + '|' + str(self.get_update_instant())
         return value
+
+def parseArchiveList(val,form=None):
+    if bool(val):
+        out = val.split('^')
+        del out[-1]
+        if form == 'str':
+            out = [str(n) for n in out]
+        elif form == 'float':
+            out = [float(n) for n in out]
+        else:
+            out = [n for n in out]
+    else:
+        out = None
+    return out
 
 class Reading(models.Model):
 
@@ -155,6 +139,23 @@ class Reading(models.Model):
     error_details = models.CharField('Error Details',blank=True,max_length=150)
     event_temp_amb = models.ForeignKey('Event',null=True,blank=True,related_name='reading_to_temp_amb')
     event_temp_beer = models.ForeignKey('Event',null=True,blank=True,related_name='reading_to_temp_beer')
+
+    def __str__(self):
+        fmt = '%Y-%m-%d %H:%M:%S %Z%z'
+        cst = pytz.timezone('America/Chicago')
+        time = self.instant_actual.astimezone(cst).strftime(fmt)
+        name = str(self.beer) + ' - ' + str(time)
+        return name
+
+    def save(self, *args, **kwargs):
+        super(Reading, self).save(*args, **kwargs)
+        if bool(self.instant_override):
+            self.instant_actual = self.instant_override
+        else:
+            self.instant_actual = self.instant
+        self.instant_actual_iso = self.instant_actual.isoformat()
+        self.version += 1
+        super(Reading, self).save(*args, **kwargs)
 
     def get_instant_actual(self):
         value = self.instant_actual_iso
@@ -194,27 +195,6 @@ class Reading(models.Model):
         value = str(self.get_instant_actual()) + '|' + str(self.get_version())
         return value
 
-    def __str__(self):
-        fmt = '%Y-%m-%d %H:%M:%S %Z%z'
-        cst = pytz.timezone('America/Chicago')
-        time = self.instant_actual.astimezone(cst).strftime(fmt)
-        name = str(self.beer) + ' - ' + str(time)
-        return name
-
-    def save(self, *args, **kwargs):
-
-        super(Reading, self).save(*args, **kwargs)
-
-        if bool(self.instant_override):
-            self.instant_actual = self.instant_override
-        else:
-            self.instant_actual = self.instant
-        self.instant_actual_iso = self.instant_actual.isoformat()
-
-        self.version += 1
-
-        super(Reading, self).save(*args, **kwargs)
-
 class Config(models.Model):
 
     beer = models.ForeignKey(Beer)
@@ -234,7 +214,7 @@ class Config(models.Model):
     read_missing = models.PositiveIntegerField('Missing Reading Warning (minutes)',
                                                default=0)
     read_last_instant = models.DateTimeField('Last Reading Instant',blank=True,
-                                null=True,default=None)
+                                             null=True,default=None)
 
     email_enable = models.BooleanField('Enable Email?',default=False)
     email_timeout = models.PositiveIntegerField('Email Timeout (minutes)',
@@ -259,19 +239,12 @@ class Config(models.Model):
         return 'Config' + ': ' + str(self.pk)
 
     def save(self, *args, **kwargs):
-
         super(Config, self).save(*args, **kwargs)
-
-        from monitor.do import genReadingKey
-        from monitor.do import genArchiveKey
-
         active_beer = self.beer
-        reading_key = genReadingKey(active_beer)
-        archive_key = genArchiveKey(active_beer)
-
+        reading_key = do.genReadingKey(active_beer)
+        archive_key = do.genArchiveKey(active_beer)
         self.reading_key = reading_key
         self.archive_key = archive_key
-
         super(Config, self).save(*args, **kwargs)
 
 class Event(models.Model):
@@ -284,6 +257,7 @@ class Event(models.Model):
         ('temp_amb','temp_amb'),
         ('temp_beer','temp_beer'),
     )
+
     beer = models.ForeignKey(Beer)
     reading = models.ForeignKey(Reading,null=True,blank=True,related_name='event_to_reading')
     instant = models.DateTimeField('Instant',auto_now_add=True)
