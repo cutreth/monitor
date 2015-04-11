@@ -1,7 +1,5 @@
 from django.db import models
 
-import monitor.do as do
-
 import pytz
 
 class Beer(models.Model):
@@ -241,6 +239,7 @@ class Config(models.Model):
     def save(self, *args, **kwargs):
         super(Config, self).save(*args, **kwargs)
         active_beer = self.beer
+        import monitor.do as do
         reading_key = do.genReadingKey(active_beer)
         archive_key = do.genArchiveKey(active_beer)
         self.reading_key = reading_key
