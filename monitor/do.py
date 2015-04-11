@@ -223,10 +223,10 @@ def getEventData(reading=None,event_temp_amb=None,event_temp_beer=None):
         temp_beer = None
 
     if bool(temp_amb):
-        temp_amb_t = temp_amb.category
+        temp_amb_t = temp_amb.sensor
         temp_amb_d = temp_amb.details
     if bool(temp_beer):
-        temp_beer_t = temp_beer.category
+        temp_beer_t = temp_beer.sensor
         temp_beer_d = temp_beer.details
 
     return [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d]
