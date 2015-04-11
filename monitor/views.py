@@ -185,21 +185,24 @@ def dashboard(request):
         "last_log_date": cur_reading.instant_actual.strftime("%Y-%m-%d"),
         "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
         "last_log_ago": get_date_diff(cur_reading.instant_actual, do.nowInUtc()),
-        'all_beers': Beer.objects.all(),
-        'active_beer': active_beer,
-        'beer_date': active_beer.brew_date,
+        "next_log": next_log_estimate(),
+        "all_beers": Beer.objects.all(),
+        "active_beer": active_beer,
+        "beer_date": active_beer.brew_date,
     }
     return render_to_response('dashboard.html',data)
+    
+def get_date_diff(d1,d2, append = "ago"):
 
-def get_date_diff(d1,d2):
     '''Returns the difference between two datetime objects in a readable format'''
     diff = abs(d2-d1)
 
-    if(diff.days > 0): out = str(diff.days) + " day(s) ago"
-    elif(diff.seconds < 60): out = "less than a minute ago"
-    elif(diff.seconds < 60*60): out = str(int(round(diff.seconds/60,0))) + " minute(s) ago"
-    else: out = str(int(round(diff.seconds/(60*60),0))) + " hour(s) ago"
-
+    if(diff.days > 0): out = str(diff.days) + " day(s)"
+    elif(diff.seconds < 60): out = "less than a minute"
+    elif(diff.seconds < 60*60): out = str(int(round(diff.seconds/60,0))) + " minute(s)"
+    else: out = str(int(round(diff.seconds/(60*60),0))) + " hour(s)"
+    
+    if append != None: out = out + " " + append
     return(out)
 
 def get_paint_cols(val, rng = None):
@@ -297,3 +300,19 @@ def data_chk(request, page_name = "dashboard", cur_beer = None):
         else: out = "404 Page Not Found"
 
     return out
+def next_log_estimate():
+    last_reading = do.getLastReading(do.getActiveBeer()).instant_actual
+    log_freq = None
+    for i in range(10):
+        r, msg = send2middleware("M")
+        print(r)
+        if r.upper() == "SUCCESS":
+            log_freq = int(msg.split("=")[1])
+            break
+        sleep(.1)
+    out = "unknown amount of time"
+    if log_freq != None:
+        next = last_reading + timedelta(minutes = log_freq)
+        now = do.nowInUtc()
+        if next >= now: out = get_date_diff(do.nowInUtc(), next, append = None)
+    return(out)
