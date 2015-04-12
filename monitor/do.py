@@ -20,6 +20,26 @@ def getAllBeer():
     all_beer = Beer.objects.all()
     return all_beer
 
+def applyModifier(val,mod=None):
+    try:
+        if bool(mod):
+            for item in mod:
+                split = item.split('|')
+                operator = str(split[0])
+                constant = float(split[1])
+                if operator == '-':
+                    constant = -1 * constant
+                    operator = '+'
+                elif operator == '/':
+                    constant = 1 / constant
+                    operator = '*'
+                if operator == '+':
+                    val = val + constant
+                elif operator == '*':
+                    val = val * constant
+    finally:
+        return val
+
 '''Reading'''
 
 def getAllReadings(cur_beer):
@@ -87,6 +107,12 @@ def updateArchive(archive, reading):
         archive.pres_beer += str(reading.get_pres_beer()) + '^'
         archive.temp_amb += str(reading.get_temp_amb()) + '^'
         archive.temp_beer += str(reading.get_temp_beer()) + '^'
+
+        archive.light_amb_orig += str(reading.get_light_amb_orig()) + '^'
+        archive.pres_beer_orig += str(reading.get_pres_beer_orig()) + '^'
+        archive.temp_amb_orig += str(reading.get_temp_amb_orig()) + '^'
+        archive.temp_beer_orig += str(reading.get_temp_beer_orig()) + '^'
+
         archive.event_temp_amb += str(reading.event_temp_amb.pk) + '^'
         archive.event_temp_beer += str(reading.event_temp_beer.pk) + '^'
         archive.update_instant = nowInUtc()
@@ -223,10 +249,10 @@ def getEventData(reading=None,event_temp_amb=None,event_temp_beer=None):
         temp_beer = None
 
     if bool(temp_amb):
-        temp_amb_t = temp_amb.category
+        temp_amb_t = temp_amb.sensor
         temp_amb_d = temp_amb.details
     if bool(temp_beer):
-        temp_beer_t = temp_beer.category
+        temp_beer_t = temp_beer.sensor
         temp_beer_d = temp_beer.details
 
     return [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d]

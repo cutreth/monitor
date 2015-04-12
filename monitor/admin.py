@@ -11,16 +11,18 @@ class ReadingInLine(admin.TabularInline):
 
 class BeerAdmin(admin.ModelAdmin):
     fieldsets = [
-        ('General Information',      {'fields': ['beer_text']}),
-        ('Brew Notes',               {'fields': ['brew_date']}),
+        ('General Information', {'fields': ['beer_text']}),
+        ('Brew Notes',          {'fields': [('brew_date','brew_sg'),('bottle_date','bottle_sg'),('pull_date','max_abv')]}),
+        ('Sensor Modifiers',    {'fields': [('temp_amb_mod','light_amb_mod'),('temp_beer_mod','pres_beer_mod')]})
     ]
     #inlines = [ReadingInLine]
+    readonly_fields = ('max_abv',)
 
 class ReadingAdmin(admin.ModelAdmin):
     fieldsets = [
     ('Instant',    {'fields': ['instant','instant_override','instant_actual','version']}),
-    ('Data',       {'fields': ['beer','light_amb','pres_beer','temp_amb',
-                               'temp_beer','temp_unit']}),
+    ('Data',       {'fields': ['beer',('temp_amb','light_amb'),('temp_beer','pres_beer'),
+                               'temp_unit']}),
     ('Errors',     {'fields': ['error_flag','error_details']}),
     ]
 
