@@ -55,6 +55,12 @@ class Archive(models.Model):
     pres_beer = models.TextField('Beer Pressure')
     temp_amb = models.TextField('Ambient Temp')
     temp_beer = models.TextField('Beer Temp')
+
+    light_amb_orig = models.TextField('Original Ambient Light')
+    pres_beer_orig = models.TextField('Original Beer Pressure')
+    temp_amb_orig = models.TextField('Original Ambient Temp')
+    temp_beer_orig = models.TextField('Original Beer Temp')
+
     event_temp_amb = models.TextField('Amb Temp Events')
     event_temp_beer = models.TextField('Beer Temp Events')
 
@@ -167,6 +173,19 @@ class Reading(models.Model):
     temp_unit = models.CharField('Temp Unit',max_length=1,
                                  choices=temp_choices,default='F')
 
+    light_amb_orig = models.DecimalField('Original Ambient Light', max_digits=5,
+                                    decimal_places=2,blank=True,null=False,
+                                    default=0)
+    pres_beer_orig = models.DecimalField('Original Beer Pressure', max_digits=5,
+                                   decimal_places=2,blank=True,null=False,
+                                   default=0)
+    temp_amb_orig = models.DecimalField('Original Ambient Temp',max_digits=5,
+                                   decimal_places=2,blank=True,null=False,
+                                    default=0)
+    temp_beer_orig = models.DecimalField('Original Beer Temp',max_digits=5,
+                                    decimal_places=2,blank=True,null=False,
+                                    default=0)
+
     error_flag = models.NullBooleanField('Error?')
     error_details = models.CharField('Error Details',blank=True,max_length=150)
     event_temp_amb = models.ForeignKey('Event',null=True,blank=True,related_name='reading_to_temp_amb')
@@ -207,13 +226,34 @@ class Reading(models.Model):
         else:
             return float(self.temp_beer*9/5+32)
 
-    #Eventually remove the clipping code; this should be handled on the server
     def get_light_amb(self):
         value = self.light_amb
         return float(value)
 
     def get_pres_beer(self):
         value = self.pres_beer
+        return float(value)
+
+    #Break out conversion into a new function, combine with get_temp_beer
+    def get_temp_amb_orig(self):
+        if self.temp_unit is 'F' or self.temp_unit is None:
+            return float(self.temp_amb_orig)
+        else:
+            return float(self.temp_amb_orig*9/5+32)
+
+    #Break out conversion into a new function, combine with get_temp_amb
+    def get_temp_beer_orig(self):
+        if self.temp_unit is 'F' or self.temp_unit is None:
+            return float(self.temp_beer_orig)
+        else:
+            return float(self.temp_beer_orig*9/5+32)
+
+    def get_light_amb_orig(self):
+        value = self.light_amb_orig
+        return float(value)
+
+    def get_pres_beer_orig(self):
+        value = self.pres_beer_orig
         return float(value)
 
     def get_version(self):
@@ -268,9 +308,9 @@ class Config(models.Model):
         return 'Config' + ': ' + str(self.pk)
 
     def save(self, *args, **kwargs):
+        import monitor.do as do
         super(Config, self).save(*args, **kwargs)
         active_beer = self.beer
-        import monitor.do as do
         reading_key = do.genReadingKey(active_beer)
         archive_key = do.genArchiveKey(active_beer)
         self.reading_key = reading_key

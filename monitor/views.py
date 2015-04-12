@@ -41,11 +41,23 @@ def api_in(request):
 
         if not api.allDataBlank(sensor_data) and api.allDataPositive(sensor_data):
 
+            #Get beer-level modifiers
+            light_amb_mod = active_beer.get_light_amb_mod()
+            pres_beer_mod = active_beer.get_pres_beer_mod()
+            temp_beer_mod = active_beer.get_temp_beer_mod()
+            temp_amb_mod = active_beer.get_temp_amb_mod()
+
+            #Store unmodified values
+            read.light_amb_orig = light_amb
+            read.pres_beer_orig = pres_beer
+            read.temp_beer_orig = temp_beer
+            read.temp_amb_orig = temp_amb
+
             #All data set for every read
-            read.light_amb = light_amb
-            read.pres_beer = pres_beer
-            read.temp_beer = temp_beer
-            read.temp_amb = temp_amb
+            read.light_amb = do.applyModifier(light_amb,light_amb_mod)
+            read.pres_beer = do.applyModifier(pres_beer,pres_beer_mod)
+            read.temp_beer = do.applyModifier(temp_beer,temp_beer_mod)
+            read.temp_amb = do.applyModifier(temp_amb,temp_amb_mod)
 
             #Get and set temp_unit
             temp_unit = api.getTempUnit(request)

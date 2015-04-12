@@ -107,6 +107,12 @@ def updateArchive(archive, reading):
         archive.pres_beer += str(reading.get_pres_beer()) + '^'
         archive.temp_amb += str(reading.get_temp_amb()) + '^'
         archive.temp_beer += str(reading.get_temp_beer()) + '^'
+
+        archive.light_amb_orig += str(reading.get_light_amb_orig()) + '^'
+        archive.pres_beer_orig += str(reading.get_pres_beer_orig()) + '^'
+        archive.temp_amb_orig += str(reading.get_temp_amb_orig()) + '^'
+        archive.temp_beer_orig += str(reading.get_temp_beer_orig()) + '^'
+
         archive.event_temp_amb += str(reading.event_temp_amb.pk) + '^'
         archive.event_temp_beer += str(reading.event_temp_beer.pk) + '^'
         archive.update_instant = nowInUtc()
