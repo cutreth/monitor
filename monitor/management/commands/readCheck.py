@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 
-from monitor.api import api
-from monitor.do import do
+import monitor.api as api
+import monitor.do as do
 
 import datetime
 

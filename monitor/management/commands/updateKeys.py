@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from monitor.do import do
+import monitor.do as do
 
 class Command(BaseCommand):
     args = '<poll_id poll_id ...>'
