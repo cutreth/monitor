@@ -334,7 +334,7 @@ class Event(models.Model):
     category = models.CharField('Category',max_length=50,
                                 choices=cat_choices)
     sensor = models.CharField('Sensor',max_length=50,
-                              choices=cat_sensors,blank=True)
+                              choices=cat_sensors,blank=True,null=True)
     details = models.CharField('Error Details',blank=True,max_length=150)
 
     def __str__(self):
