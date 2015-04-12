@@ -20,6 +20,26 @@ def getAllBeer():
     all_beer = Beer.objects.all()
     return all_beer
 
+def applyModifier(val,mod=None):
+    try:
+        if bool(mod):
+            for item in mod:
+                split = item.split('|')
+                operator = str(split[0])
+                constant = float(split[1])
+                if operator == '-':
+                    constant = -1 * constant
+                    operator = '+'
+                elif operator == '/':
+                    constant = 1 / constant
+                    operator = '*'
+                if operator == '+':
+                    val = val + constant
+                elif operator == '*':
+                    val = val * constant
+    finally:
+        return val
+
 '''Reading'''
 
 def getAllReadings(cur_beer):

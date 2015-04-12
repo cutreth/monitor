@@ -25,6 +25,26 @@ class Beer(models.Model):
     def __str__(self):
         return self.beer_text
 
+    def get_light_amb_mod(self):
+        val = self.light_amb_mod
+        out = parseList(val,'str')
+        return out
+
+    def get_pres_beer_mod(self):
+        val = self.pres_beer_mod
+        out = parseList(val,'str')
+        return out
+
+    def get_temp_amb_mod(self):
+        val = self.temp_amb_mod
+        out = parseList(val,'str')
+        return out
+
+    def get_temp_beer_mod(self):
+        val = self.temp_beer_mod
+        out = parseList(val,'str')
+        return out
+
 class Archive(models.Model):
 
     beer = models.ForeignKey(Beer)
@@ -50,37 +70,37 @@ class Archive(models.Model):
 
     def get_instant_actual(self):
         val = self.instant_actual
-        out = parseArchiveList(val,'str')
+        out = parseList(val,'str')
         return out
 
     def get_light_amb(self):
         val = self.light_amb
-        out = parseArchiveList(val,'float')
+        out = parseList(val,'float')
         return out
 
     def get_pres_beer(self):
         val = self.pres_beer
-        out = parseArchiveList(val,'float')
+        out = parseList(val,'float')
         return out
 
     def get_temp_amb(self):
         val = self.temp_amb
-        out = parseArchiveList(val,'float')
+        out = parseList(val,'float')
         return out
 
     def get_temp_beer(self):
         val = self.temp_beer
-        out = parseArchiveList(val,'float')
+        out = parseList(val,'float')
         return out
 
     def get_event_temp_beer(self):
         val = self.event_temp_beer
-        out = parseArchiveList(val,'float')
+        out = parseList(val,'float')
         return out
 
     def get_event_temp_amb(self):
         val = self.event_temp_amb
-        out = parseArchiveList(val,'float')
+        out = parseList(val,'float')
         return out
 
     def get_count(self):
@@ -101,7 +121,7 @@ class Archive(models.Model):
         value = str(self.get_reading_date()) + '|' + str(self.get_update_instant())
         return value
 
-def parseArchiveList(val,form=None):
+def parseList(val,form=None):
     if bool(val):
         out = val.split('^')
         del out[-1]
@@ -190,10 +210,7 @@ class Reading(models.Model):
     #Eventually remove the clipping code; this should be handled on the server
     def get_light_amb(self):
         value = self.light_amb
-        if value > 200:
-            return float(200)
-        else:
-            return float(self.light_amb)
+        return float(value)
 
     def get_pres_beer(self):
         value = self.pres_beer

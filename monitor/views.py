@@ -191,7 +191,7 @@ def dashboard(request):
         "beer_date": active_beer.brew_date,
     }
     return render_to_response('dashboard.html',data)
-    
+
 def get_date_diff(d1,d2, append = "ago"):
 
     '''Returns the difference between two datetime objects in a readable format'''
@@ -201,7 +201,7 @@ def get_date_diff(d1,d2, append = "ago"):
     elif(diff.seconds < 60): out = "less than a minute"
     elif(diff.seconds < 60*60): out = str(int(round(diff.seconds/60,0))) + " minute(s)"
     else: out = str(int(round(diff.seconds/(60*60),0))) + " hour(s)"
-    
+
     if append != None: out = out + " " + append
     return(out)
 
