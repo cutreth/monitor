@@ -5,8 +5,22 @@ import pytz
 class Beer(models.Model):
 
     beer_text = models.CharField('Beer',max_length=30)
+
     brew_date = models.DateField('Brew Date',blank=True,null=True)
     bottle_date = models.DateField('Bottle Date',blank=True,null=True)
+    pull_date = models.DateField('Pull Date',blank=True,null=True)
+
+    brew_sg = models.DecimalField('Brew SG', max_digits=4,
+                                  decimal_places=3,blank=True,null=True)
+    bottle_sg = models.DecimalField('Bottle SG', max_digits=4,
+                                    decimal_places=3,blank=True,null=True)
+    max_abv = models.DecimalField('Max ABV', max_digits = 2,
+                                  decimal_places=1,blank=True,null=True)
+
+    light_amb_mod = models.CharField('Ambient Light Modifier',blank=True,max_length=20)
+    pres_beer_mod = models.CharField('Beer Pressure Modifier',blank=True,max_length=20)
+    temp_amb_mod = models.CharField('Ambient Temp Modifier',blank=True,max_length=20)
+    temp_beer_mod = models.CharField('Beer Temp Modifier',blank=True,max_length=20)
 
     def __str__(self):
         return self.beer_text
