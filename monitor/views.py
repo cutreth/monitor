@@ -75,7 +75,7 @@ def api_in(request):
                 read.save()
 
             #Check for deviation errors
-            error_flag = api.ErrorCheck(active_config, read)
+            error_flag = api.BoundsErrorCheck(active_config, read)
 
             #And finally, save the record
             if key == prod_key:
