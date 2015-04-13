@@ -14,8 +14,8 @@ class Beer(models.Model):
                                   decimal_places=3,blank=True,null=True)
     bottle_sg = models.DecimalField('Bottle SG', max_digits=4,
                                     decimal_places=3,blank=True,null=True)
-    max_abv = models.DecimalField('Max ABV', max_digits = 2,
-                                  decimal_places=1,blank=True,null=True)
+    max_abv = models.DecimalField('Max ABV', max_digits = 3,
+                                  decimal_places=2,blank=True,null=True)
     brew_temp = models.DecimalField('Brew Temp',max_digits=3,
                                     decimal_places=1,blank=True,null=True)
     bottle_temp = models.DecimalField('Bottle Temp',max_digits=3,
@@ -31,7 +31,22 @@ class Beer(models.Model):
 
     def save(self, *args, **kwargs):
         super(Beer, self).save(*args, **kwargs)
-
+        if bool(self.brew_sg) and bool(self.bottle_sg):
+            brew_sg = float(self.brew_sg)
+            bottle_sg = float(self.bottle_sg)
+            if bool(self.brew_temp):
+                brew_temp = float(self.brew_temp)
+                brew_sg += (0.000172414 * brew_temp - 0.0104828)
+            if bool(self.bottle_temp):
+                bottle_temp = float(self.bottle_temp)
+                bottle_sg += (0.000172414 * bottle_temp - 0.0104828)
+            if bool(False):
+                max_abv = 131*(brew_sg-bottle_sg)
+            else:
+                max_abv = ((76.08*(brew_sg-bottle_sg)/(1.775-brew_sg))*(bottle_sg/0.794))
+            self.max_abv = max_abv
+        else:
+            self.max_abv = None
         super(Beer, self).save(*args, **kwargs)
 
     def get_light_amb_mod(self):
