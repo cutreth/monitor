@@ -95,7 +95,18 @@ def SetErrorInfo(error_flag, error_details, error):
         error_details = error_details + error
     return [error_flag, error_details]
 
-def ErrorCheck(active_config, read):
+def MissingErrorCheck(read_missing, read_last_instant, time_delta):
+    right_now = do.nowInUtc()
+    read_expected = True #Assume need a reading
+    if read_missing > 0:
+        if bool(read_last_instant):
+            if not isTimeBefore(read_last_instant, right_now, time_delta):
+                read_expected = False
+    else:
+        read_expected = False
+    return read_expected
+
+def BoundsErrorCheck(active_config, read):
     '''Check for errors, update Reading record, output True if errors found'''
     error_flag = False
     error_details = str('')
