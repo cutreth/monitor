@@ -16,6 +16,10 @@ class Beer(models.Model):
                                     decimal_places=3,blank=True,null=True)
     max_abv = models.DecimalField('Max ABV', max_digits = 2,
                                   decimal_places=1,blank=True,null=True)
+    brew_temp = models.DecimalField('Brew Temp',max_digits=3,
+                                    decimal_places=1,blank=True,null=True)
+    bottle_temp = models.DecimalField('Bottle Temp',max_digits=3,
+                                    decimal_places=1,blank=True,null=True)
 
     light_amb_mod = models.CharField('Ambient Light Modifier',blank=True,max_length=20)
     pres_beer_mod = models.CharField('Beer Pressure Modifier',blank=True,max_length=20)
@@ -24,6 +28,11 @@ class Beer(models.Model):
 
     def __str__(self):
         return self.beer_text
+
+    def save(self, *args, **kwargs):
+        super(Beer, self).save(*args, **kwargs)
+
+        super(Beer, self).save(*args, **kwargs)
 
     def get_light_amb_mod(self):
         val = self.light_amb_mod
