@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from monitor.do import updateReadingKey, updateArchiveKey
+import monitor.do as do
 
 class Command(BaseCommand):
     args = '<poll_id poll_id ...>'
@@ -8,7 +8,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
             
-        updateArchiveKey()
-        updateReadingKey()
+        do.updateArchiveKey()
+        do.updateReadingKey()
 
         return None
