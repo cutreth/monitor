@@ -114,4 +114,11 @@ C - Turns off server permanently, will require access to the server to turn it b
 send2middleware("c", True)	= ('Success', 'Cancelled.')
 
 ----------------------------------------------------------------
+
+A=var_name[min,max] - Turns on audible alerts from the middleware for var_name when out of the min-max range
+
+send2middleware("a=temp_beer[70,80]", testMode = True)  = ('Success', 'Alert for temp_beer set to [70, 80]')
+send2middleware("a=off[0,0]", testMode = True)          = ('Success', 'Alerts turned off')
+
+----------------------------------------------------------------
 '''
