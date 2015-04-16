@@ -32,7 +32,6 @@
                         var command = "a=" + var_name + "[" + min + "," + max + "]/"
                         
                         cur_form.action = cur_form.action + command
-                        console.log(cur_form.action);
                     };
                 </script>
                 <form name="alert_form" action="/monitor/commands/" method="get" onsubmit = "return alert_change();">
