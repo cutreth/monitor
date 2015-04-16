@@ -338,7 +338,6 @@ def getAllData(cur_beer):
     return all_data
 
 def get_date_diff(d1,d2, append = "ago"):
-
     '''Returns the difference between two datetime objects in a readable format'''
     diff = abs(d2-d1)
 
@@ -360,6 +359,7 @@ def get_paint_cols(val, rng = None):
     return((bgcol, fgcol))
 
 def next_log_estimate():
+    '''Estimates the next reading time based on log freq and last logged time'''
     last_reading = getLastReading(getActiveBeer()).instant_actual
     log_freq = None
     for i in range(10):
@@ -373,5 +373,6 @@ def next_log_estimate():
     if log_freq != None:
         next = last_reading + timedelta(minutes = log_freq)
         now = nowInUtc()
-        if next >= now: out = get_date_diff(nowInUtc(), next, append = None)
+        if next >= now: out = get_date_diff(now, next, append = None)
+        elif: new >= now - timedelta(minutes = 5): out = "less than a minute"
     return(out)
