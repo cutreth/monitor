@@ -16,7 +16,15 @@
 		<main>
 			<div class="innertube">
 				
-				<h1>Server Commands</h1>
+				<h1>Command page</h1>
+                <h2>Current values</h2>
+                <table>
+                    <tr><td>Log frequency:</td><td>{{ log_freq }}</td>
+                    <tr><td>Collection status:</td><td>{{ collection_status }}</td>
+                    <tr><td>Logging status:</td><td>{{ logging_status }}</td>
+                    <tr><td>Alert status:</td><td>{{ alert_status }}</td>
+                </table>
+                <h2>Commands</h2>
                 <form name="force_form" action="/monitor/commands/" method="get">
                     <input type = "hidden" name = code value = "f">
                     <input type = "submit" value="Force log">

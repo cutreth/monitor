@@ -131,7 +131,26 @@ def commands(request):
     all_beers = do.getAllBeer()
     beer_name = active_beer
     beer_date = active_beer.brew_date
-
+    
+    s, log_freq = send2middleware("?code=m")
+    if s != "Success": log_freq = "?"
+    
+    s, collection_status = send2middleware("?code=c&dir=get")
+    if s != "Success": collection_status = "?"
+    else:
+        if "on" in collection_status: collection_status = "On"
+        elif "on" in collection_status: collection_status = "Off"
+        else: collection_status = "?"
+        
+    s, logging_status = send2middleware("?code=L&dir=get")
+    if s != "Success": logging_status = "?"
+    else:
+        if "on" in logging_status: logging_status = "On"
+        elif "on" in logging_status: logging_status = "Off"
+        else: logging_status = "?"
+    
+    alert_status = "TBD"
+    
     data = {
             'all_beers': all_beers,
             'beer_name': beer_name,
@@ -140,7 +159,11 @@ def commands(request):
             'command_status': command_status,
             'varlist': varlist,
             'error': error,
-            'details': details
+            'details': details,
+            'log_freq': log_freq,
+            'collection_status': collection_status,
+            'logging_status': logging_status,
+            'alert_status': alert_status,
            }
 
     return render_to_response('commands.html', data, context_instance=RequestContext(request))

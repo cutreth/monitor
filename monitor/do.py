@@ -374,4 +374,5 @@ def next_log_estimate():
         next = last_reading + timedelta(minutes = log_freq)
         now = nowInUtc()
         if next >= now: out = get_date_diff(now, next, append = None)
+        elif new >= now - timedelta(minutes = 5): out = "less than a minute"
     return(out)
