@@ -29,9 +29,9 @@
                         var var_name = cur_form.Var.value;
                         var min = cur_form.Min.value;
                         var max = cur_form.Max.value;
-                        var command = "a=" + var_name + "[" + min + "," + max + "]/"
+                        var command = "a=" + var_name + "[" + min + "," + max + "]/";
                         
-                        cur_form.action = cur_form.action + command
+                        cur_form.action = cur_form.action + command;
                     };
                 </script>
                 <form name="alert_form" action="/monitor/commands/" method="get" onsubmit = "return alert_change();">
