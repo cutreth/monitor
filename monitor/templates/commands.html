@@ -22,6 +22,25 @@
                         <input type="submit" value="{{description}}">
                     </form>
                 {% endfor %}
+                <script type="text/javascript">
+                    function alert_change() {
+   
+                        var cur_form = document.alert_form;
+                        var var_name = cur_form.Var.value;
+                        var min = cur_form.Min.value;
+                        var max = cur_form.Max.value;
+                        var command = "a=" + var_name + "[" + min + "," + max + "]/"
+                        
+                        cur_form.action = cur_form.action + command
+                        console.log(cur_form.action);
+                    };
+                </script>
+                <form name="alert_form" action="/monitor/commands/" method="get" onsubmit = "return alert_change();">
+                    <label>Variable:<input type="text" name="Var"></label>
+                    <label>Min:<input type="number" name="Min"></label>
+                    <label>Max:<input type="number" name="Max"></label>
+                    <input type="submit" value="Set alert">
+                </form>
                 <h2>{{error}}</h2>
                 <h3>{{details}}</h3>
                 
