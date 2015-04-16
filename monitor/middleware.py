@@ -1,11 +1,14 @@
 def handler(signum, frame):
     raise Exception()
 
-def send2middleware(message, testMode = False):
+def send2middleware(message, serverURL = None, testMode = False):
     import socket
     import platform
     import signal    
-    from monitor.do import getServerUrl
+    try: from monitor.do import getServerUrl
+    except:
+        def getServerUrl():
+            return(serverURL)
  
     if platform.system() != 'Windows': 
         signal.signal(signal.SIGALRM, handler)
