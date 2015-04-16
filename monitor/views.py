@@ -125,21 +125,7 @@ def commands(request):
     if not bool(details):
         details = blank
 
-    command_options = [('f','Force a log'),
-                       ('m','Show log freq'),
-                       ('m=1','Log freq = 1'),
-                       ('m=5','Log freq = 5'),
-                       ('m=15','Log freq = 15'),
-                       ('m=30','Log freq = 30'),
-                       ('r=temp_amb','Value of temp_amb'),
-                       ('r=temp_beer','Value of temp_beer'),
-                       ('r=light_amb','Value of light_amb'),
-                       ('r=pres_beer','Value of pres_beer'),
-                       ('l','Turn data collection on'),
-                       ('o','Turn data collection off'),
-                       ('d','Turn remote logging on'),
-                       ('e','Turn remote logging off')
-                      ]
+    varlist = ["temp_amb", "temp_beer", "light_amb", "pres_beer"]
 
     active_beer = do.getActiveBeer()
     all_beers = do.getAllBeer()
@@ -152,7 +138,7 @@ def commands(request):
             'beer_date': beer_date,
             'active_beer': do.getActiveBeer(),
             'command_status': command_status,
-            'command_options': command_options,
+            'varlist': varlist,
             'error': error,
             'details': details
            }
