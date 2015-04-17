@@ -10,6 +10,7 @@ import monitor.do as do
 from monitor.models import Beer, Reading
 from monitor.middleware import send2middleware
 
+import re
 import datetime
 from datetime import timedelta
 from time import sleep
@@ -125,7 +126,9 @@ def commands(request):
     if not bool(details):
         details = blank
 
-    varlist = ["temp_amb", "temp_beer", "light_amb", "pres_beer"]
+    #List vars: [Current Value, Alert]
+    varlist = {"temp_amb":["?", "?"], "temp_beer":["?", "?"], "light_amb":["?", "?"], "pres_beer":["?", "?"]}
+    
 
     active_beer = do.getActiveBeer()
     all_beers = do.getAllBeer()
@@ -134,14 +137,17 @@ def commands(request):
     
     s, log_freq = send2middleware("?code=m")
     if s != "Success": log_freq = "?"
+    else: log_freq = log_freq.split("=")[1]
     
+    sleep(.1)
     s, collection_status = send2middleware("?code=c&dir=get")
     if s != "Success": collection_status = "?"
     else:
         if "on" in collection_status: collection_status = "On"
         elif "on" in collection_status: collection_status = "Off"
         else: collection_status = "?"
-        
+    
+    sleep(.1)
     s, logging_status = send2middleware("?code=L&dir=get")
     if s != "Success": logging_status = "?"
     else:
@@ -149,8 +155,25 @@ def commands(request):
         elif "on" in logging_status: logging_status = "Off"
         else: logging_status = "?"
     
-    alert_status = "TBD"
+    sleep(.1)
+    s, alert_res = send2middleware("?code=A&var=get")
+    if s == "Success":
+        if "off" not in alert_res:
+            re_alert = re.search("(.*)(\[\d+, \d+\])", alert_res.split(":")[1], re.IGNORECASE)
+            print(alert_res.split(":")[1])
+            alert_var = re_alert.group(1)
+            alert_rng = re_alert.group(2)
+        else: alert_var = None
+    else: alert_var = "?"
     
+    for var in varlist:
+        sleep(.1)
+        s, val = send2middleware("?code=r&var=" + var)
+        if s == "Success": varlist[var][0] = val.split(":")[1]
+        if alert_var != "?":
+            if alert_var == var: varlist[var][1] = str(alert_rng)
+            else: varlist[var][1] = "Set alert"
+        
     data = {
             'all_beers': all_beers,
             'beer_name': beer_name,
@@ -163,7 +186,6 @@ def commands(request):
             'log_freq': log_freq,
             'collection_status': collection_status,
             'logging_status': logging_status,
-            'alert_status': alert_status,
            }
 
     return render_to_response('commands.html', data, context_instance=RequestContext(request))
