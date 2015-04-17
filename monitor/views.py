@@ -100,26 +100,17 @@ def api_in(request):
     return response
 
 @staff_member_required
-def send_command(request, command_char=None):
-    if command_char == None:
-        command_status = str('')
-    else:
-        command_status = send2middleware(command_char)
-    request.session['command_status'] = command_status
-    return HttpResponseRedirect(reverse('commands'))
-
-@staff_member_required
 def commands(request):
     blank = str('')
     command_status = blank
     error = blank
     details = blank
-
-    if request.session.has_key('command_status'):
-        command_status = request.session.get('command_status')
-        del request.session['command_status']
+    command = request.GET
+    
+    if command:
+        command_status = send2middleware(command.urlencode())
         error = command_status[0]
-        details = command_status[1]
+        details = command_status[1]        
 
     if not bool(error):
         error = blank
@@ -148,17 +139,16 @@ def commands(request):
     s, collection_status = send2middleware("?code=c&dir=get")
     if s != "Success": collection_status = "?"
     else:
-        if "on" in collection_status: collection_status = "On"
-        elif "on" in collection_status: collection_status = "Off"
-        else: collection_status = "?"
+        if "on." in collection_status: collection_status = "on"
+        else: collection_status = "off"
+    print(collection_status)
     
     sleep(.1)
     s, logging_status = send2middleware("?code=L&dir=get")
     if s != "Success": logging_status = "?"
     else:
-        if "on" in logging_status: logging_status = "On"
-        elif "on" in logging_status: logging_status = "Off"
-        else: logging_status = "?"
+        if "on." in logging_status: logging_status = "on"
+        else: logging_status = "off"
     
     sleep(.1)
     s, alert_res = send2middleware("?code=A&var=get")
