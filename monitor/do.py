@@ -223,14 +223,15 @@ def appendArchiveKey(archive):
 '''Event'''
 
 def createEvent(beer, reading, category, sensor, details):
+    '''Note: assuming Readings are saved higher up, if the prod key is set'''
     event = Event(beer=beer,reading=reading,category=category,sensor=sensor,details=details)
     event.save()
     if sensor == 'temp_amb':
         reading.event_temp_amb = event
-        reading.save()
+        #reading.save() #This was incorrectly overriding the test key
     elif sensor == 'temp_beer':
         reading.event_temp_beer = event
-        reading.save()
+        #reading.save() #Ditto above
     return event
 
 def getEventData(reading=None,event_temp_amb=None,event_temp_beer=None):
