@@ -10,6 +10,7 @@ import monitor.do as do
 from monitor.models import Beer, Reading
 from monitor.middleware import send2middleware
 
+import re
 import datetime
 from datetime import timedelta
 from time import sleep
@@ -99,33 +100,26 @@ def api_in(request):
     return response
 
 @staff_member_required
-def send_command(request, command_char=None):
-    if command_char == None:
-        command_status = str('')
-    else:
-        command_status = send2middleware(command_char)
-    request.session['command_status'] = command_status
-    return HttpResponseRedirect(reverse('commands'))
-
-@staff_member_required
 def commands(request):
     blank = str('')
     command_status = blank
     error = blank
     details = blank
-
-    if request.session.has_key('command_status'):
-        command_status = request.session.get('command_status')
-        del request.session['command_status']
+    command = request.GET
+    
+    if command:
+        command_status = send2middleware(command.urlencode())
         error = command_status[0]
         details = command_status[1]
 
-    if not bool(error):
-        error = blank
-    if not bool(details):
-        details = blank
-
-    varlist = ["temp_amb", "temp_beer", "light_amb", "pres_beer"]
+    #List vars: [Current Value, Alert, Cell Color (for future use)]
+    varlist = {
+                "temp_amb":["?", "?", "#FFFFFF"],
+                "temp_beer":["?", "?", "#FFFFFF"],
+                "light_amb":["?", "?", "#FFFFFF"],
+                "pres_beer":["?", "?", "#FFFFFF"]
+            }
+    
 
     active_beer = do.getActiveBeer()
     all_beers = do.getAllBeer()
@@ -134,23 +128,31 @@ def commands(request):
     
     s, log_freq = send2middleware("?code=m")
     if s != "Success": log_freq = "?"
+    else: log_freq = log_freq.split("=")[1]
     
-    s, collection_status = send2middleware("?code=c&dir=get")
-    if s != "Success": collection_status = "?"
-    else:
-        if "on" in collection_status: collection_status = "On"
-        elif "on" in collection_status: collection_status = "Off"
-        else: collection_status = "?"
+    collection_status = getStatus("?code=c&dir=get")
+    logging_status = getStatus("?code=L&dir=get")
+    
+    sleep(.1)
+    s, alert_res = send2middleware("?code=A&var=get")
+    if s == "Success":
+        if "off" not in alert_res:
+            re_alert = re.search("(.*)(\[\d+, \d+\])", alert_res.split(":")[1], re.IGNORECASE)
+            print(alert_res.split(":")[1])
+            alert_var = re_alert.group(1)
+            alert_rng = re_alert.group(2)
+        else: alert_var = None
+    else: alert_var = "?"
+    
+    for var in varlist:
+        sleep(.1)
+        s, val = send2middleware("?code=r&var=" + var)
+        if s == "Success":
+            varlist[var][0] = val.split(":")[1]
+        if alert_var != "?":
+            if alert_var == var: varlist[var][1] = str(alert_rng)
+            else: varlist[var][1] = "Set alert"
         
-    s, logging_status = send2middleware("?code=L&dir=get")
-    if s != "Success": logging_status = "?"
-    else:
-        if "on" in logging_status: logging_status = "On"
-        elif "on" in logging_status: logging_status = "Off"
-        else: logging_status = "?"
-    
-    alert_status = "TBD"
-    
     data = {
             'all_beers': all_beers,
             'beer_name': beer_name,
@@ -163,7 +165,6 @@ def commands(request):
             'log_freq': log_freq,
             'collection_status': collection_status,
             'logging_status': logging_status,
-            'alert_status': alert_status,
            }
 
     return render_to_response('commands.html', data, context_instance=RequestContext(request))
@@ -237,8 +238,8 @@ def chart(request, cur_beer = None):
     #active_beer is the system config active
     #cur_beer is the beer that is being charted
 
-    plot_data = do.getAllData(cur_beer)
-
+    plot_data= do.getAllData(cur_beer)
+    
     last_read = do.getLastReading(cur_beer)
     last_archive = None
 
