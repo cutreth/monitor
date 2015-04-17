@@ -266,11 +266,19 @@ def getEventData(reading=None,event_temp_amb=None,event_temp_beer=None):
 def getAllData(cur_beer):
     '''Return a DF of reading/archive data, ordered by instant'''
     active_beer = getActiveBeer()
-    all_data = []
     archive_data = []
     reading_data = []
     archive_key = ''
     reading_key = ''
+    
+    all_data = [[
+            "'Log Time'",
+            "'Ambient Temp'", "'Ambient Temp title'", "'Ambient Temp text'",
+            "'Beer Temp'", "'Beer Temp title'", "'Beer Temp text'",
+            "'Ambient Light'", "'Ambient Light title'", "'Ambient Light text'",
+            "'Beer Pressure'", "'Beer Pressure title'", "'Beer Pressure text'"
+        ]]
+    add = []
 
     archive_key = getArchiveKey()
     cache_key = cache.get('archive_key')
@@ -299,18 +307,23 @@ def getAllData(cur_beer):
                 else:
                     event_temp_beer = None
                 [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d] = getEventData(None,event_temp_beer,event_temp_amb)
-                data = {'dt':instant_actual_arch[counter],
-                        'temp_amb':[temp_amb_arch[counter],temp_amb_t,temp_amb_d],
-                        'temp_beer':[temp_beer_arch[counter],temp_beer_t,temp_beer_d],
-                        'light_amb':[light_amb_arch[counter],'undefined','undefined'],
-                        'pres_beer':[pres_beer_arch[counter],'undefined','undefined'],
-                }
+                if temp_amb_t in ['', None]: temp_amb_t = 'undefined'
+                if temp_amb_d in ['', None]: temp_amb_d = 'undefined'
+                if temp_beer_t in ['', None]: temp_beer_t = 'undefined'
+                if temp_beer_d in ['', None]: temp_beer_d = 'undefined'
+                add = [
+                        'new Date("' + str(instant_actual_arch[counter]) + '")',
+                        temp_amb_arch[counter],temp_amb_t,temp_amb_d,
+                        temp_beer_arch[counter],temp_beer_t,temp_beer_d,
+                        light_amb_arch[counter],'undefined','undefined',
+                        pres_beer_arch[counter],'undefined','undefined'
+                    ]
                 archive_data.append(data)
                 counter += 1
         if active_beer == cur_beer:
             cache.set('archive_key', archive_key)
             cache.set('archive_data', archive_data)
-    all_data = all_data + archive_data
+    all_data.extend(archive_data)
 
     reading_key = getReadingKey()
     cache_key = cache.get('reading_key')
@@ -323,18 +336,22 @@ def getAllData(cur_beer):
             reading_key = reading_key + '^' + reading.get_instant_actual()
 
             [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d] = getEventData(reading)
-
-            data = {'dt':reading.get_instant_actual(),
-                    'temp_amb':[reading.get_temp_amb(),temp_amb_t,temp_amb_d],
-                    'temp_beer':[reading.get_temp_beer(),temp_beer_t,temp_beer_d],
-                    'light_amb':[reading.get_light_amb(),'undefined','undefined'],
-                    'pres_beer':[reading.get_pres_beer(),'undefined','undefined'],
-            }
-            reading_data.append(data)
+            if temp_amb_t in ['', None]: temp_amb_t = 'undefined'
+            if temp_amb_d in ['', None]: temp_amb_d = 'undefined'
+            if temp_beer_t in ['', None]: temp_beer_t = 'undefined'
+            if temp_beer_d in ['', None]: temp_beer_d = 'undefined'
+            add = [
+                    'new Date("' + str(reading.get_instant_actual()) + '")',
+                    reading.get_temp_amb(),temp_amb_t,temp_amb_d,
+                    reading.get_temp_beer(),temp_beer_t,temp_beer_d,
+                    reading.get_light_amb(),'undefined','undefined',
+                    reading.get_pres_beer(),'undefined','undefined'
+                ]
+            reading_data.append(add)
         if active_beer == cur_beer:
             cache.set('reading_key', reading_key)
             cache.set('reading_data', reading_data)
-    all_data = all_data + reading_data
+    all_data.extend(reading_data)
 
     return all_data
 

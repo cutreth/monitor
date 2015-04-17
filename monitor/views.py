@@ -141,7 +141,6 @@ def commands(request):
     else:
         if "on." in collection_status: collection_status = "on"
         else: collection_status = "off"
-    print(collection_status)
     
     sleep(.1)
     s, logging_status = send2middleware("?code=L&dir=get")
@@ -255,8 +254,8 @@ def chart(request, cur_beer = None):
     #active_beer is the system config active
     #cur_beer is the beer that is being charted
 
-    plot_data = do.getAllData(cur_beer)
-
+    plot_data= do.getAllData(cur_beer)
+    
     last_read = do.getLastReading(cur_beer)
     last_archive = None
 
