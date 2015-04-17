@@ -8,6 +8,7 @@ from monitor.models import Event
 
 from monitor.middleware import send2middleware
 
+from datetime import timedelta
 from time import sleep
 import datetime
 import pytz
@@ -374,5 +375,5 @@ def next_log_estimate():
         next = last_reading + timedelta(minutes = log_freq)
         now = nowInUtc()
         if next >= now: out = get_date_diff(now, next, append = None)
-        elif new >= now - timedelta(minutes = 5): out = "less than a minute"
+        elif next >= now - timedelta(minutes = 5): out = "less than a minute"
     return(out)
