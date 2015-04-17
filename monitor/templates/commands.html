@@ -53,8 +53,8 @@
                         <td>
                             {% if collection_status != "?" %}
                                 <select name = "dir" value = "{{ collection_status }}" title = "When collection is off, data is NOT collected and will be lost.">
-                                    <option value="on">On</option>
-                                    <option value="off">Off</option>
+                                    <option value="on" {% if collection_status == 'on' %} selected="selected" {% endif %}>On</option>
+                                    <option value="off"{% if collection_status == 'off' %} selected="selected" {% endif %}>Off</option>
                                 </select>
                             {% else %}?
                             {% endif %}
@@ -66,8 +66,8 @@
                         <td>
                             {% if logging_status != "?" %}
                                 <select name = "dir" value = "{{ logging_status }}" title = "When logging is off, data is still collected and will be pushed when turned back on.">
-                                    <option value="on">On</option>
-                                    <option value="off">Off</option>
+                                    <option value="on" {% if logging_status == 'on' %} selected="selected" {% endif %}>On</option>
+                                    <option value="off"{% if logging_status == 'off' %} selected="selected" {% endif %}>Off</option>
                                 </select>
                             {% else %}?
                             {% endif %}
