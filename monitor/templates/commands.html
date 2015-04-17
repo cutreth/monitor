@@ -7,78 +7,93 @@
 		<title>Server - Commands</title>
 		
         {% load staticfiles %}
-        <link rel="stylesheet" type="text/css" href="{% static 'allStyle.css' %}"
-
+        <link rel="stylesheet" type="text/css" href="{% static 'allStyle.css' %}">
+        <style>
+            input[type=number]{
+                width: 45px;
+            }
+        </style>
+        <script type = "text/javascript">
+            function setAlert(var_name) {
+                alert_form.var.value = var_name;
+                if(var_name != 'off') {
+                    alert_form.min.value = parseFloat(prompt('Min value:'));
+                    alert_form.max.value = parseFloat(prompt('Max value:'));
+                }
+                alert_form.submit();
+            }
+        </script>
+        <div style="display:none">
+            <form name="alert_form" id = "alert_form" action="/monitor/commands/" method="get">
+                <input type="hidden" name="code" value="a">
+                <input type="text" name="var">
+                <input type="number" name="min">
+                <input type="number" name="max">
+            </form>
+        </div>
 	</head>
-	
 	<body>		
 				
 		<main>
 			<div class="innertube">
 				
 				<h1>Command page</h1>
-                <h2>Current values</h2>
                 <table>
-                    <tr><td>Log frequency:</td><td>{{ log_freq }}</td>
-                    <tr><td>Collection status:</td><td>{{ collection_status }}</td>
-                    <tr><td>Logging status:</td><td>{{ logging_status }}</td>
-                    <tr><td>Alert status:</td><td>{{ alert_status }}</td>
+                    <tr><form name="freq_form" action="/monitor/commands/" method="get">
+                        <input type = "hidden" name = "code" value = "m">
+                        <td>Log frequency:</td>
+                        <td><input type = "number" name="freq" min = "0" value = "{{ log_freq }}"></td>
+                        <td>
+                            <input type = "submit" value="Set" title = "Set the time between logs (in minutes)">
+                            <input type = "button" value="Force" title = "Force a log" onclick = "freq_form.code.value = 'f'; freq_form.submit();">
+                        </td>
+                    </form></tr><tr><form name="collection_form" action="/monitor/commands/" method="get">
+                        <input type = "hidden" name = "code" value = "c">
+                        <td>Collection status:</td>
+                        <td>
+                            {% if collection_status != "?" %}
+                                <select name = "dir" value = "{{ collection_status }}" title = "When collection is off, data is NOT collected and will be lost.">
+                                    <option value="on" {% if collection_status == 'on' %} selected="selected" {% endif %}>On</option>
+                                    <option value="off"{% if collection_status == 'off' %} selected="selected" {% endif %}>Off</option>
+                                </select>
+                            {% else %}?
+                            {% endif %}
+                        </td>
+                        <td><input type = "submit" value="Set"></td>
+                    </form></tr><tr><form name="log_form" action="/monitor/commands/" method="get">
+                        <input type = "hidden" name = "code" value = "l">
+                        <td>Logging status:</td>
+                        <td>
+                            {% if logging_status != "?" %}
+                                <select name = "dir" value = "{{ logging_status }}" title = "When logging is off, data is still collected and will be pushed when turned back on.">
+                                    <option value="on" {% if logging_status == 'on' %} selected="selected" {% endif %}>On</option>
+                                    <option value="off"{% if logging_status == 'off' %} selected="selected" {% endif %}>Off</option>
+                                </select>
+                            {% else %}?
+                            {% endif %}
+                        </td>
+                        <td><input type = "submit" value="Set"  title = "Turn data logging on or off"></td>
+                    </form></tr>
                 </table>
-                <h2>Commands</h2>
-                <form name="force_form" action="/monitor/commands/" method="get">
-                    <input type = "hidden" name = code value = "f">
-                    <input type = "submit" value="Force log">
-                </form><br>
-                <form name="freq_form" action="/monitor/commands/" method="get">
-                    <input type = "hidden" name = code value = "m">
-                    <input type = "number" name="freq" min = "0">
-                    <input type = "submit" value="Set log frequency">
-                    <input type = "button" value="Get log frequency" onclick = "freq_form.freq.value = ''; freq_form.submit();">
-                </form><br>
-                <form name="read_form" action="/monitor/commands/" method="get">
-                    <input type = "hidden" name = code value = "r">
-                    <select name = "var">
-                        {% for var in varlist %}
-                            <option value="{{ var }}">{{ var }}</option>
-                        {% endfor %}
-                    </select>
-                    <input type = "submit" value="Get current value">
-                </form><br>
-                <form name="collection_form" action="/monitor/commands/" method="get">
-                    <input type = "hidden" name = code value = "c">
-                    <select name = "dir">
-                        <option value="on">On</option>
-                        <option value="off">Off</option>
-                        <option value="toggle">Toggle</option>
-                        <option value="get">Get</option>
-                    </select>
-                    <input type = "submit" value="Change collection status">
-                </form><br>
-                <form name="log_form" action="/monitor/commands/" method="get">
-                    <input type = "hidden" name = code value = "l">
-                    <select name = "dir">
-                        <option value="on">On</option>
-                        <option value="off">Off</option>
-                        <option value="toggle">Toggle</option>
-                        <option value="get">Get</option>
-                    </select>
-                    <input type = "submit" value="Change logging status">
-                </form><br>
-                <form name="alert_form" action="/monitor/commands/" method="get">
-                    <input type = "hidden" name = code value = "a">
-                    <label>Variable:
-                        <select name = "var">
-                            {% for var in varlist %}
-                                <option value="{{ var }}">{{ var }}</option>
-                            {% endfor %}
-                            <option value="off">Off</option>
-                        </select>
-                    </label>
-                    <label>Min:<input type="number" name="Min"></label>
-                    <label>Max:<input type="number" name="Max"></label>
-                    <input type = "submit" value="Set alert">
-                    <input type = "button" value="Alert off" onclick = "alert_form.var.value = 'off'; alert_form.submit();">
-                </form><br>
+                <hr>
+                <table>
+                    {% for var, values in varlist.items %}
+                        <tr>
+                            <td>{{ var }}:</td>
+                            <td bgcolor = "{{ values.2 }}">{{ values.0 }}</td>
+                            {% if values.1 == 'Set alert' %}
+                                <td><input type = "button" value="Set alert" title = "Set range for {{ var }}" onclick = "return setAlert('{{ var }}');"></td>
+                            {% elif values.1 == '?' %}
+                                <td>?</td>
+                            {% else %}
+                                <td>
+                                    <input type = "button" value="{{ values.1 }}" title = "Change range for {{ var }}" onclick = "return setAlert('{{ var }}');">
+                                    <input type = "button" value="Off" title = "Turn alerts off for {{ var }}" onclick = "return setAlert('off');">
+                                </td>
+                            {% endif %}    
+                        </tr>
+                    {% endfor %}
+                </table>
                 <h2>{{error}}</h2>
                 <h3>{{details}}</h3>
                 

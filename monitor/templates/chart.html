@@ -22,37 +22,7 @@
             if (init_vals.indexOf('Ambient Light')  >= 0) col_list.push(default_cols[2]);
             if (init_vals.indexOf('Beer Pressure')  >= 0) col_list.push(default_cols[3]);
             
-            var data = new google.visualization.DataTable();
-            data.addColumn('datetime', 'Log Time');
-            data.addColumn('number', 'Ambient Temp');
-            data.addColumn('string', 'Ambient Temp title');
-            data.addColumn('string', 'Ambient Temp text');
-            data.addColumn('number', 'Beer Temp');
-            data.addColumn('string', 'Beer Temp title');
-            data.addColumn('string', 'Beer Temp text');
-            data.addColumn('number', 'Ambient Light');
-            data.addColumn('string', 'Ambient Light title');
-            data.addColumn('string', 'Ambient Light text');
-            data.addColumn('number', 'Beer Pressure');
-            data.addColumn('string', 'Beer Pressure title');
-            data.addColumn('string', 'Beer Pressure text');
-            data.addRows([  {% for row in plot_data %}
-                                [new Date("{{ row.dt|safe }}"),
-                                    {{ row.temp_amb.0|safe }},
-                                    '{{ row.temp_amb.1|safe }}',
-                                    '{{ row.temp_amb.2|safe }}',
-                                    {{ row.temp_beer.0|safe }},
-                                    '{{ row.temp_beer.1|safe }}',
-                                    '{{ row.temp_beer.2|safe }}',
-                                    {{ row.light_amb.0|safe }},
-                                    {{ row.light_amb.1|safe }},
-                                    {{ row.light_amb.2|safe }},
-                                    {{ row.pres_beer.0|safe }},
-                                    {{ row.pres_beer.1|safe }},
-                                    {{ row.pres_beer.2|safe }},
-                                ],
-                            {% endfor%}
-                        ]);
+            var data = new google.visualization.arrayToDataTable( {{ plot_data|safe|cut:"'" }} );
 
             var columnsTable = new google.visualization.DataTable();
             columnsTable.addColumn('number', 'colIndex');
