@@ -10,6 +10,7 @@ import monitor.do as do
 from monitor.models import Beer, Reading
 from monitor.middleware import send2middleware
 
+import re
 import datetime
 from datetime import timedelta
 from time import sleep
@@ -99,62 +100,71 @@ def api_in(request):
     return response
 
 @staff_member_required
-def send_command(request, command_char=None):
-    if command_char == None:
-        command_status = str('')
-    else:
-        command_status = send2middleware(command_char)
-    request.session['command_status'] = command_status
-    return HttpResponseRedirect(reverse('commands'))
-
-@staff_member_required
 def commands(request):
     blank = str('')
     command_status = blank
     error = blank
     details = blank
-
-    if request.session.has_key('command_status'):
-        command_status = request.session.get('command_status')
-        del request.session['command_status']
+    command = request.GET
+    
+    if command:
+        command_status = send2middleware(command.urlencode())
         error = command_status[0]
         details = command_status[1]
 
-    if not bool(error):
-        error = blank
-    if not bool(details):
-        details = blank
-
-    command_options = [('f','Force a log'),
-                       ('m','Show log freq'),
-                       ('m=1','Log freq = 1'),
-                       ('m=5','Log freq = 5'),
-                       ('m=15','Log freq = 15'),
-                       ('m=30','Log freq = 30'),
-                       ('r=temp_amb','Value of temp_amb'),
-                       ('r=temp_beer','Value of temp_beer'),
-                       ('r=light_amb','Value of light_amb'),
-                       ('r=pres_beer','Value of pres_beer'),
-                       ('l','Turn data collection on'),
-                       ('o','Turn data collection off'),
-                       ('d','Turn remote logging on'),
-                       ('e','Turn remote logging off')
-                      ]
+    #List vars: [Current Value, Alert, Cell Color (for future use)]
+    varlist = {
+                "temp_amb":["?", "?", "#FFFFFF"],
+                "temp_beer":["?", "?", "#FFFFFF"],
+                "light_amb":["?", "?", "#FFFFFF"],
+                "pres_beer":["?", "?", "#FFFFFF"]
+            }
+    
 
     active_beer = do.getActiveBeer()
     all_beers = do.getAllBeer()
     beer_name = active_beer
     beer_date = active_beer.brew_date
-
+    
+    s, log_freq = send2middleware("?code=m")
+    if s != "Success": log_freq = "?"
+    else: log_freq = log_freq.split("=")[1]
+    
+    collection_status = getStatus("?code=c&dir=get")
+    logging_status = getStatus("?code=L&dir=get")
+    
+    sleep(.1)
+    s, alert_res = send2middleware("?code=A&var=get")
+    if s == "Success":
+        if "off" not in alert_res:
+            re_alert = re.search("(.*)(\[\d+, \d+\])", alert_res.split(":")[1], re.IGNORECASE)
+            print(alert_res.split(":")[1])
+            alert_var = re_alert.group(1)
+            alert_rng = re_alert.group(2)
+        else: alert_var = None
+    else: alert_var = "?"
+    
+    for var in varlist:
+        sleep(.1)
+        s, val = send2middleware("?code=r&var=" + var)
+        if s == "Success":
+            varlist[var][0] = val.split(":")[1]
+        if alert_var != "?":
+            if alert_var == var: varlist[var][1] = str(alert_rng)
+            else: varlist[var][1] = "Set alert"
+        
     data = {
             'all_beers': all_beers,
             'beer_name': beer_name,
             'beer_date': beer_date,
             'active_beer': do.getActiveBeer(),
             'command_status': command_status,
-            'command_options': command_options,
+            'varlist': varlist,
             'error': error,
-            'details': details
+            'details': details,
+            'log_freq': log_freq,
+            'collection_status': collection_status,
+            'logging_status': logging_status,
            }
 
     return render_to_response('commands.html', data, context_instance=RequestContext(request))
@@ -185,10 +195,10 @@ def dashboard(request):
             "pres_beer": cur_pres_beer
         },
         "bgcols" : {
-            "temp_amb": get_paint_cols(cur_temp_amb, temp_amb_rng)[0],
-            "temp_beer": get_paint_cols(cur_temp_beer, temp_beer_rng)[0],
-            "light_amb": get_paint_cols(cur_light_amb)[0],
-            "pres_beer": get_paint_cols(cur_pres_beer)[0]
+            "temp_amb": do.get_paint_cols(cur_temp_amb, temp_amb_rng)[0],
+            "temp_beer": do.get_paint_cols(cur_temp_beer, temp_beer_rng)[0],
+            "light_amb": do.get_paint_cols(cur_light_amb)[0],
+            "pres_beer": do.get_paint_cols(cur_pres_beer)[0]
         },
         "greenrng": {
             "temp_amb": temp_amb_rng,
@@ -196,36 +206,13 @@ def dashboard(request):
         },
         "last_log_date": cur_reading.instant_actual.strftime("%Y-%m-%d"),
         "last_log_time": cur_reading.instant_actual.strftime("%H:%M:%S"),
-        "last_log_ago": get_date_diff(cur_reading.instant_actual, do.nowInUtc()),
-        "next_log": next_log_estimate(),
+        "last_log_ago": do.get_date_diff(cur_reading.instant_actual, do.nowInUtc()),
+        "next_log": do.next_log_estimate(),
         "all_beers": Beer.objects.all(),
         "active_beer": active_beer,
         "beer_date": active_beer.brew_date,
     }
     return render_to_response('dashboard.html',data)
-
-def get_date_diff(d1,d2, append = "ago"):
-
-    '''Returns the difference between two datetime objects in a readable format'''
-    diff = abs(d2-d1)
-
-    if(diff.days > 0): out = str(diff.days) + " day(s)"
-    elif(diff.seconds < 60): out = "less than a minute"
-    elif(diff.seconds < 60*60): out = str(int(round(diff.seconds/60,0))) + " minute(s)"
-    else: out = str(int(round(diff.seconds/(60*60),0))) + " hour(s)"
-
-    if append != None: out = out + " " + append
-    return(out)
-
-def get_paint_cols(val, rng = None):
-    '''Returns the background color for a value given a set range. In the future, it could also return foreground color'''
-    if rng == None or rng == (0,0): bgcol = "#FFFFFF" #White
-    elif(rng[0] <= val <= rng[1]): bgcol = "#008000" #Green
-    elif(not (rng[0] <= val <= rng[1])): bgcol = "#FF0000" #Red
-
-
-    fgcol = "#000000" #Black
-    return((bgcol, fgcol))
 
 def dashboard_update(request):
     '''Forces a log then returns to dashboard page'''
@@ -233,7 +220,7 @@ def dashboard_update(request):
     old_reading = do.getLastReading(active_beer)
 
     for i in range(4):
-        command_status = send2middleware("F")
+        command_status = send2middleware("?code=F")
         if command_status[0] == "Success": break
         sleep(.1)
     if command_status[0] == "Success":
@@ -241,17 +228,6 @@ def dashboard_update(request):
             if do.getLastReading(active_beer) != old_reading: break
             sleep(.1)
     return HttpResponseRedirect(reverse('dashboard'))
-
-def gen_unableToLoad(page_name, cur_beer):
-    '''Creates a page saying the page_name for cur_berr was unable to be loaded due to no readings'''
-    #In future: allow the message (reason for unable to load page) a parameter
-    data = {
-        'all_beers': Beer.objects.all(),
-        'active_beer': do.getActiveBeer(),
-        'page_name': page_name,
-        'cur_beer': cur_beer,
-    }
-    return render_to_response('unabletoload.html',data)
 
 def chart(request, cur_beer = None):
     '''Creates a chart page with the Google Annotation Chart'''
@@ -262,8 +238,8 @@ def chart(request, cur_beer = None):
     #active_beer is the system config active
     #cur_beer is the beer that is being charted
 
-    plot_data = do.getAllData(cur_beer)
-
+    plot_data= do.getAllData(cur_beer)
+    
     last_read = do.getLastReading(cur_beer)
     last_archive = None
 
@@ -312,19 +288,14 @@ def data_chk(request, page_name = "dashboard", cur_beer = None):
         else: out = "404 Page Not Found"
 
     return out
-def next_log_estimate():
-    last_reading = do.getLastReading(do.getActiveBeer()).instant_actual
-    log_freq = None
-    for i in range(10):
-        r, msg = send2middleware("M")
-        print(r)
-        if r.upper() == "SUCCESS":
-            log_freq = int(msg.split("=")[1])
-            break
-        sleep(.1)
-    out = "unknown amount of time"
-    if log_freq != None:
-        next = last_reading + timedelta(minutes = log_freq)
-        now = do.nowInUtc()
-        if next >= now: out = get_date_diff(do.nowInUtc(), next, append = None)
-    return(out)
+
+def gen_unableToLoad(page_name, cur_beer):
+    '''Creates a page saying the page_name for cur_berr was unable to be loaded due to no readings'''
+    #In future: allow the message (reason for unable to load page) a parameter
+    data = {
+        'all_beers': Beer.objects.all(),
+        'active_beer': do.getActiveBeer(),
+        'page_name': page_name,
+        'cur_beer': cur_beer,
+    }
+    return render_to_response('unabletoload.html',data)

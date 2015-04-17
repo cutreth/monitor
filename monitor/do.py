@@ -6,6 +6,10 @@ from monitor.models import Archive
 from monitor.models import Config
 from monitor.models import Event
 
+from monitor.middleware import send2middleware
+
+from datetime import timedelta
+from time import sleep
 import datetime
 import pytz
 
@@ -262,11 +266,19 @@ def getEventData(reading=None,event_temp_amb=None,event_temp_beer=None):
 def getAllData(cur_beer):
     '''Return a DF of reading/archive data, ordered by instant'''
     active_beer = getActiveBeer()
-    all_data = []
     archive_data = []
     reading_data = []
     archive_key = ''
     reading_key = ''
+    
+    all_data = [[
+            "'Log Time'",
+            "'Ambient Temp'", "'Ambient Temp title'", "'Ambient Temp text'",
+            "'Beer Temp'", "'Beer Temp title'", "'Beer Temp text'",
+            "'Ambient Light'", "'Ambient Light title'", "'Ambient Light text'",
+            "'Beer Pressure'", "'Beer Pressure title'", "'Beer Pressure text'"
+        ]]
+    add = []
 
     archive_key = getArchiveKey()
     cache_key = cache.get('archive_key')
@@ -295,18 +307,23 @@ def getAllData(cur_beer):
                 else:
                     event_temp_beer = None
                 [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d] = getEventData(None,event_temp_beer,event_temp_amb)
-                data = {'dt':instant_actual_arch[counter],
-                        'temp_amb':[temp_amb_arch[counter],temp_amb_t,temp_amb_d],
-                        'temp_beer':[temp_beer_arch[counter],temp_beer_t,temp_beer_d],
-                        'light_amb':[light_amb_arch[counter],'undefined','undefined'],
-                        'pres_beer':[pres_beer_arch[counter],'undefined','undefined'],
-                }
+                if temp_amb_t in ['', None]: temp_amb_t = 'undefined'
+                if temp_amb_d in ['', None]: temp_amb_d = 'undefined'
+                if temp_beer_t in ['', None]: temp_beer_t = 'undefined'
+                if temp_beer_d in ['', None]: temp_beer_d = 'undefined'
+                add = [
+                        'new Date("' + str(instant_actual_arch[counter]) + '")',
+                        temp_amb_arch[counter],temp_amb_t,temp_amb_d,
+                        temp_beer_arch[counter],temp_beer_t,temp_beer_d,
+                        light_amb_arch[counter],'undefined','undefined',
+                        pres_beer_arch[counter],'undefined','undefined'
+                    ]
                 archive_data.append(data)
                 counter += 1
         if active_beer == cur_beer:
             cache.set('archive_key', archive_key)
             cache.set('archive_data', archive_data)
-    all_data = all_data + archive_data
+    all_data.extend(archive_data)
 
     reading_key = getReadingKey()
     cache_key = cache.get('reading_key')
@@ -319,17 +336,70 @@ def getAllData(cur_beer):
             reading_key = reading_key + '^' + reading.get_instant_actual()
 
             [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d] = getEventData(reading)
-
-            data = {'dt':reading.get_instant_actual(),
-                    'temp_amb':[reading.get_temp_amb(),temp_amb_t,temp_amb_d],
-                    'temp_beer':[reading.get_temp_beer(),temp_beer_t,temp_beer_d],
-                    'light_amb':[reading.get_light_amb(),'undefined','undefined'],
-                    'pres_beer':[reading.get_pres_beer(),'undefined','undefined'],
-            }
-            reading_data.append(data)
+            if temp_amb_t in ['', None]: temp_amb_t = 'undefined'
+            if temp_amb_d in ['', None]: temp_amb_d = 'undefined'
+            if temp_beer_t in ['', None]: temp_beer_t = 'undefined'
+            if temp_beer_d in ['', None]: temp_beer_d = 'undefined'
+            add = [
+                    'new Date("' + str(reading.get_instant_actual()) + '")',
+                    reading.get_temp_amb(),temp_amb_t,temp_amb_d,
+                    reading.get_temp_beer(),temp_beer_t,temp_beer_d,
+                    reading.get_light_amb(),'undefined','undefined',
+                    reading.get_pres_beer(),'undefined','undefined'
+                ]
+            reading_data.append(add)
         if active_beer == cur_beer:
             cache.set('reading_key', reading_key)
             cache.set('reading_data', reading_data)
-    all_data = all_data + reading_data
+    all_data.extend(reading_data)
 
     return all_data
+
+def get_date_diff(d1,d2, append = "ago"):
+    '''Returns the difference between two datetime objects in a readable format'''
+    diff = abs(d2-d1)
+
+    if(diff.days > 0): out = str(diff.days) + " day(s)"
+    elif(diff.seconds < 60): out = "less than a minute"
+    elif(diff.seconds < 60*60): out = str(int(round(diff.seconds/60,0))) + " minute(s)"
+    else: out = str(int(round(diff.seconds/(60*60),0))) + " hour(s)"
+
+    if append != None: out = out + " " + append
+    return(out)
+
+def get_paint_cols(val, rng = None):
+    '''Returns the background color for a value given a set range. In the future, it could also return foreground color'''
+    if rng == None or rng == (0,0): bgcol = "#FFFFFF" #White
+    elif(rng[0] <= val <= rng[1]): bgcol = "#008000" #Green
+    elif(not (rng[0] <= val <= rng[1])): bgcol = "#FF0000" #Red
+
+    fgcol = "#000000" #Black
+    return((bgcol, fgcol))
+
+def next_log_estimate():
+    '''Estimates the next reading time based on log freq and last logged time'''
+    last_reading = getLastReading(getActiveBeer()).instant_actual
+    log_freq = None
+    for i in range(10):
+        r, msg = send2middleware("?code=M")
+        print(r)
+        if r.upper() == "SUCCESS":
+            log_freq = int(msg.split("=")[1])
+            break
+        sleep(.1)
+    out = "unknown amount of time"
+    if log_freq != None:
+        next = last_reading + timedelta(minutes = log_freq)
+        now = nowInUtc()
+        if next >= now: out = get_date_diff(now, next, append = None)
+        elif next >= now - timedelta(minutes = 5): out = "less than a minute"
+    return(out)
+    
+def getStatus(command):
+    sleep(.1)
+    s, collection_status = send2middleware(command)
+    if s != "Success": out = "?"
+    else:
+        if "on." in collection_status: out = "on"
+        else: out = "off"
+    return(out)
