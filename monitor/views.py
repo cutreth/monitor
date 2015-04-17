@@ -110,12 +110,7 @@ def commands(request):
     if command:
         command_status = send2middleware(command.urlencode())
         error = command_status[0]
-        details = command_status[1]        
-
-    if not bool(error):
-        error = blank
-    if not bool(details):
-        details = blank
+        details = command_status[1]
 
     #List vars: [Current Value, Alert, Cell Color (for future use)]
     varlist = {
@@ -135,19 +130,8 @@ def commands(request):
     if s != "Success": log_freq = "?"
     else: log_freq = log_freq.split("=")[1]
     
-    sleep(.1)
-    s, collection_status = send2middleware("?code=c&dir=get")
-    if s != "Success": collection_status = "?"
-    else:
-        if "on." in collection_status: collection_status = "on"
-        else: collection_status = "off"
-    
-    sleep(.1)
-    s, logging_status = send2middleware("?code=L&dir=get")
-    if s != "Success": logging_status = "?"
-    else:
-        if "on." in logging_status: logging_status = "on"
-        else: logging_status = "off"
+    collection_status = getStatus("?code=c&dir=get")
+    logging_status = getStatus("?code=L&dir=get")
     
     sleep(.1)
     s, alert_res = send2middleware("?code=A&var=get")

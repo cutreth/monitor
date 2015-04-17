@@ -394,3 +394,12 @@ def next_log_estimate():
         if next >= now: out = get_date_diff(now, next, append = None)
         elif next >= now - timedelta(minutes = 5): out = "less than a minute"
     return(out)
+    
+def getStatus(command):
+    sleep(.1)
+    s, collection_status = send2middleware(command)
+    if s != "Success": out = "?"
+    else:
+        if "on." in collection_status: out = "on"
+        else: out = "off"
+    return(out)
