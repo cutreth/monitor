@@ -126,8 +126,13 @@ def commands(request):
     if not bool(details):
         details = blank
 
-    #List vars: [Current Value, Alert]
-    varlist = {"temp_amb":["?", "?"], "temp_beer":["?", "?"], "light_amb":["?", "?"], "pres_beer":["?", "?"]}
+    #List vars: [Current Value, Alert, Cell Color (for future use)]
+    varlist = {
+                "temp_amb":["?", "?", "#FFFFFF"],
+                "temp_beer":["?", "?", "#FFFFFF"],
+                "light_amb":["?", "?", "#FFFFFF"],
+                "pres_beer":["?", "?", "#FFFFFF"]
+            }
     
 
     active_beer = do.getActiveBeer()
@@ -169,7 +174,8 @@ def commands(request):
     for var in varlist:
         sleep(.1)
         s, val = send2middleware("?code=r&var=" + var)
-        if s == "Success": varlist[var][0] = val.split(":")[1]
+        if s == "Success":
+            varlist[var][0] = val.split(":")[1]
         if alert_var != "?":
             if alert_var == var: varlist[var][1] = str(alert_rng)
             else: varlist[var][1] = "Set alert"
