@@ -10,6 +10,5 @@ class Command(BaseCommand):
             
         #do.updateArchiveOffsets()
         do.updateReadingOffsets()
-        #Update events
 
         return None

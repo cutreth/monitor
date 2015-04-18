@@ -70,13 +70,14 @@ def addReadingKey(reading):
     return reading_key
 
 def updateReadingOffsets(beer=None):
+    active_config = getActiveConfig()
     if not bool(beer):
         beer = getActiveBeer()
     light_amb_mod = beer.get_light_amb_mod()
     pres_beer_mod = beer.get_pres_beer_mod()
     temp_beer_mod = beer.get_temp_beer_mod()
     temp_amb_mod = beer.get_temp_amb_mod()
-    
+
     all_readings = getAllReadings(beer)
     for reading in all_readings:
         light_amb = reading.light_amb_orig
@@ -86,7 +87,20 @@ def updateReadingOffsets(beer=None):
         reading.light_amb = applyModifier(light_amb,light_amb_mod)
         reading.pres_beer = applyModifier(pres_beer,pres_beer_mod)
         reading.temp_beer = applyModifier(temp_beer,temp_beer_mod)
-        reading.temp_amb = applyModifier(temp_amb,temp_amb_mod) 
+        reading.temp_amb = applyModifier(temp_amb,temp_amb_mod)
+        
+        reading.error_flag = 'Unkown'
+        reading.error_details = ''
+        event_temp_amb = reading.event_temp_amb
+        event_temp_beer = reading.event_temp_beer
+        if bool(event_temp_amb):
+            reading.event_temp_amb = None
+            event_temp_amb.delete()
+        if bool(event_temp_beer):
+            reading.event_temp_beer = None
+            event_temp_beer.delete()
+        import monitor.api as api
+        api.BoundsErrorCheck(active_config, reading)
         reading.save()
 
 '''Archive'''
