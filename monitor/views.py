@@ -106,7 +106,7 @@ def commands(request):
     error = blank
     details = blank
     command = request.GET
-    
+
     if command:
         command_status = send2middleware(command.urlencode())
         error = command_status[0]
@@ -119,20 +119,20 @@ def commands(request):
                 "light_amb":["?", "?", "#FFFFFF"],
                 "pres_beer":["?", "?", "#FFFFFF"]
             }
-    
+
 
     active_beer = do.getActiveBeer()
     all_beers = do.getAllBeer()
     beer_name = active_beer
     beer_date = active_beer.brew_date
-    
+
     s, log_freq = send2middleware("?code=m")
     if s != "Success": log_freq = "?"
     else: log_freq = log_freq.split("=")[1]
-    
+
     collection_status = do.getStatus("?code=c&dir=get")
     logging_status = do.getStatus("?code=L&dir=get")
-    
+
     sleep(.1)
     s, alert_res = send2middleware("?code=A&var=get")
     if s == "Success":
@@ -143,7 +143,7 @@ def commands(request):
             alert_rng = re_alert.group(2)
         else: alert_var = None
     else: alert_var = "?"
-    
+
     for var in varlist:
         sleep(.1)
         s, val = send2middleware("?code=r&var=" + var)
@@ -152,7 +152,7 @@ def commands(request):
         if alert_var != "?":
             if alert_var == var: varlist[var][1] = str(alert_rng)
             else: varlist[var][1] = "Set alert"
-        
+
     data = {
             'all_beers': all_beers,
             'beer_name': beer_name,
@@ -239,7 +239,7 @@ def chart(request, cur_beer = None):
     #cur_beer is the beer that is being charted
 
     plot_data= do.getAllData(cur_beer)
-    
+
     last_read = do.getLastReading(cur_beer)
     last_archive = None
 
