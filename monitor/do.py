@@ -88,7 +88,7 @@ def updateReadingOffsets(beer=None):
         reading.pres_beer = applyModifier(pres_beer,pres_beer_mod)
         reading.temp_beer = applyModifier(temp_beer,temp_beer_mod)
         reading.temp_amb = applyModifier(temp_amb,temp_amb_mod)
-        
+
         reading.error_flag = 'Unkown'
         reading.error_details = ''
         event_temp_amb = reading.event_temp_amb

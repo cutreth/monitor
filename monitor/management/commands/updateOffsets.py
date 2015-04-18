@@ -7,7 +7,7 @@ class Command(BaseCommand):
     help = 'Closes the specified poll for voting'
 
     def handle(self, *args, **options):
-            
+
         #do.updateArchiveOffsets()
         do.updateReadingOffsets()
 
