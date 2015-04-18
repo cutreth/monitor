@@ -254,15 +254,19 @@ def getEventData(reading=None,event_temp_amb=None,event_temp_beer=None):
         temp_beer = None
 
     if bool(temp_amb):
-        temp_amb_t = temp_amb.sensor
-        temp_amb_d = temp_amb.details
+        temp_amb_t = wrapInQuotes(temp_amb.sensor)
+        temp_amb_d = wrapInQuotes(temp_amb.details)
     if bool(temp_beer):
-        temp_beer_t = temp_beer.sensor
-        temp_beer_d = temp_beer.details
+        temp_beer_t = wrapInQuotes(temp_beer.sensor)
+        temp_beer_d = wrapInQuotes(temp_beer.details)
 
     return [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d]
 
 '''Other'''
+
+def wrapInQuotes(val):
+    val = '"' + str(val) + '"'
+    return val
 
 def getAllData(cur_beer):
     '''Return a DF of reading/archive data, ordered by instant'''
@@ -271,7 +275,7 @@ def getAllData(cur_beer):
     reading_data = []
     archive_key = ''
     reading_key = ''
-    
+
     all_data = [[
             "'Log Time'",
             "'Ambient Temp'", "'Ambient Temp title'", "'Ambient Temp text'",
@@ -319,7 +323,7 @@ def getAllData(cur_beer):
                         light_amb_arch[counter],'undefined','undefined',
                         pres_beer_arch[counter],'undefined','undefined'
                     ]
-                archive_data.append(data)
+                archive_data.append(add)
                 counter += 1
         if active_beer == cur_beer:
             cache.set('archive_key', archive_key)
@@ -395,7 +399,7 @@ def next_log_estimate():
         if next >= now: out = get_date_diff(now, next, append = None)
         elif next >= now - timedelta(minutes = 5): out = "less than a minute"
     return(out)
-    
+
 def getStatus(command):
     sleep(.1)
     s, collection_status = send2middleware(command)
