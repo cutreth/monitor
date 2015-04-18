@@ -84,8 +84,8 @@ def MaxMinCheck(base, deviation, value, category):
         upper = base + deviation
         lower = base - deviation
         if not (lower < value < upper):
-            error = 'Sensor value of ' + str(round(value,2)) + ' outside range of ['
-            error = error + str(lower) + ', ' + str(upper) + '] '
+            error = 'Sensor value of ' + str(round(value,2)) + ' outside range of {'
+            error = error + str(lower) + ', ' + str(upper) + '} '
     return error
 
 def SetErrorInfo(error_flag, error_details, error):
