@@ -25,24 +25,23 @@ def getAllBeer():
     return all_beer
 
 def applyModifier(val,mod=None):
-    try:
-        if bool(mod):
-            for item in mod:
-                split = item.split('|')
-                operator = str(split[0])
-                constant = float(split[1])
-                if operator == '-':
-                    constant = -1 * constant
-                    operator = '+'
-                elif operator == '/':
-                    constant = 1 / constant
-                    operator = '*'
-                if operator == '+':
-                    val = val + constant
-                elif operator == '*':
-                    val = val * constant
-    finally:
-        return val
+    if bool(mod):
+        for item in mod:
+            split = item.split('|')
+            operator = str(split[0])
+            constant = float(split[1])
+            val = float(val)
+            if operator == '-':
+                constant = -1 * constant
+                operator = '+'
+            elif operator == '/':
+                constant = 1 / constant
+                operator = '*'
+            if operator == '+':
+                val = val + constant
+            elif operator == '*':
+                val = val * constant
+    return val
 
 '''Reading'''
 
@@ -69,6 +68,40 @@ def addReadingKey(reading):
     reading_key = ''
     reading_key = '^' + reading.get_unique_ident()
     return reading_key
+
+def updateReadingOffsets(beer=None):
+    active_config = getActiveConfig()
+    if not bool(beer):
+        beer = getActiveBeer()
+    light_amb_mod = beer.get_light_amb_mod()
+    pres_beer_mod = beer.get_pres_beer_mod()
+    temp_beer_mod = beer.get_temp_beer_mod()
+    temp_amb_mod = beer.get_temp_amb_mod()
+
+    all_readings = getAllReadings(beer)
+    for reading in all_readings:
+        light_amb = reading.light_amb_orig
+        pres_beer = reading.pres_beer_orig
+        temp_beer = reading.temp_beer_orig
+        temp_amb = reading.temp_amb_orig
+        reading.light_amb = applyModifier(light_amb,light_amb_mod)
+        reading.pres_beer = applyModifier(pres_beer,pres_beer_mod)
+        reading.temp_beer = applyModifier(temp_beer,temp_beer_mod)
+        reading.temp_amb = applyModifier(temp_amb,temp_amb_mod)
+
+        reading.error_flag = 'Unkown'
+        reading.error_details = ''
+        event_temp_amb = reading.event_temp_amb
+        event_temp_beer = reading.event_temp_beer
+        if bool(event_temp_amb):
+            reading.event_temp_amb = None
+            event_temp_amb.delete()
+        if bool(event_temp_beer):
+            reading.event_temp_beer = None
+            event_temp_beer.delete()
+        import monitor.api as api
+        api.BoundsErrorCheck(active_config, reading)
+        reading.save()
 
 '''Archive'''
 
@@ -254,15 +287,19 @@ def getEventData(reading=None,event_temp_amb=None,event_temp_beer=None):
         temp_beer = None
 
     if bool(temp_amb):
-        temp_amb_t = temp_amb.sensor
-        temp_amb_d = temp_amb.details
+        temp_amb_t = wrapInQuotes(temp_amb.sensor)
+        temp_amb_d = wrapInQuotes(temp_amb.details)
     if bool(temp_beer):
-        temp_beer_t = temp_beer.sensor
-        temp_beer_d = temp_beer.details
+        temp_beer_t = wrapInQuotes(temp_beer.sensor)
+        temp_beer_d = wrapInQuotes(temp_beer.details)
 
     return [temp_amb_t, temp_amb_d, temp_beer_t, temp_beer_d]
 
 '''Other'''
+
+def wrapInQuotes(val):
+    val = '"' + str(val) + '"'
+    return val
 
 def getAllData(cur_beer):
     '''Return a DF of reading/archive data, ordered by instant'''
@@ -271,7 +308,7 @@ def getAllData(cur_beer):
     reading_data = []
     archive_key = ''
     reading_key = ''
-    
+
     all_data = [[
             "'Log Time'",
             "'Ambient Temp'", "'Ambient Temp title'", "'Ambient Temp text'",
@@ -319,7 +356,7 @@ def getAllData(cur_beer):
                         light_amb_arch[counter],'undefined','undefined',
                         pres_beer_arch[counter],'undefined','undefined'
                     ]
-                archive_data.append(data)
+                archive_data.append(add)
                 counter += 1
         if active_beer == cur_beer:
             cache.set('archive_key', archive_key)
@@ -395,7 +432,7 @@ def next_log_estimate():
         if next >= now: out = get_date_diff(now, next, append = None)
         elif next >= now - timedelta(minutes = 5): out = "less than a minute"
     return(out)
-    
+
 def getStatus(command):
     sleep(.1)
     s, collection_status = send2middleware(command)
