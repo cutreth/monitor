@@ -130,8 +130,8 @@ def commands(request):
     if s != "Success": log_freq = "?"
     else: log_freq = log_freq.split("=")[1]
     
-    collection_status = getStatus("?code=c&dir=get")
-    logging_status = getStatus("?code=L&dir=get")
+    collection_status = do.getStatus("?code=c&dir=get")
+    logging_status = do.getStatus("?code=L&dir=get")
     
     sleep(.1)
     s, alert_res = send2middleware("?code=A&var=get")
