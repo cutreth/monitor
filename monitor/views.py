@@ -256,11 +256,10 @@ def chart(request, cur_beer = None):
         end_date = end_date + timedelta(days=1)
     else:
         end_date = today
+    
+    start_date = end_date - timedelta(days=7)     
     if end_date == today:
-        end_date = None
-
-    #Get start_date which is 7 days before the last logged date.
-    start_date = end_date - timedelta(days=7)
+        end_date = None     
 
     data = {
         'all_beers': Beer.objects.all(),
