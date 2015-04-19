@@ -242,6 +242,7 @@ def chart(request, cur_beer = None):
 
     last_read = do.getLastReading(cur_beer)
     last_archive = None
+    end_date = None
 
     if bool(last_read):
         end_date = do.getLastReading(cur_beer).instant_actual.date()
@@ -249,8 +250,14 @@ def chart(request, cur_beer = None):
         last_archive = do.getLastArchive(cur_beer)
         if bool(last_archive):
             end_date = last_archive.reading_date
-    if not bool(end_date):
-        end_date = datetime.date.today()
+    
+    today = do.nowInUtc().date()
+    if bool(end_date):
+        end_date = end_date + timedelta(days=1)
+    else:
+        end_date = today
+    if end_date == today:
+        end_date = None
 
     #Get start_date which is 7 days before the last logged date.
     start_date = end_date - timedelta(days=7)
