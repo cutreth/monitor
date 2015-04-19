@@ -1,10 +1,13 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 import pytz
 
 class Beer(models.Model):
 
     beer_text = models.CharField('Beer',max_length=30)
+    beer_type = models.CharField('Beer Type',blank=True,max_length=50)
+    brewer = models.ManyToManyField(User,'Brewer/s',blank=True)
 
     brew_date = models.DateField('Brew Date',blank=True,null=True)
     bottle_date = models.DateField('Bottle Date',blank=True,null=True)
@@ -25,6 +28,14 @@ class Beer(models.Model):
     pres_beer_mod = models.CharField('Beer Pressure Modifier',blank=True,max_length=20)
     temp_amb_mod = models.CharField('Ambient Temp Modifier',blank=True,max_length=20)
     temp_beer_mod = models.CharField('Beer Temp Modifier',blank=True,max_length=20)
+    
+    brew_notes = models.TextField('Brew Notes',blank=True)
+    bottle_notes = models.TextField('Bottle Notes',blank=True)
+    other_notes = models.TextField('Other Notes',blank=True)
+    
+    sugar_amount = models.CharField('Sugar Amount',blank=True,max_length=30)
+    bottle_count = models.PositiveSmallIntegerField('Bottle Count',blank=True,
+                                                    null=True)
 
     def __str__(self):
         return self.beer_text
