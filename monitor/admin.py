@@ -11,9 +11,10 @@ class ReadingInLine(admin.TabularInline):
 
 class BeerAdmin(admin.ModelAdmin):
     fieldsets = [
-        ('General Information', {'fields': ['beer_text']}),
-        ('Brew Notes',          {'fields': [('brew_date','brew_sg','brew_temp'),('bottle_date','bottle_sg','bottle_temp'),
-                                            ('pull_date','max_abv')]}),
+        ('General Information', {'fields': [('beer_text','beer_type'),'brewer']}),
+        ('Brew Details', {'fields': [('brew_date','brew_sg','brew_temp'),'brew_notes']}),
+        ('Bottle Details', {'fields': [('bottle_date','bottle_sg','bottle_temp'),('sugar_amount','bottle_count'),'bottle_notes']}),
+        ('Other Details', {'fields': [('pull_date','max_abv'),'other_notes']}),
         ('Sensor Modifiers',    {'fields': [('temp_amb_mod','light_amb_mod'),('temp_beer_mod','pres_beer_mod')]})
     ]
     #inlines = [ReadingInLine]
