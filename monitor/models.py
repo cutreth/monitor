@@ -300,7 +300,7 @@ class Config(models.Model):
     temp_beer_base = models.DecimalField('Beer Temp Baseline', max_digits=5,
                                          decimal_places=2,blank=True,null=True,
                                          default=None)
-    temp_beer_dev = models.DecimalField('Ambient Temp Deviation', max_digits=5,
+    temp_beer_dev = models.DecimalField('Beer Temp Deviation', max_digits=5,
                                         decimal_places=2,blank=True,null=True,
                                         default=None)
 
