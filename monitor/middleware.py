@@ -5,7 +5,7 @@ def handler(signum, frame):
     
 def sendCommand(message, attempts = 5, wait = .1, serverURL = None, testMode = False):
     for i in range(attempts):
-        command_status = send2middleware(message)
+        command_status = send2middleware(message, serverURL = serverURL, testMode = testMode)
         if command_status[0] == "Success": break
         sleep(wait)
     return(command_status)
