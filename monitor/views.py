@@ -11,8 +11,7 @@ from monitor.models import Beer, Reading
 from monitor.middleware import send2middleware
 
 import re
-import datetime
-from datetime import timedelta
+from datetime import timedelta, datetime
 from time import sleep
 
 #C:\Python34\python -m pdb manage.py runserver
@@ -105,9 +104,10 @@ def commands(request):
     command_status = blank
     error = blank
     details = blank
-    command = request.GET
+    command = request.GET.copy()
 
     if command:
+        if command["code"].lower() == "s": command["time"] = datetime.utcnow().timestamp()
         command_status = send2middleware(command.urlencode())
         error = command_status[0]
         details = command_status[1]

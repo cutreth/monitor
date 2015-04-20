@@ -94,6 +94,12 @@
                         </tr>
                     {% endfor %}
                 </table>
+                <hr>
+                <form name="log_form" action="/monitor/commands/" method="get">
+                    <input type = "hidden" name = "code" value = "s">
+                    <input type = "Submit" value = "Sync time" title = "Sync the server's time with django so time stamps match better">
+                </form>
+                <hr>
                 <h2>{{error}}</h2>
                 <h3>{{details}}</h3>
                 
