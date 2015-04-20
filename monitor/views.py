@@ -1,6 +1,6 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
@@ -11,6 +11,7 @@ from monitor.models import Beer, Reading
 from monitor.middleware import sendCommand
 
 import re
+import csv
 from datetime import timedelta, datetime
 from time import sleep
 
@@ -305,3 +306,20 @@ def gen_unableToLoad(page_name, cur_beer):
         'cur_beer': cur_beer,
     }
     return render_to_response('unabletoload.html',data)
+    
+def export(request):
+    '''Exports archived data'''
+    try: cur_beer = Beer.objects.get(pk=request.GET["beerid"])
+    except: cur_beer = do.getActiveBeer()
+    #Get data
+    vars, all_data = do.getExportData(cur_beer)
+    #Get meta data (exporting two files, how? zip them?)
+
+    #Make csv and HTTP response
+    fname = cur_beer.beer_text + ".csv"
+    r = HttpResponse(content_type = "text/csv")
+    r["Content-Disposition"] = "attachment; filename = '" + fname + "'"
+    writer = csv.DictWriter(r, vars)
+    writer.writeheader()
+    for row in all_data: writer.writerow(row)
+    return(r)

@@ -435,3 +435,16 @@ def getStatus(command):
         if "on." in collection_status: out = "on"
         else: out = "off"
     return(out)
+    
+def getExportData(cur_beer):
+    #Var names
+    vars = list(set(Reading._meta.get_all_field_names() + Archive._meta.get_all_field_names()))
+    vars = sorted(vars)
+    #Active (non-archived)
+    active_readings = [entry for entry in getAllReadings(cur_beer).values()]
+    #Archived data
+    archived_readings = [entry for entry in getAllArchives(cur_beer).values()]
+    
+    all_data = active_readings + archived_readings
+    
+    return((vars, all_data))
