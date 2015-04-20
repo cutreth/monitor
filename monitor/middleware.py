@@ -120,4 +120,11 @@ send2middleware("code=a&var=temp_beer&max=80&min=70", testMode = True)  = ('Succ
 send2middleware("code=a&var=off", testMode = True)                      =( 'Success', 'Alerts turned off')
 
 ----------------------------------------------------------------
+
+code=s&time=unixvalue - Changes the middleware's system clock to the unixtime (UTC seconds since epoch)
+
+send2middleware("?code=s&time=1429548009", testMode = True) = ('Success', 'Time set to 2015-04-20 11:40:09')
+send2middleware("?code=s", testMode = True)                 = ('Fail', 'Unknown error, time not set')
+
+----------------------------------------------------------------
 '''
