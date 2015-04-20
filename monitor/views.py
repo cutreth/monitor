@@ -106,13 +106,7 @@ def commands(request):
     error = blank
     details = blank
     command = request.GET.copy()
-
-    if command:
-        if command["code"].lower() == "s": command["time"] = datetime.utcnow().timestamp()
-        command_status = sendCommand(command.urlencode())
-        error = command_status[0]
-        details = command_status[1]
-
+    
     #List vars: [Current Value, Alert, Cell Color (for future use)]
     varlist = {
                 "temp_amb":["?", "?", "#FFFFFF"],
@@ -120,38 +114,73 @@ def commands(request):
                 "light_amb":["?", "?", "#FFFFFF"],
                 "pres_beer":["?", "?", "#FFFFFF"]
             }
-
+    cookielist = [var for var in varlist] + ["collection_status", "logging_status", "log_freq", "alert_res"]
+    
+    if command:
+        if "cookie" in command:
+            cookie = command["cookie"]
+            if cookie:
+                if cookie.lower() == "all":
+                    for c in cookielist:
+                        if c in request.COOKIES: request.COOKIES[c] = None
+                elif cookie.lower() == "sensors":
+                    for c in varlist:
+                        if c in request.COOKIES: request.COOKIES[c] = None
+                elif cookie.lower() == "alertvars":
+                    for c in [v for v in varlist] + ["alert_res"]:
+                        if c in request.COOKIES: request.COOKIES[c] = None
+                elif cookie in request.COOKIES: request.COOKIES[cookie] = None
+        code = command["code"].lower()
+        if code == "s": command["time"] = datetime.utcnow().timestamp()
+        elif code != "":
+            command_status = sendCommand(command.urlencode())
+            error = command_status[0]
+            details = command_status[1]
 
     active_beer = do.getActiveBeer()
     all_beers = do.getAllBeer()
     beer_name = active_beer
     beer_date = active_beer.brew_date
 
-    s, log_freq = sendCommand("?code=m")
-    if s != "Success": log_freq = "?"
-    else: log_freq = log_freq.split("=")[1]
+    log_freq = do.chkCookie(request, "log_freq")
+    if log_freq == None:
+        s, log_freq = sendCommand("?code=m")
+        if s != "Success": log_freq = "?"
+        else:
+            log_freq = log_freq.split("=")[1]        
 
-    collection_status = do.getStatus("?code=c&dir=get")
-    logging_status = do.getStatus("?code=L&dir=get")
+    collection_status = do.getStatus("?code=c&dir=get", request, "collection_status")
+    logging_status = do.getStatus("?code=L&dir=get", request, "logging_status")
 
-    sleep(.1)
-    s, alert_res = sendCommand("?code=A&var=get")
-    if s == "Success":
+    alert_res = do.chkCookie(request, "alert_res")
+    if alert_res == None:
+        sleep(.1)
+        s, alert_res = sendCommand("?code=A&var=get")
+        if s == "Success":
+            if "off" not in alert_res:
+                re_alert = re.search("(.*)(\[\d+, \d+\])", alert_res.split(":")[1], re.IGNORECASE)
+                alert_var = re_alert.group(1)
+                alert_rng = re_alert.group(2)
+            else: alert_var = None
+        else: alert_var = "?"
+    else:
         if "off" not in alert_res:
             re_alert = re.search("(.*)(\[\d+, \d+\])", alert_res.split(":")[1], re.IGNORECASE)
             alert_var = re_alert.group(1)
             alert_rng = re_alert.group(2)
         else: alert_var = None
-    else: alert_var = "?"
 
     for var in varlist:
-        sleep(.1)
-        s, val = sendCommand("?code=r&var=" + var)
-        if s == "Success":
-            varlist[var][0] = val.split(":")[1]
-        if alert_var != "?":
-            if alert_var == var: varlist[var][1] = str(alert_rng)
-            else: varlist[var][1] = "Set alert"
+        temp = do.chkCookie(request, var)
+        if temp == None:
+            sleep(.1)
+            s, val = sendCommand("?code=r&var=" + var)
+            if s == "Success":
+                varlist[var][0] = val.split(":")[1]
+            if alert_var != "?":
+                if alert_var == var: varlist[var][1] = str(alert_rng)
+                else: varlist[var][1] = "Set alert"
+        else: varlist[var] = temp.split("|")
 
     data = {
             'all_beers': all_beers,
@@ -167,7 +196,16 @@ def commands(request):
             'logging_status': logging_status,
            }
 
-    return render_to_response('commands.html', data, context_instance=RequestContext(request))
+    max_age = 300
+    expires = datetime.utcnow() + timedelta(seconds=max_age)
+    response = render_to_response('commands.html', data, context_instance=RequestContext(request))
+    
+    for var in cookielist:
+        if var in varlist: val = "|".join(varlist[var])
+        else: val = locals()[var]
+        if val != "?": response.set_cookie(var, val, max_age=max_age, expires=expires)
+        
+    return(response)
 
 def dashboard(request):
     '''Creates dashboard (gauges and table) page for the active beer'''

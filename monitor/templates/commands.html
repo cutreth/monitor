@@ -26,6 +26,7 @@
         <div style="display:none">
             <form name="alert_form" id = "alert_form" action="/monitor/commands/" method="get">
                 <input type="hidden" name="code" value="a">
+                <input type="hidden" name="cookie" value="alertvars">
                 <input type="text" name="var">
                 <input type="number" name="min">
                 <input type="number" name="max">
@@ -38,17 +39,25 @@
 			<div class="innertube">
 				
 				<h1>Command page</h1>
+                <form name = "update" action="/monitor/commands/" method="get">
+                    <input type = "hidden" name = "code" value = "">
+                    <input type="hidden" name="cookie" value="all">
+                    <input type = "submit" value = "Update all">
+                </form>
+                <hr>
                 <table>
                     <tr><form name="freq_form" action="/monitor/commands/" method="get">
                         <input type = "hidden" name = "code" value = "m">
+                        <input type="hidden" name="cookie" value="log_freq">
                         <td>Log frequency:</td>
                         <td><input type = "number" name="freq" min = "0" value = "{{ log_freq }}"></td>
                         <td>
                             <input type = "submit" value="Set" title = "Set the time between logs (in minutes)">
-                            <input type = "button" value="Force" title = "Force a log" onclick = "freq_form.code.value = 'f'; freq_form.submit();">
+                            <input type = "button" value="Force" title = "Force a log" onclick = "freq_form.code.value = 'f';freq_form.cookie.value = 'sensors'; freq_form.submit();">
                         </td>
                     </form></tr><tr><form name="collection_form" action="/monitor/commands/" method="get">
                         <input type = "hidden" name = "code" value = "c">
+                        <input type="hidden" name="cookie" value="collection_status">
                         <td>Collection status:</td>
                         <td>
                             {% if collection_status != "?" %}
@@ -62,6 +71,7 @@
                         <td><input type = "submit" value="Set"></td>
                     </form></tr><tr><form name="log_form" action="/monitor/commands/" method="get">
                         <input type = "hidden" name = "code" value = "l">
+                        <input type="hidden" name="cookie" value="logging_status">
                         <td>Logging status:</td>
                         <td>
                             {% if logging_status != "?" %}

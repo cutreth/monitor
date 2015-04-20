@@ -8,14 +8,13 @@ from monitor.models import Event
 
 from monitor.middleware import sendCommand
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 from time import sleep
-import datetime
 import pytz
 
 def nowInUtc():
     utc = pytz.utc
-    now = datetime.datetime.now(tz=utc)
+    now = datetime.now(tz=utc)
     return now
 
 '''Beer'''
@@ -427,13 +426,16 @@ def next_log_estimate():
         elif next >= now - timedelta(minutes = 5): out = "less than a minute"
     return(out)
 
-def getStatus(command):
-    sleep(.1)
-    s, collection_status = sendCommand(command)
-    if s != "Success": out = "?"
-    else:
-        if "on." in collection_status: out = "on"
-        else: out = "off"
+def getStatus(command, request = None, key = None):
+    out = None
+    if key != None: out = chkCookie(request, key)
+    if out == None:
+        sleep(.1)
+        s, status = sendCommand(command)
+        if s != "Success": out = "?"
+        else:
+            if "on." in status: out = "on"
+            else: out = "off"
     return(out)
     
 def getExportData(cur_beer):
@@ -448,3 +450,7 @@ def getExportData(cur_beer):
     all_data = active_readings + archived_readings
     
     return((vars, all_data))
+def chkCookie(request, key):
+    out = request.COOKIES.get(key)
+    return(out)
+    
