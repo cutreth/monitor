@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 import monitor.api as api
 import monitor.do as do
 from monitor.models import Beer, Reading
-from monitor.middleware import send2middleware
+from monitor.middleware import sendCommand
 
 import re
 from datetime import timedelta, datetime
@@ -108,7 +108,7 @@ def commands(request):
 
     if command:
         if command["code"].lower() == "s": command["time"] = datetime.utcnow().timestamp()
-        command_status = send2middleware(command.urlencode())
+        command_status = sendCommand(command.urlencode())
         error = command_status[0]
         details = command_status[1]
 
@@ -126,7 +126,7 @@ def commands(request):
     beer_name = active_beer
     beer_date = active_beer.brew_date
 
-    s, log_freq = send2middleware("?code=m")
+    s, log_freq = sendCommand("?code=m")
     if s != "Success": log_freq = "?"
     else: log_freq = log_freq.split("=")[1]
 
@@ -134,11 +134,10 @@ def commands(request):
     logging_status = do.getStatus("?code=L&dir=get")
 
     sleep(.1)
-    s, alert_res = send2middleware("?code=A&var=get")
+    s, alert_res = sendCommand("?code=A&var=get")
     if s == "Success":
         if "off" not in alert_res:
             re_alert = re.search("(.*)(\[\d+, \d+\])", alert_res.split(":")[1], re.IGNORECASE)
-            print(alert_res.split(":")[1])
             alert_var = re_alert.group(1)
             alert_rng = re_alert.group(2)
         else: alert_var = None
@@ -146,7 +145,7 @@ def commands(request):
 
     for var in varlist:
         sleep(.1)
-        s, val = send2middleware("?code=r&var=" + var)
+        s, val = sendCommand("?code=r&var=" + var)
         if s == "Success":
             varlist[var][0] = val.split(":")[1]
         if alert_var != "?":
@@ -219,11 +218,9 @@ def dashboard_update(request):
     active_beer = do.getActiveBeer()
     old_reading = do.getLastReading(active_beer)
 
-    for i in range(4):
-        command_status = send2middleware("?code=F")
-        if command_status[0] == "Success": break
-        sleep(.1)
+    command_status = sendCommand("?code=F")
     if command_status[0] == "Success":
+        '''Wait until the forced log actually shows up in django'''
         for i in range(49):
             if do.getLastReading(active_beer) != old_reading: break
             sleep(.1)

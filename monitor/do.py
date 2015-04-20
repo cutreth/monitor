@@ -6,7 +6,7 @@ from monitor.models import Archive
 from monitor.models import Config
 from monitor.models import Event
 
-from monitor.middleware import send2middleware
+from monitor.middleware import sendCommand
 
 from datetime import timedelta
 from time import sleep
@@ -418,13 +418,7 @@ def next_log_estimate():
     '''Estimates the next reading time based on log freq and last logged time'''
     last_reading = getLastReading(getActiveBeer()).instant_actual
     log_freq = None
-    for i in range(10):
-        r, msg = send2middleware("?code=M")
-        print(r)
-        if r.upper() == "SUCCESS":
-            log_freq = int(msg.split("=")[1])
-            break
-        sleep(.1)
+    r, msg = sendCommand("?code=M")
     out = "unknown amount of time"
     if log_freq != None:
         next = last_reading + timedelta(minutes = log_freq)
@@ -435,7 +429,7 @@ def next_log_estimate():
 
 def getStatus(command):
     sleep(.1)
-    s, collection_status = send2middleware(command)
+    s, collection_status = sendCommand(command)
     if s != "Success": out = "?"
     else:
         if "on." in collection_status: out = "on"

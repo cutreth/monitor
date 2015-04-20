@@ -1,5 +1,14 @@
+from time import sleep
+
 def handler(signum, frame):
     raise Exception()
+    
+def sendCommand(message, attempts = 5, wait = .1, serverURL = None, testMode = False):
+    for i in range(attempts):
+        command_status = send2middleware(message)
+        if command_status[0] == "Success": break
+        sleep(wait)
+    return(command_status)
 
 def send2middleware(message, serverURL = None, testMode = False):
     import socket
