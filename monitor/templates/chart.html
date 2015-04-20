@@ -43,7 +43,9 @@
                     scaleType: 'allfixed',
                     displayZoomButtons: false,
                     zoomStartTime: new Date("{{start_date}}"),
+                    {% if end_date != None %}
                     zoomEndTime: new Date("{{end_date}}"),
+                    {% endif %}
                     colors: col_list,
                 }
             });
