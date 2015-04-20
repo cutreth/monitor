@@ -258,8 +258,11 @@ def chart(request, cur_beer = None):
         end_date = today
     
     start_date = end_date - timedelta(days=7)     
+    start_date = start_date.isoformat()
     if end_date == today:
-        end_date = None     
+        end_date = None
+    elif bool(end_date):
+        end_date = end_date.isoformat()
 
     data = {
         'all_beers': Beer.objects.all(),
@@ -267,8 +270,8 @@ def chart(request, cur_beer = None):
         'cur_beer': cur_beer,
         'plot_data': plot_data,
         'beer_date': cur_beer.brew_date,
-        'start_date': start_date.isoformat(),
-        'end_date': end_date.isoformat(),
+        'start_date': start_date,
+        'end_date': end_date,
     }
     return render_to_response('chart.html', data)
 
