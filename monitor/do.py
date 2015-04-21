@@ -136,32 +136,32 @@ def createArchive(cur_beer, day):
 
 def updateArchive(archive, reading):
     result = None
-    try:
-        archive.instant_actual += str(reading.get_instant_actual()) + '^'
-        archive.light_amb += str(reading.get_light_amb()) + '^'
-        archive.pres_beer += str(reading.get_pres_beer()) + '^'
-        archive.temp_amb += str(reading.get_temp_amb()) + '^'
-        archive.temp_beer += str(reading.get_temp_beer()) + '^'
 
-        archive.light_amb_orig += str(reading.get_light_amb_orig()) + '^'
-        archive.pres_beer_orig += str(reading.get_pres_beer_orig()) + '^'
-        archive.temp_amb_orig += str(reading.get_temp_amb_orig()) + '^'
-        archive.temp_beer_orig += str(reading.get_temp_beer_orig()) + '^'
+    archive.instant_actual += str(reading.get_instant_actual()) + '^'
+    archive.light_amb += str(reading.get_light_amb()) + '^'
+    archive.pres_beer += str(reading.get_pres_beer()) + '^'
+    archive.temp_amb += str(reading.get_temp_amb()) + '^'
+    archive.temp_beer += str(reading.get_temp_beer()) + '^'
 
-        archive.event_temp_amb += str(reading.event_temp_amb.pk) + '^'
-        archive.event_temp_beer += str(reading.event_temp_beer.pk) + '^'
-        archive.update_instant = nowInUtc()
-        archive.count += 1
-        
-        archive.save()
-        reading.event_temp_amb.reading = None
-        reading.event_temp_amb.save()
-        reading.event_temp_beer.reading = None 
-        reading.event_temp_beer.save()
-        reading.delete()
-        result = True
-    finally:
-        return result
+    archive.light_amb_orig += str(reading.get_light_amb_orig()) + '^'
+    archive.pres_beer_orig += str(reading.get_pres_beer_orig()) + '^'
+    archive.temp_amb_orig += str(reading.get_temp_amb_orig()) + '^'
+    archive.temp_beer_orig += str(reading.get_temp_beer_orig()) + '^'
+
+    archive.event_temp_amb += str(reading.event_temp_amb.pk) + '^'
+    archive.event_temp_beer += str(reading.event_temp_beer.pk) + '^'
+    archive.update_instant = nowInUtc()
+    archive.count += 1
+    
+    archive.save()
+    reading.event_temp_amb.reading = None
+    reading.event_temp_amb.save()
+    reading.event_temp_beer.reading = None 
+    reading.event_temp_beer.save()
+    reading.delete()
+    
+    result = True
+    return result
 
 def genArchiveKey(cur_beer):
     archive_key = ''
