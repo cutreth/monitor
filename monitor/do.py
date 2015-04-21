@@ -150,7 +150,7 @@ def updateArchive(archive, reading):
 
     event_temp_amb = reading.event_temp_amb
     if bool(event_temp_amb):
-        event_temp_amb_pk = reading.event_temp_amb.pk
+        event_temp_amb_pk = event_temp_amb.pk
     else:        
         event_temp_amb_pk = ''
     event_temp_beer = reading.event_temp_beer
@@ -165,10 +165,12 @@ def updateArchive(archive, reading):
     archive.count += 1
     
     archive.save()
-    reading.event_temp_amb.reading = None
-    reading.event_temp_amb.save()
-    reading.event_temp_beer.reading = None 
-    reading.event_temp_beer.save()
+    if bool(event_temp_amb):
+        reading.event_temp_amb.reading = None
+        reading.event_temp_amb.save()
+    if bool(event_temp_beer):
+        reading.event_temp_beer.reading = None 
+        reading.event_temp_beer.save()
     reading.delete()
     
     result = True
