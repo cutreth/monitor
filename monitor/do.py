@@ -6,16 +6,15 @@ from monitor.models import Archive
 from monitor.models import Config
 from monitor.models import Event
 
-from monitor.middleware import send2middleware
+from monitor.middleware import sendCommand
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 from time import sleep
-import datetime
 import pytz
 
 def nowInUtc():
     utc = pytz.utc
-    now = datetime.datetime.now(tz=utc)
+    now = datetime.now(tz=utc)
     return now
 
 '''Beer'''
@@ -418,13 +417,7 @@ def next_log_estimate():
     '''Estimates the next reading time based on log freq and last logged time'''
     last_reading = getLastReading(getActiveBeer()).instant_actual
     log_freq = None
-    for i in range(10):
-        r, msg = send2middleware("?code=M")
-        print(r)
-        if r.upper() == "SUCCESS":
-            log_freq = int(msg.split("=")[1])
-            break
-        sleep(.1)
+    r, msg = sendCommand("?code=M")
     out = "unknown amount of time"
     if log_freq != None:
         next = last_reading + timedelta(minutes = log_freq)
@@ -433,11 +426,31 @@ def next_log_estimate():
         elif next >= now - timedelta(minutes = 5): out = "less than a minute"
     return(out)
 
-def getStatus(command):
-    sleep(.1)
-    s, collection_status = send2middleware(command)
-    if s != "Success": out = "?"
-    else:
-        if "on." in collection_status: out = "on"
-        else: out = "off"
+def getStatus(command, request = None, key = None):
+    out = None
+    if key != None: out = chkCookie(request, key)
+    if out == None:
+        sleep(.1)
+        s, status = sendCommand(command)
+        if s != "Success": out = "?"
+        else:
+            if "on." in status: out = "on"
+            else: out = "off"
     return(out)
+    
+def getExportData(cur_beer):
+    #Var names
+    vars = list(set(Reading._meta.get_all_field_names() + Archive._meta.get_all_field_names()))
+    vars = sorted(vars)
+    #Active (non-archived)
+    active_readings = [entry for entry in getAllReadings(cur_beer).values()]
+    #Archived data
+    archived_readings = [entry for entry in getAllArchives(cur_beer).values()]
+    
+    all_data = active_readings + archived_readings
+    
+    return((vars, all_data))
+def chkCookie(request, key):
+    out = request.COOKIES.get(key)
+    return(out)
+    
