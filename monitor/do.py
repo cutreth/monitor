@@ -148,10 +148,16 @@ def updateArchive(archive, reading):
     archive.temp_amb_orig += str(reading.get_temp_amb_orig()) + '^'
     archive.temp_beer_orig += str(reading.get_temp_beer_orig()) + '^'
 
-    event_temp_amb_pk = reading.event_temp_amb.pk
-    if not bool(event_temp_amb_pk): event_temp_amb_pk = ''
-    event_temp_beer_pk = reading.event_temp_beer.pk
-    if not bool(event_temp_beer_pk): event_temp_beer_pk = ''
+    event_temp_amb = reading.event_temp_amb
+    if bool(event_temp_amb):
+        event_temp_amb_pk = reading.event_temp_amb.pk
+    else:        
+        event_temp_amb_pk = ''
+    event_temp_beer = reading.event_temp_beer
+    if bool(event_temp_beer):
+        event_temp_beer_pk = event_temp_beer.pk
+    else:
+        event_temp_beer_pk = ''
 
     archive.event_temp_amb += str(event_temp_amb_pk) + '^'
     archive.event_temp_beer += str(event_temp_beer_pk) + '^'
