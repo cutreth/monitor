@@ -132,7 +132,7 @@ def commands(request):
                 elif cookie in request.COOKIES: request.COOKIES[cookie] = None
         code = command["code"].lower()
         if code == "s": command["time"] = datetime.utcnow().timestamp()
-        elif code != "":
+        if code != "":
             command_status = sendCommand(command.urlencode())
             error = command_status[0]
             details = command_status[1]
@@ -222,7 +222,17 @@ def dashboard(request):
     if active_config.temp_beer_base != None and active_config.temp_beer_dev != None:
         temp_beer_rng = [active_config.temp_beer_base - active_config.temp_beer_dev, active_config.temp_beer_base + active_config.temp_beer_dev]
     else: temp_beer_rng = (0,0)
-
+    
+    s, alert_res = sendCommand("?code=a&var=get")
+    alert_var = None
+    alert_rng = None
+    if s == "Success" and "off" not in alert_res:
+            re_alert = re.search("(.*)\[(\d+), (\d+)\]", alert_res.split(":")[1], re.IGNORECASE)
+            alert_var = re_alert.group(1)
+            alert_rng = [int(re_alert.group(2)), int(re_alert.group(3))]
+            val = locals()["cur_"+alert_var]
+            if not(val < alert_rng[0] or val > alert_rng[1]): alert_var = None
+    
     data = {
         "vals": {
             "temp_amb": cur_temp_amb,
@@ -230,6 +240,8 @@ def dashboard(request):
             "light_amb": cur_light_amb,
             "pres_beer": cur_pres_beer
         },
+        "alert_var": alert_var,
+        "alert_rng": alert_rng,
         "bgcols" : {
             "temp_amb": do.get_paint_cols(cur_temp_amb, temp_amb_rng)[0],
             "temp_beer": do.get_paint_cols(cur_temp_beer, temp_beer_rng)[0],
@@ -352,7 +364,7 @@ def export(request):
     #Get meta data (exporting two files, how? zip them?)
 
     #Make csv and HTTP response
-    fname = cur_beer.beer_text + ".csv"
+    fname = cur_beer.beer_text + "_" + datetime.now().strftime("%Y%m%d_%H%M") + ".csv"
     r = HttpResponse(content_type = "text/csv")
     r["Content-Disposition"] = "attachment; filename = '" + fname + "'"
     writer = csv.DictWriter(r, vars)
