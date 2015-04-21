@@ -132,7 +132,7 @@ def commands(request):
                 elif cookie in request.COOKIES: request.COOKIES[cookie] = None
         code = command["code"].lower()
         if code == "s": command["time"] = datetime.utcnow().timestamp()
-        elif code != "":
+        if code != "":
             command_status = sendCommand(command.urlencode())
             error = command_status[0]
             details = command_status[1]
