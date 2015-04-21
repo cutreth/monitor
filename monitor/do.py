@@ -9,7 +9,6 @@ from monitor.models import Event
 from monitor.middleware import sendCommand
 
 from datetime import timedelta, datetime
-from time import sleep
 import pytz
 
 def nowInUtc():
@@ -430,7 +429,6 @@ def getStatus(command, request = None, key = None):
     out = None
     if key != None: out = chkCookie(request, key)
     if out == None:
-        sleep(.1)
         s, status = sendCommand(command)
         if s != "Success": out = "?"
         else:

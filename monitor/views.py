@@ -154,7 +154,6 @@ def commands(request):
 
     alert_res = do.chkCookie(request, "alert_res")
     if alert_res == None:
-        sleep(.1)
         s, alert_res = sendCommand("?code=A&var=get")
         if s == "Success":
             if "off" not in alert_res:
@@ -173,7 +172,6 @@ def commands(request):
     for var in varlist:
         temp = do.chkCookie(request, var)
         if temp == None:
-            sleep(.1)
             s, val = sendCommand("?code=r&var=" + var)
             if s == "Success":
                 varlist[var][0] = val.split(":")[1]
