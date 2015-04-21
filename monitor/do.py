@@ -296,8 +296,12 @@ def getEventData(reading=None,event_temp_amb=None,event_temp_beer=None):
     elif bool(event_temp_amb) or bool(event_temp_beer):
         if bool(event_temp_amb):
             temp_amb = Event.objects.get(pk=event_temp_amb)
+        else:
+            temp_amb = None
         if bool(event_temp_beer):
             temp_beer = Event.objects.get(pk=event_temp_beer)
+        else:
+            temp_beer = None
     else:
         temp_amb = None
         temp_beer = None
