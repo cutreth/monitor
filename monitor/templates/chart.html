@@ -14,8 +14,6 @@
         google.load('visualization', '1', {'packages':['annotationchart']});
         google.setOnLoadCallback(drawChart);
         
-        var chart;
-        
         function drawChart() {
             init_vals = typeof init_vals !== 'undefined' ? init_vals : ['Ambient Temp', 'Beer Temp'];
             default_cols = ["#3366cc","#dc3912","#ff9900","#109618","#990099","#0099c6","#dd4477","#aa aa11","#22aa99","#994499"];
@@ -36,7 +34,7 @@
                 columnsTable.addRow([i, data.getColumnLabel(i)]);
             }
 
-            chart = new google.visualization.ChartWrapper({
+            var chart = new google.visualization.ChartWrapper({
                 chartType: 'AnnotationChart',
                 containerId: 'chart_div',
                 dataTable: data,
@@ -89,10 +87,13 @@
                 chart.setView(view);
                 chart.draw();
             }
+            function rangechange_handler(e) {
+                console.log('You changed the range to ', e['start'], ' and ', e['end']);
+            };
             google.visualization.events.addListener(columnFilter, 'statechange', setChartView);
-            
             setChartView();
             columnFilter.draw();
+            google.visualization.events.addListener(chart, 'rangechange', rangechange_handler);
         }
         function download_date_range() {
             alert("This button doesn't work yet");
