@@ -436,7 +436,22 @@ def getStatus(command, request = None, key = None):
             if "on." in status: out = "on"
             else: out = "off"
     return(out)
+def expandArchive(row):
+    readCnt = int(row["count"])
+    if readCnt == 0: return([row])
     
+    row = {v:row[v].split("^") if "^" in str(row[v]) else [row[v]] for v in row}
+    repeats = {v: len(row[v]) > 1 for v in row}
+
+    out = []
+    for r in range(readCnt):
+        add = {}
+        for var in row:
+            val = row[var]
+            if repeats[var] == True: add[var] = val[r]
+            else: add[var] = val[0]
+        out.append(add)
+    return(out)    
 def getExportData(cur_beer):
     #Var names
     vars = list(set(Reading._meta.get_all_field_names() + Archive._meta.get_all_field_names()))
@@ -444,8 +459,9 @@ def getExportData(cur_beer):
     #Active (non-archived)
     active_readings = [entry for entry in getAllReadings(cur_beer).values()]
     #Archived data
-    archived_readings = [entry for entry in getAllArchives(cur_beer).values()]
-    
+    archived_raw = [entry for entry in getAllArchives(cur_beer).values()]
+    archived_readings = [row for read in archived_raw for row in expandArchive(read)]
+
     all_data = active_readings + archived_readings
     
     return((vars, all_data))
