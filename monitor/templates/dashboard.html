@@ -64,11 +64,51 @@
             chart.draw(data4, options4);
           }
         </script>
+        <audio id="alertsound" src="{% static 'ir_end.wav' %}" preload="auto"></audio>
+        <audio id="reloadsound" src="{% static 'Windows Exclamation.wav' %}" preload="auto"></audio>
+        <script type="text/javascript">
+            function play_alert() {
+                if(getCookie("method_sound") == "true") {
+                    document.getElementById('alertsound').play();
+                }
+            }
+            function flash() {
+                if(getCookie("method_flash") == "true") {
+                    var state = false;
+                    setInterval(function()
+                        {
+                            state = !state;
+                            var color = (state?'red':'white');
+                            document.getElementById('cell_' + '{{ alert_var }}' ).style.backgroundColor = color;
+                        }, 500);
+                }
+            }
+            function play_reload() {
+                document.getElementById('reloadsound').play();
+            }
+            function save_alert_method() {
+                expires = new Date(new Date().setYear(new Date().getFullYear() + 1));
+                document.cookie="method_sound="+alert_method.sound.checked+"; expires="+expires;
+                document.cookie="method_flash="+alert_method.flash.checked+"; expires="+expires;
+            }
+            function getCookie(name) {
+                var value = "; " + document.cookie;
+                var parts = value.split("; " + name + "=");
+                if (parts.length == 2) return parts.pop().split(";").shift();
+            }
+            function set_alert_method() {
+                alert_method.sound.checked = (getCookie("method_sound") == "true");
+                alert_method.flash.checked = (getCookie("method_flash") == "true");
+            }
+            {% if alert_var  %}
+                play_alert();
+                flash();
+            {% endif %}
+        </script>
         <meta http-equiv="refresh" content="60">
 	</head>
 	
 	<body>		
-				
 		<main>
         <div class="innertube">
             <h1>{{active_beer}} - {{beer_date}}</h1>
@@ -81,10 +121,10 @@
                 <div id="chart_div3" style="display: inline-block;"></div>
                 <div id="chart_div4" style="display: inline-block;"></div>
             </div>
-            
+            <br>
             <form action="/monitor/dashboard/update/" method="get">
                 <input type="submit" value="Update">
-            </form>
+            </form><br>
             
             <table border = "1">
                 <tr>
@@ -92,19 +132,30 @@
                     <th>Value</th>
                 </tr><tr>
                     <td>Current Amb Temp</td>
-                    <td bgcolor = {{ bgcols.temp_amb }} align = "right">{{ vals.temp_amb }}</td>
+                    <td id = "cell_temp_amb" bgcolor = {{ bgcols.temp_amb }} align = "right">{{ vals.temp_amb }}</td>
                 </tr><tr>
                     <td>Current Beer Temp</td>
-                    <td bgcolor = {{ bgcols.temp_beer }} align = "right">{{ vals.temp_beer }}</td>
+                    <td id = "cell_temp_beer" bgcolor = {{ bgcols.temp_beer }} align = "right">{{ vals.temp_beer }}</td>
                 </tr><tr>
                     <td>Current Amb Light</td>
-                    <td bgcolor = {{ bgcols.light_amb }} align = "right">{{ vals.light_amb }}</td>
+                    <td id = "cell_light_amb" bgcolor = {{ bgcols.light_amb }} align = "right">{{ vals.light_amb }}</td>
                 </tr><tr>
                     <td>Current Beer Pressure</td>
-                    <td bgcolor = {{ bgcols.pres_beer }} align = "right">{{ vals.pres_beer }}</td>
+                    <td id = "cell_pres_beer" bgcolor = {{ bgcols.pres_beer }} align = "right">{{ vals.pres_beer }}</td>
                 </tr>
-                
-            </table>
+            </table><br>
+            {% if alert_var  %}
+                <b>{{ alert_var }} is outside of range {{ alert_rng }}!</b>
+            {% else %}
+                <i>No alerts set. Set alerts on the <a href="/monitor/commands/">Commands</a> page.</i>
+            {% endif %}
+            <form name = "alert_method">
+                Alert method:
+                <input type="checkbox" id="sound">Play sound
+                <input type="checkbox" id="flash">Flash value
+                <input type="button" value = "Save" onclick="save_alert_method();">
+            </form>
+            <script>set_alert_method();</script>
         </div>
 		</main>
 	
