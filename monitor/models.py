@@ -169,7 +169,7 @@ def parseList(val,form=None):
         if form == 'str':
             out = [str(n) for n in out]
         elif form == 'float':
-            out = [float(n) for n in out]
+            out = [(float(n) if bool(n) else None) for n in out]
         else:
             out = [n for n in out]
     else:

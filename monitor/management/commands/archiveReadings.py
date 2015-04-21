@@ -10,23 +10,26 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        #Define a datetime one week ago
         today = do.nowInUtc().date()
         week_ago = today - datetime.timedelta(days=6)
         #Normally set days=6 for one week
 
-        #Return readings for active_beer before the date limit
-        active_beer = do.getActiveBeer()
-        active_readings = do.getAllReadings(active_beer)
-        active_readings = active_readings.filter(instant_actual__lte=week_ago)
+        all_beer = do.getAllBeer()
 
-        for day in active_readings.datetimes('instant_actual', 'day', order='DESC'):
-            archive = do.getArchive(active_beer, day)
-            if not bool (archive):
-                archive = do.createArchive(active_beer, day)
-            day_readings = active_readings.filter(instant_actual__gte=day)
-            for reading in day_readings:
-                do.updateArchive(archive, reading)
+        for beer in all_beer:
+            active_readings = None
+            archive = None
+            day_readings = None
+            active_readings = do.getAllReadings(beer)
+            if bool(active_readings):
+                active_readings = active_readings.filter(instant_actual__lte=week_ago)
+                for day in active_readings.datetimes('instant_actual', 'day', order='DESC'):
+                    archive = do.getArchive(beer, day)
+                    if not bool (archive):
+                        archive = do.createArchive(beer, day)
+                    day_readings = active_readings.filter(instant_actual__gte=day)
+                    for reading in day_readings:
+                        do.updateArchive(archive, reading)
 
         do.updateArchiveKey()
         do.updateReadingKey()

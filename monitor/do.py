@@ -6,16 +6,14 @@ from monitor.models import Archive
 from monitor.models import Config
 from monitor.models import Event
 
-from monitor.middleware import send2middleware
+from monitor.middleware import sendCommand
 
-from datetime import timedelta
-from time import sleep
-import datetime
+from datetime import timedelta, datetime
 import pytz
 
 def nowInUtc():
     utc = pytz.utc
-    now = datetime.datetime.now(tz=utc)
+    now = datetime.now(tz=utc)
     return now
 
 '''Beer'''
@@ -138,27 +136,45 @@ def createArchive(cur_beer, day):
 
 def updateArchive(archive, reading):
     result = None
-    try:
-        archive.instant_actual += str(reading.get_instant_actual()) + '^'
-        archive.light_amb += str(reading.get_light_amb()) + '^'
-        archive.pres_beer += str(reading.get_pres_beer()) + '^'
-        archive.temp_amb += str(reading.get_temp_amb()) + '^'
-        archive.temp_beer += str(reading.get_temp_beer()) + '^'
 
-        archive.light_amb_orig += str(reading.get_light_amb_orig()) + '^'
-        archive.pres_beer_orig += str(reading.get_pres_beer_orig()) + '^'
-        archive.temp_amb_orig += str(reading.get_temp_amb_orig()) + '^'
-        archive.temp_beer_orig += str(reading.get_temp_beer_orig()) + '^'
+    archive.instant_actual += str(reading.get_instant_actual()) + '^'
+    archive.light_amb += str(reading.get_light_amb()) + '^'
+    archive.pres_beer += str(reading.get_pres_beer()) + '^'
+    archive.temp_amb += str(reading.get_temp_amb()) + '^'
+    archive.temp_beer += str(reading.get_temp_beer()) + '^'
 
-        archive.event_temp_amb += str(reading.event_temp_amb.pk) + '^'
-        archive.event_temp_beer += str(reading.event_temp_beer.pk) + '^'
-        archive.update_instant = nowInUtc()
-        archive.count += 1
-        archive.save()
-        reading.delete()
-        result = True
-    finally:
-        return result
+    archive.light_amb_orig += str(reading.get_light_amb_orig()) + '^'
+    archive.pres_beer_orig += str(reading.get_pres_beer_orig()) + '^'
+    archive.temp_amb_orig += str(reading.get_temp_amb_orig()) + '^'
+    archive.temp_beer_orig += str(reading.get_temp_beer_orig()) + '^'
+
+    event_temp_amb = reading.event_temp_amb
+    if bool(event_temp_amb):
+        event_temp_amb_pk = event_temp_amb.pk
+    else:        
+        event_temp_amb_pk = ''
+    event_temp_beer = reading.event_temp_beer
+    if bool(event_temp_beer):
+        event_temp_beer_pk = event_temp_beer.pk
+    else:
+        event_temp_beer_pk = ''
+
+    archive.event_temp_amb += str(event_temp_amb_pk) + '^'
+    archive.event_temp_beer += str(event_temp_beer_pk) + '^'
+    archive.update_instant = nowInUtc()
+    archive.count += 1
+    
+    archive.save()
+    if bool(event_temp_amb):
+        reading.event_temp_amb.reading = None
+        reading.event_temp_amb.save()
+    if bool(event_temp_beer):
+        reading.event_temp_beer.reading = None 
+        reading.event_temp_beer.save()
+    reading.delete()
+    
+    result = True
+    return result
 
 def genArchiveKey(cur_beer):
     archive_key = ''
@@ -280,8 +296,12 @@ def getEventData(reading=None,event_temp_amb=None,event_temp_beer=None):
     elif bool(event_temp_amb) or bool(event_temp_beer):
         if bool(event_temp_amb):
             temp_amb = Event.objects.get(pk=event_temp_amb)
+        else:
+            temp_amb = None
         if bool(event_temp_beer):
             temp_beer = Event.objects.get(pk=event_temp_beer)
+        else:
+            temp_beer = None
     else:
         temp_amb = None
         temp_beer = None
@@ -418,13 +438,7 @@ def next_log_estimate():
     '''Estimates the next reading time based on log freq and last logged time'''
     last_reading = getLastReading(getActiveBeer()).instant_actual
     log_freq = None
-    for i in range(10):
-        r, msg = send2middleware("?code=M")
-        print(r)
-        if r.upper() == "SUCCESS":
-            log_freq = int(msg.split("=")[1])
-            break
-        sleep(.1)
+    r, msg = sendCommand("?code=M")
     out = "unknown amount of time"
     if log_freq != None:
         next = last_reading + timedelta(minutes = log_freq)
@@ -433,11 +447,30 @@ def next_log_estimate():
         elif next >= now - timedelta(minutes = 5): out = "less than a minute"
     return(out)
 
-def getStatus(command):
-    sleep(.1)
-    s, collection_status = send2middleware(command)
-    if s != "Success": out = "?"
-    else:
-        if "on." in collection_status: out = "on"
-        else: out = "off"
+def getStatus(command, request = None, key = None):
+    out = None
+    if key != None: out = chkCookie(request, key)
+    if out == None:
+        s, status = sendCommand(command)
+        if s != "Success": out = "?"
+        else:
+            if "on." in status: out = "on"
+            else: out = "off"
     return(out)
+    
+def getExportData(cur_beer):
+    #Var names
+    vars = list(set(Reading._meta.get_all_field_names() + Archive._meta.get_all_field_names()))
+    vars = sorted(vars)
+    #Active (non-archived)
+    active_readings = [entry for entry in getAllReadings(cur_beer).values()]
+    #Archived data
+    archived_readings = [entry for entry in getAllArchives(cur_beer).values()]
+    
+    all_data = active_readings + archived_readings
+    
+    return((vars, all_data))
+def chkCookie(request, key):
+    out = request.COOKIES.get(key)
+    return(out)
+    
