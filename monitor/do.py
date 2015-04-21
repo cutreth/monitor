@@ -443,7 +443,6 @@ def next_log_estimate():
     
     out = "unknown amount of time"
     if log_freq != None:
-        print("here")
         next = last_reading + timedelta(minutes = log_freq)
         now = nowInUtc()
         if next >= now: out = get_date_diff(now, next, append = None)
