@@ -152,7 +152,12 @@ def updateArchive(archive, reading):
         archive.event_temp_beer += str(reading.event_temp_beer.pk) + '^'
         archive.update_instant = nowInUtc()
         archive.count += 1
+        
         archive.save()
+        reading.event_temp_amb.reading = None
+        reading.event_temp_amb.save()
+        reading.event_temp_beer.reading = None 
+        reading.event_temp_beer.save()
         reading.delete()
         result = True
     finally:
