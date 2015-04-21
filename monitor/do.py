@@ -439,8 +439,11 @@ def next_log_estimate():
     last_reading = getLastReading(getActiveBeer()).instant_actual
     log_freq = None
     r, msg = sendCommand("?code=M")
+    if r == "Success": log_freq = int(msg.split("=")[1])
+    
     out = "unknown amount of time"
     if log_freq != None:
+        print("here")
         next = last_reading + timedelta(minutes = log_freq)
         now = nowInUtc()
         if next >= now: out = get_date_diff(now, next, append = None)
