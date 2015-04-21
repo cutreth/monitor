@@ -13,6 +13,9 @@
         <script type='text/javascript'>
         google.load('visualization', '1', {'packages':['annotationchart']});
         google.setOnLoadCallback(drawChart);
+        
+        var chart;
+        
         function drawChart() {
             init_vals = typeof init_vals !== 'undefined' ? init_vals : ['Ambient Temp', 'Beer Temp'];
             default_cols = ["#3366cc","#dc3912","#ff9900","#109618","#990099","#0099c6","#dd4477","#aa aa11","#22aa99","#994499"];
@@ -33,7 +36,7 @@
                 columnsTable.addRow([i, data.getColumnLabel(i)]);
             }
 
-            var chart = new google.visualization.ChartWrapper({
+            chart = new google.visualization.ChartWrapper({
                 chartType: 'AnnotationChart',
                 containerId: 'chart_div',
                 dataTable: data,
@@ -91,6 +94,9 @@
             setChartView();
             columnFilter.draw();
         }
+        function download_date_range() {
+            alert("This button doesn't work yet");
+        }
         </script>
 	</head>
 	
@@ -107,9 +113,13 @@
             </label><br>
             <div id='chart_div' style='width: 900px; height: 500px;'></div>
         </div>
+        Download:
         <form name="download_form" id = "download_form" action="/monitor/export/" method="get">
             <input type = "hidden" name = "beerid" value = "{{ cur_beer.id }}">
-            <input type = "submit" value = "Download">
+            <input type = "hidden" name = "min" value = "None">
+            <input type = "hidden" name = "max" value = "None">
+            <input type = "button" value = "Selected range" onclick = "download_date_range();">
+            <input type = "submit" value = "All">
         </form>
         <div id='colFilter_div' style="display: none;"></div>
 		</main>
