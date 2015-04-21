@@ -64,11 +64,23 @@
             chart.draw(data4, options4);
           }
         </script>
+        <audio id="alertsound" src="{% static 'ir_end.wav' %}" preload="auto"></audio>
+        <audio id="reloadsound" src="{% static 'Windows Exclamation.wav' %}" preload="auto"></audio>
+        <script type="text/javascript">
+            function play_alert() {
+                document.getElementById('alertsound').play();
+            }
+            function play_reload() {
+                document.getElementById('reloadsound').play();
+            }
+            {% if alert_var  %}
+                play_alert();
+            {% endif %}
+        </script>
         <meta http-equiv="refresh" content="60">
 	</head>
 	
 	<body>		
-				
 		<main>
         <div class="innertube">
             <h1>{{active_beer}} - {{beer_date}}</h1>
@@ -81,6 +93,9 @@
                 <div id="chart_div3" style="display: inline-block;"></div>
                 <div id="chart_div4" style="display: inline-block;"></div>
             </div>
+            {% if alert_var  %}
+                <b>{{ alert_var }} is outside of range {{ alert_rng }}!</b>
+            {% endif %}
             
             <form action="/monitor/dashboard/update/" method="get">
                 <input type="submit" value="Update">
@@ -103,7 +118,6 @@
                     <td>Current Beer Pressure</td>
                     <td bgcolor = {{ bgcols.pres_beer }} align = "right">{{ vals.pres_beer }}</td>
                 </tr>
-                
             </table>
         </div>
 		</main>
