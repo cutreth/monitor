@@ -364,7 +364,7 @@ def export(request):
     #Get meta data (exporting two files, how? zip them?)
 
     #Make csv and HTTP response
-    fname = cur_beer.beer_text + ".csv"
+    fname = cur_beer.beer_text + "_" + datetime.now().strftime("%Y%m%d_%H%M") + ".csv"
     r = HttpResponse(content_type = "text/csv")
     r["Content-Disposition"] = "attachment; filename = '" + fname + "'"
     writer = csv.DictWriter(r, vars)
