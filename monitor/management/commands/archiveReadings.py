@@ -11,7 +11,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         today = do.nowInUtc().date()
-        week_ago = today - datetime.timedelta(days=2)
+        week_ago = today - datetime.timedelta(days=6)
         #Normally set days=6 for one week
 
         all_beer = do.getAllBeer()
